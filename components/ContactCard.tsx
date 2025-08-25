@@ -1,15 +1,22 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Contact, Subject } from '../contexts/ContactContext';
+import { Contact, Subject, useContacts } from '../contexts/ContactContext';
 
 interface ContactCardProps {
   contact: Contact;
 }
 
 const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
+  const { state } = useContacts();
   const subjectsRef = useRef<HTMLDivElement>(null);
   const [visibleSubjects, setVisibleSubjects] = useState<Subject[]>([]);
   const [showOverflow, setShowOverflow] = useState(false);
   const [hiddenCount, setHiddenCount] = useState(0);
+
+  // Look up the actual data using IDs
+  const occupation = contact.occupationId ? state.occupations.find(o => o.id === contact.occupationId) : null;
+  const organization = contact.organizationId ? state.organizations.find(org => org.id === contact.organizationId) : null;
+  const subjects = contact.subjectIds ? contact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
+  const relationships = contact.relationshipIds ? contact.relationshipIds.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) : [];
 
   // Format birth date from ISO format to "Month Date, Year" format
   const formatBirthDate = (dateString: string): string => {
@@ -32,11 +39,8 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
   };
 
   // Get the first relationship for display (if any)
-  const primaryRelationship = contact.relationships?.[0];
+  const primaryRelationship = relationships?.[0];
   
-  // Get all subjects for display
-  const subjects = contact.subjects || [];
-
   // Measure how many subjects actually fit in 2 rows
   useEffect(() => {
     if (!subjectsRef.current || subjects.length === 0) {
@@ -111,9 +115,9 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
   }, [subjects]);
 
   return (
-    <div className="w-80 h-[229px] bg-circle-neutral-variant rounded-xl p-3 flex flex-col gap-[21px]">
-      {/* Top Section - Contact Info and Menu */}
-      <div className="flex flex-col gap-5 w-full">
+    <div className="w-80 h-fit bg-circle-neutral-variant rounded-xl p-3 flex flex-col gap-[20px]">
+              {/* Top Section - Contact Info and Menu */}
+        <div className="flex flex-col gap-[10px] w-full">
         {/* Row with contact info and menu button */}
         <div className="flex flex-row justify-between items-start w-full">
           {/* Contact Info Column */}
@@ -122,11 +126,13 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
               {contact.name}
             </div>
             <div className="font-inter font-normal text-sm leading-5 text-circle-primary">
-              {contact.occupation}
+              {occupation?.title || 'No occupation'}
             </div>
-            <div className="font-inter font-normal text-sm leading-5 text-circle-primary">
-              {formatBirthDate(contact.birthDate)}
-            </div>
+            {organization && (
+              <div className="font-inter font-normal text-sm leading-5 text-circle-primary">
+                {organization.name}
+              </div>
+            )}
           </div>
           
           {/* Menu Button */}
@@ -137,23 +143,30 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
           </div>
         </div>
         
-        {/* Notes Count */}
-        <div className="flex flex-row items-center gap-2 flex-shrink-0">
-          {/* Edit Icon */}
-          <div className="w-4 h-4 flex items-center justify-center">
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11.25 1.875L13.125 3.75L4.6875 12.1875H2.8125V10.3125L11.25 1.875Z" stroke="#1E1E1E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+        {/* Birthdate and Notes Column */}
+        <div className="flex flex-col gap-0">
+          {contact.birthDate && (
+            <div className="font-inter font-normal text-sm leading-5 text-circle-primary">
+              {formatBirthDate(contact.birthDate)}
+            </div>
+          )}
+          <div className="flex flex-row items-center gap-2 flex-shrink-0">
+            {/* Edit Icon */}
+            <div className="w-4 h-4 flex items-center justify-center">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.25 1.875L13.125 3.75L4.6875 12.1875H2.8125V10.3125L11.25 1.875Z" stroke="#1E1E1E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            {/* Notes Count */}
+            <span className="font-inter font-normal text-sm leading-5 text-circle-primary">
+              {contact.noteIds?.length || 0} notes
+            </span>
           </div>
-          {/* Notes Count */}
-          <span className="font-inter font-normal text-sm leading-5 text-circle-primary">
-            {contact.notes?.length || 0} notes
-          </span>
         </div>
       </div>
 
       {/* Bottom Section - Relationship and Subjects */}
-      <div className="flex flex-col gap-2.5 w-full">
+      <div className="flex flex-col gap-[5px] w-full">
         {/* Relationship Tag */}
         {primaryRelationship && (
           <div className="flex flex-row flex-wrap items-start content-start gap-0 w-full">
@@ -176,22 +189,22 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
         >
           <div className="flex flex-row flex-wrap items-start content-start gap-1 w-full">
             {subjects.map((subject: Subject) => (
-                          <div
-              key={`measure-${subject.id}`}
-              data-subject-tag
-              className="px-1 py-0.5 bg-circle-secondary rounded-md flex items-center justify-center h-5 flex-shrink-0"
-              style={{ minWidth: `${Math.max(subject.label.length * 8, 34)}px` }}
-            >
-              <span className="font-inter font-medium text-[11px] leading-4 text-white text-center tracking-[0.5px]">
-                {subject.label}
-              </span>
-            </div>
+              <div
+                key={`measure-${subject.id}`}
+                data-subject-tag
+                className="px-1 py-0.5 bg-circle-secondary rounded-md flex items-center justify-center h-5 flex-shrink-0"
+                style={{ minWidth: `${Math.max(subject.label.length * 8, 34)}px` }}
+              >
+                <span className="font-inter font-medium text-[11px] leading-4 text-white text-center tracking-[0.5px]">
+                  {subject.label}
+                </span>
+              </div>
             ))}
           </div>
         </div>
 
         {/* Visible subjects container - limited to 2 rows with overflow indicator */}
-        <div className="flex flex-row flex-wrap items-start content-start gap-1 w-full max-h-[50px] overflow-hidden">
+        <div className="flex flex-row flex-wrap items-start content-start gap-[5px] w-full max-h-[45px] overflow-hidden">
           {subjects.length > 0 ? (
             <>
               {visibleSubjects.map((subject: Subject) => (

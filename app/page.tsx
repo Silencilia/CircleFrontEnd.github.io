@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import HeaderNote from '../components/Headers/HeaderNote';
-import InputSection from '../components/InputSection';
+import HeaderCircle from '../components/Headers/HeaderCircle';
+import TalkToCircle from '../components/TalkToCircle';
 import ContactPreview from '../components/ContactPreview';
 import NavigationBar from '../components/NavigationBar';
 import { useContacts } from '../contexts/ContactContext';
@@ -24,16 +24,16 @@ export default function NotePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FBF7F3]">
-      {/* HeaderNote - fixed at top */}
+      {/* HeaderCircle - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <HeaderNote />
+        <HeaderCircle />
       </div>
       
       {/* Main content area - with top padding to account for fixed header */}
       <div className="flex-1 flex flex-col pt-[138px]">
         {/* Input Section - centered in the available space */}
         <div className="flex-1 flex items-center justify-center px-8 py-10">
-          <InputSection />
+          <TalkToCircle />
         </div>
         
         {/* ContactPreview - positioned above navigation */}

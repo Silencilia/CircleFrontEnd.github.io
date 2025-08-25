@@ -1,19 +1,17 @@
 import React from 'react';
-import { Subject } from '../contexts/ContactContext';
+import { Contact, Subject, useContacts } from '../contexts/ContactContext';
 
 interface ContactCardSimpleProps {
-  name: string;
-  occupation: string;
-  birthDate: string;
-  subjects: Subject[];
+  contact: Contact;
 }
 
-const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({
-  name,
-  occupation,
-  birthDate,
-  subjects = [] // Provide default empty array
-}) => {
+const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
+  const { state } = useContacts();
+  
+  // Look up the actual data using IDs
+  const occupation = contact.occupationId ? state.occupations.find(o => o.id === contact.occupationId) : null;
+  const subjects = contact.subjectIds ? contact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
+
   // Ensure subjects is always an array
   const safeSubjects = Array.isArray(subjects) ? subjects : [];
 
@@ -52,14 +50,16 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({
       {/* Contact Info */}
       <div className="flex flex-col gap-1">
         <div className="font-inter font-medium text-base leading-6 text-circle-primary truncate">
-          {name}
+          {contact.name}
         </div>
         <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate">
-          {occupation}
+          {occupation?.title || 'No occupation'}
         </div>
-        <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate">
-          {formatBirthDate(birthDate)}
-        </div>
+        {contact.birthDate && (
+          <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate">
+            {formatBirthDate(contact.birthDate)}
+          </div>
+        )}
       </div>
       
       {/* Subjects */}

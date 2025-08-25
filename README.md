@@ -15,7 +15,7 @@ Circle is a personal social manager app that helps users remember meaningful det
 ### Current Implementation
 - **Note Page**: Main interface showing contact previews with tags
 - **Contact Cards**: Horizontal scrollable list of contact information
-- **Input Section**: Voice and file upload functionality
+- **Talk To Circle**: Voice and file upload functionality
 - **Navigation**: Four main sections (Note, Memo, Contacts, User)
 
 ## Tech Stack
@@ -81,7 +81,7 @@ circle/
 │   ├── ContactCardSimple.tsx # Individual contact display
 │   ├── ContactPreview.tsx   # Horizontal scrollable contact list
 │   ├── Header.tsx           # App header with logo and Ask Circle button
-│   ├── InputSection.tsx     # Voice and file upload controls
+│   ├── TalkToCircle.tsx     # Voice and file upload controls
 │   └── NavigationBar.tsx    # Bottom navigation bar
 ├── package.json             # Dependencies and scripts
 ├── tailwind.config.js       # Tailwind configuration with custom theme
@@ -94,7 +94,7 @@ circle/
 - **ContactCardSimple**: Displays individual contact with name, occupation, last interaction, and tags
 - **ContactPreview**: Container for horizontal scrolling contact cards
 - **Header**: App branding and Ask Circle functionality
-- **InputSection**: Voice recording and file upload interface
+- **TalkToCircle**: Voice recording and file upload interface
 - **NavigationBar**: Bottom navigation with four main sections
 
 ## Future Enhancements

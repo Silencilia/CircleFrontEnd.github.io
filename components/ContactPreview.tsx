@@ -98,10 +98,7 @@ const ContactPreview: React.FC<ContactPreviewProps> = ({ contacts }) => {
             validContacts.map((contact) => (
               <div key={contact.id} className="flex-shrink-0">
                 <ContactCardSimple
-                  name={contact.name}
-                  occupation={contact.occupation}
-                  birthDate={contact.birthDate}
-                  subjects={contact.subjects || []}
+                  contact={contact}
                 />
               </div>
             ))
