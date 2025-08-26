@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CircleIcon, MemoIcon, ContactsIcon, UserIcon } from './icons';
+import { CircleIcon, MemoIcon, ContactsIcon, UserIcon, DevIcon } from './icons';
 
 interface NavigationBarProps {
   currentPage?: 'note' | 'memo' | 'contacts' | 'user';
@@ -85,6 +85,14 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) =
               User
             </span>
           </div>
+
+          {/* Dev Button */}
+          <Link href="/developer" className="flex flex-col items-center justify-center gap-1 w-16 sm:w-18 h-14 sm:h-15 rounded-xl p-1 transition-colors hover:bg-circle-neutral-variant">
+            <DevIcon width={30} height={30} />
+            <span className="font-inter font-medium text-xs leading-4 text-black text-center">
+              Dev
+            </span>
+          </Link>
         </div>
       </div>
     </div>

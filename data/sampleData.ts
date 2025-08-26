@@ -119,8 +119,7 @@ export const sampleContacts: Contact[] = [
   {
     id: 2,
     name: 'Sarah Chen',
-    occupationId: 2,
-    organizationId: 2,
+    // Removed occupationId and organizationId to test missing data
     birthDate: '1988-09-22',
     lastInteraction: 1734048000000, // Dec 12, 2024 timestamp
     subjectIds: [4, 7, 10, 13, 14, 19, 21, 24, 26, 30],
@@ -131,7 +130,7 @@ export const sampleContacts: Contact[] = [
     id: 3,
     name: 'Michael Rodriguez',
     occupationId: 3,
-    organizationId: 3,
+    // Removed organizationId to test missing organization
     birthDate: '1992-03-10',
     lastInteraction: 1733788800000, // Dec 10, 2024 timestamp
     subjectIds: [5, 8, 11, 14, 17, 19, 23, 28, 12, 16],
@@ -143,7 +142,7 @@ export const sampleContacts: Contact[] = [
     name: 'Emily Watson',
     occupationId: 4,
     organizationId: 4,
-    birthDate: '1989-11-05',
+    // Removed birthDate to test missing birth date
     lastInteraction: 1733616000000, // Dec 8, 2024 timestamp
     subjectIds: [2, 6, 9, 13, 15, 20, 22, 25, 27, 29],
     relationshipIds: [2, 3],
@@ -152,7 +151,7 @@ export const sampleContacts: Contact[] = [
   {
     id: 5,
     name: 'David Kim',
-    occupationId: 5,
+    // Removed occupationId to test missing occupation
     organizationId: 5,
     birthDate: '1991-07-18',
     lastInteraction: 1733356800000, // Dec 5, 2024 timestamp
@@ -174,9 +173,7 @@ export const sampleContacts: Contact[] = [
   {
     id: 7,
     name: 'James Wilson',
-    occupationId: 7,
-    organizationId: 7,
-    birthDate: '1986-04-12',
+    // Removed all optional fields to test complete missing data
     lastInteraction: 1733006400000, // Dec 1, 2024 timestamp
     subjectIds: [2, 5, 9, 12, 16, 20, 23, 25, 27, 29],
     relationshipIds: [2, 7],
@@ -186,8 +183,7 @@ export const sampleContacts: Contact[] = [
     id: 8,
     name: 'Maria Garcia',
     occupationId: 8,
-    organizationId: 8,
-    birthDate: '1993-08-25',
+    // Removed organizationId and birthDate
     lastInteraction: 1732752000000, // Nov 28, 2024 timestamp
     subjectIds: [1, 3, 6, 10, 13, 17, 21, 24, 26, 30],
     relationshipIds: [1, 3],
@@ -207,9 +203,8 @@ export const sampleContacts: Contact[] = [
   {
     id: 10,
     name: 'Jennifer Lee',
-    occupationId: 10,
+    // Removed occupationId and birthDate
     organizationId: 10,
-    birthDate: '1994-06-08',
     lastInteraction: 1732406400000, // Nov 22, 2024 timestamp
     subjectIds: [3, 8, 10, 13, 16, 20, 23, 25, 27, 29],
     relationshipIds: [1, 6],
@@ -229,9 +224,7 @@ export const sampleContacts: Contact[] = [
   {
     id: 12,
     name: 'Amanda Davis',
-    occupationId: 12,
-    organizationId: 12,
-    birthDate: '1990-10-03',
+    // Removed all optional fields to test complete missing data
     lastInteraction: 1732060800000, // Nov 18, 2024 timestamp
     subjectIds: [1, 4, 7, 11, 14, 18, 19, 22, 28, 12],
     relationshipIds: [1, 2],

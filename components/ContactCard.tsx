@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Contact, Subject, useContacts } from '../contexts/ContactContext';
 
 interface ContactCardProps {
@@ -12,11 +12,26 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
   const [showOverflow, setShowOverflow] = useState(false);
   const [hiddenCount, setHiddenCount] = useState(0);
 
-  // Look up the actual data using IDs
-  const occupation = contact.occupationId ? state.occupations.find(o => o.id === contact.occupationId) : null;
-  const organization = contact.organizationId ? state.organizations.find(org => org.id === contact.organizationId) : null;
-  const subjects = contact.subjectIds ? contact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
-  const relationships = contact.relationshipIds ? contact.relationshipIds.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) : [];
+  // Use useMemo to prevent recreating these arrays on every render
+  const occupation = useMemo(() => 
+    contact.occupationId ? state.occupations.find(o => o.id === contact.occupationId) : null, 
+    [contact.occupationId, state.occupations]
+  );
+  
+  const organization = useMemo(() => 
+    contact.organizationId ? state.organizations.find(org => org.id === contact.organizationId) : null, 
+    [contact.organizationId, state.organizations]
+  );
+  
+  const subjects = useMemo(() => 
+    contact.subjectIds ? contact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [], 
+    [contact.subjectIds, state.subjects]
+  );
+  
+  const relationships = useMemo(() => 
+    contact.relationshipIds ? contact.relationshipIds.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) : [], 
+    [contact.relationshipIds, state.relationships]
+  );
 
   // Format birth date from ISO format to "Month Date, Year" format
   const formatBirthDate = (dateString: string): string => {
@@ -121,18 +136,16 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
         {/* Row with contact info and menu button */}
         <div className="flex flex-row justify-between items-start w-full">
           {/* Contact Info Column */}
-          <div className="flex flex-col gap-0">
+          <div className="flex flex-col gap-0 h-fit ">
             <div className="font-inter font-medium text-base leading-6 text-circle-primary">
               {contact.name}
             </div>
-            <div className="font-inter font-normal text-sm leading-5 text-circle-primary">
-              {occupation?.title || 'No occupation'}
+            <div className="font-inter font-normal text-sm leading-5 text-circle-primary h-[20px]">
+              {occupation?.title || ''}
             </div>
-            {organization && (
-              <div className="font-inter font-normal text-sm leading-5 text-circle-primary">
-                {organization.name}
-              </div>
-            )}
+            <div className="font-inter font-normal text-sm leading-5 text-circle-primary h-[20px]">
+              {organization?.name || ''}
+            </div>
           </div>
           
           {/* Menu Button */}
@@ -144,12 +157,10 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
         </div>
         
         {/* Birthdate and Notes Column */}
-        <div className="flex flex-col gap-0">
-          {contact.birthDate && (
-            <div className="font-inter font-normal text-sm leading-5 text-circle-primary">
-              {formatBirthDate(contact.birthDate)}
-            </div>
-          )}
+        <div className="flex flex-col gap-0 h-fit">
+          <div className="font-inter font-normal text-sm leading-5 text-circle-primary h-[20px]">
+            {contact.birthDate ? formatBirthDate(contact.birthDate) : ''}
+          </div>
           <div className="flex flex-row items-center gap-2 flex-shrink-0">
             {/* Edit Icon */}
             <div className="w-4 h-4 flex items-center justify-center">

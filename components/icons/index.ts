@@ -1,4 +1,9 @@
 export { default as CircleIcon } from './CircleIcon';
-export { default as MemoIcon } from './MemoIcon';
+export { default as CircleIconSelected } from './CircleIconSelected';
 export { default as ContactsIcon } from './ContactsIcon';
+export { default as ContactsIconSelected } from './ContactsIconSelected';
+export { default as MemoIcon } from './MemoIcon';
+export { default as MemoIconSelected } from './MemoIconSelected';
 export { default as UserIcon } from './UserIcon';
+export { default as UserIconSelected } from './UserIconSelected';
+export { default as DevIcon } from './DevIcon';

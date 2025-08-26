@@ -46,24 +46,22 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
   };
 
   return (
-    <div className="w-56 h-40 bg-circle-neutral-variant rounded-xl p-3 flex flex-col gap-3">
+    <div className="w-56 h-fit bg-circle-neutral-variant rounded-xl p-3 flex flex-col gap-3">
       {/* Contact Info */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col h-fit gap-1">
         <div className="font-inter font-medium text-base leading-6 text-circle-primary truncate">
           {contact.name}
         </div>
-        <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate">
-          {occupation?.title || 'No occupation'}
+        <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate h-[20px]">
+          {occupation?.title || ''}
         </div>
-        {contact.birthDate && (
-          <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate">
-            {formatBirthDate(contact.birthDate)}
-          </div>
-        )}
+        <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate h-[20px]">
+          {contact.birthDate ? formatBirthDate(contact.birthDate) : ''}
+        </div>
       </div>
       
       {/* Subjects */}
-      <div className="flex flex-row flex-wrap items-start content-start gap-1 w-54 h-11 overflow-hidden">
+      <div className="flex flex-row flex-wrap items-start content-start gap-[5px] w-54 h-[45px] overflow-hidden">
         {safeSubjects.length > 0 ? (
           <>
             {visibleSubjects.map((subject: Subject) => (

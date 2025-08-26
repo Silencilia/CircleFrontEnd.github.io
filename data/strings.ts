@@ -1,0 +1,100 @@
+// Common text strings used throughout the Circle app
+export const STRINGS = {
+  // Navigation
+  NAV: {
+    CIRCLE: 'Circle',
+    MEMO: 'Memo',
+    CONTACTS: 'Contacts',
+    USER: 'User',
+    DEV: 'Dev',
+  },
+  
+  // Contact-related
+  CONTACT: {
+    NO_OCCUPATION: 'No occupation',
+    NO_SUBJECTS: 'No subjects assigned',
+    NOTES_COUNT: (count: number) => `${count} notes`,
+    OVERFLOW_INDICATOR: (count: number) => `+${count}`,
+    NO_BIRTH_DATE: '',
+    NO_ORGANIZATION: '',
+  },
+  
+  // Loading states
+  LOADING: {
+    CONTACTS: 'Loading contacts...',
+  },
+  
+  // Placeholder text
+  PLACEHOLDERS: {
+    SEARCH: 'Search contacts...',
+    NO_RESULTS: 'No contacts found',
+    NO_DATA: 'No data available',
+  },
+  
+  // Error messages
+  ERRORS: {
+    LOAD_FAILED: 'Failed to load contacts',
+    SAVE_FAILED: 'Failed to save contact',
+    PARSE_FAILED: 'Failed to parse saved data',
+  },
+  
+  // UI Elements
+  UI: {
+    EDIT: 'Edit',
+    DELETE: 'Delete',
+    ADD: 'Add',
+    SAVE: 'Save',
+    CANCEL: 'Cancel',
+    CLOSE: 'Close',
+    MENU: 'Menu',
+  },
+  
+  // Relationship categories
+  RELATIONSHIPS: {
+    PERSONAL: 'personal',
+    PROFESSIONAL: 'professional',
+    ROMANTIC: 'romantic',
+  },
+  
+  // Subject categories
+  SUBJECTS: {
+    ACTIVITY: 'activity',
+    INTEREST: 'interest',
+    HOBBY: 'hobby',
+    ORGANIZATION: 'organization',
+  },
+} as const;
+
+// Greeting messages for the Circle app
+export const GREETINGS = [
+  "Any news from your friends?",
+  "Who did you meet today?",
+  "How can I help with your relationships?",
+  "What's new with your contacts?",
+  "Ready to strengthen your social connections?",
+] as const;
+
+// Common dimensions and spacing
+export const LAYOUT = {
+  CARD_HEIGHTS: {
+    CONTACT_INFO: '72px',
+    OCCUPATION: '20px',
+    ORGANIZATION: '20px',
+    BIRTH_DATE: '20px',
+    SUBJECTS: '45px',
+    NOTES_SECTION: '40px',
+  },
+  
+  SPACING: {
+    GAP_SMALL: 'gap-1',
+    GAP_MEDIUM: 'gap-3',
+    GAP_LARGE: 'gap-[20px]',
+  },
+} as const;
+
+// Export individual categories for easier imports
+export const NAV_STRINGS = STRINGS.NAV;
+export const CONTACT_STRINGS = STRINGS.CONTACT;
+export const LOADING_STRINGS = STRINGS.LOADING;
+export const ERROR_STRINGS = STRINGS.ERRORS;
+export const UI_STRINGS = STRINGS.UI;
