@@ -2,6 +2,7 @@
   "name": "circle",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://Silencilia.github.io"
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -27,4 +28,5 @@
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
   }
+  
 }
