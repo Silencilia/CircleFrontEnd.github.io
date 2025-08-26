@@ -5,10 +5,11 @@
   "homepage": "https://Silencilia.github.io"
   "scripts": {
     "dev": "next dev",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "build": "next build",
+    "export": "next export",
+    "start": "next start",
+    "test": "next test",
+    "eject": "next eject"
     "lint": "next lint"
   },
   "dependencies": {
