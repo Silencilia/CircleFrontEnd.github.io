@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { CircleIcon, MemoIcon, ContactsIcon, UserIcon, DevIcon } from './icons';
+import { NavigationButton } from './Button';
 
 interface NavigationBarProps {
   currentPage?: 'note' | 'memo' | 'contacts' | 'user';
@@ -51,48 +51,43 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) =
         {/* Container for navigation buttons to ensure consistent spacing */}
         <div className="flex items-center justify-center gap-4 sm:gap-8 h-full max-w-none">
           {/* Circle Button */}
-          <Link href="/" className="flex flex-col items-center justify-center gap-1 w-16 sm:w-18 h-14 sm:h-15 rounded-xl p-1 transition-colors hover:bg-circle-neutral-variant">
-            <CircleIcon width={30} height={30} />
-            <span className="font-inter font-medium text-xs leading-4 text-black text-center">
-              Circle
-            </span>
-          </Link>
+          <NavigationButton
+            href="/"
+            icon={<CircleIcon width={30} height={30} />}
+            label="Circle"
+            isActive={currentPage === 'note'}
+          />
           
           {/* Memo Button */}
-          <div className={`flex flex-col items-center justify-center gap-1 w-16 sm:w-18 h-14 sm:h-15 rounded-xl p-1 transition-colors ${
-            currentPage === 'memo' ? 'bg-circle-neutral-variant' : 'hover:bg-circle-neutral-variant'
-          }`}>
-            <MemoIcon width={30} height={30} />
-            <span className="font-inter font-medium text-xs leading-4 text-black text-center">
-              Memo
-            </span>
-          </div>
+          <NavigationButton
+            icon={<MemoIcon width={30} height={30} />}
+            label="Memo"
+            isActive={currentPage === 'memo'}
+            onClick={() => {/* TODO: Implement memo navigation */}}
+          />
           
           {/* Contacts Button */}
-          <Link href="/contacts" className="flex flex-col items-center justify-center gap-1 w-16 sm:w-18 h-14 sm:h-15 rounded-xl p-1 transition-colors hover:bg-circle-neutral-variant">
-            <ContactsIcon width={30} height={30} />
-            <span className="font-inter font-medium text-xs leading-4 text-black text-center">
-              Contacts
-            </span>
-          </Link>
+          <NavigationButton
+            href="/contacts"
+            icon={<ContactsIcon width={30} height={30} />}
+            label="Contacts"
+            isActive={currentPage === 'contacts'}
+          />
           
           {/* User Button */}
-          <div className={`flex flex-col items-center justify-center gap-1 w-16 sm:w-18 h-14 sm:h-15 rounded-xl p-1 transition-colors ${
-            currentPage === 'user' ? 'bg-circle-neutral-variant' : 'hover:bg-circle-neutral-variant'
-          }`}>
-            <UserIcon width={30} height={30} />
-            <span className="font-inter font-medium text-xs leading-4 text-black text-center">
-              User
-            </span>
-          </div>
+          <NavigationButton
+            icon={<UserIcon width={30} height={30} />}
+            label="User"
+            isActive={currentPage === 'user'}
+            onClick={() => {/* TODO: Implement user navigation */}}
+          />
 
           {/* Dev Button */}
-          <Link href="/developer" className="flex flex-col items-center justify-center gap-1 w-16 sm:w-18 h-14 sm:h-15 rounded-xl p-1 transition-colors hover:bg-circle-neutral-variant">
-            <DevIcon width={30} height={30} />
-            <span className="font-inter font-medium text-xs leading-4 text-black text-center">
-              Dev
-            </span>
-          </Link>
+          <NavigationButton
+            href="/developer"
+            icon={<DevIcon width={30} height={30} />}
+            label="Dev"
+          />
         </div>
       </div>
     </div>

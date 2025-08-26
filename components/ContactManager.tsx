@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useContacts } from '../contexts/ContactContext';
+import { PrimaryButton, DeleteButton } from './Button';
 
 const ContactManager: React.FC = () => {
   const { state, addContact, deleteContact, resetToSample } = useContacts();
@@ -100,12 +101,14 @@ const ContactManager: React.FC = () => {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <button
+        <PrimaryButton
           onClick={handleAddContact}
-          className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          variant="primary"
+          size="lg"
+          className="mt-4"
         >
           Add Contact
-        </button>
+        </PrimaryButton>
       </div>
 
       {/* Data Overview */}
@@ -137,21 +140,21 @@ const ContactManager: React.FC = () => {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">All Contacts ({state.contacts.length})</h3>
           <div className="space-x-2">
-            <button
+            <PrimaryButton
               onClick={() => {
                 localStorage.removeItem('circle-data');
                 window.location.reload();
               }}
-              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+              variant="danger"
             >
               Clear Storage & Reload
-            </button>
-            <button
+            </PrimaryButton>
+            <PrimaryButton
               onClick={resetToSample}
-              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              variant="secondary"
             >
               Reset to Sample Data
-            </button>
+            </PrimaryButton>
           </div>
         </div>
         
@@ -167,12 +170,11 @@ const ContactManager: React.FC = () => {
               <div key={contact.id} className="p-4 border border-gray-200 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold text-gray-800">{contact.name}</h4>
-                  <button
-                    onClick={() => handleDeleteContact(contact.id)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Delete
-                  </button>
+                  <DeleteButton
+                    onDelete={() => deleteContact(contact.id)}
+                    confirmMessage={`Are you sure you want to delete ${contact.name}?`}
+                    size="sm"
+                  />
                 </div>
                 <p className="text-gray-600 text-sm mb-1">{occupation?.title || 'No occupation'}</p>
                 {organization && (

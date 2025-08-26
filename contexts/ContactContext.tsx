@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { getSampleData } from '../data/sampleData';
+import { dataService } from '../data/dataService';
 
 export interface Subject {
   id: number;
@@ -77,6 +78,7 @@ type ContactAction =
   | { type: 'ADD_NOTE'; payload: Note }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_ALL_DATA'; payload: { contacts: Contact[]; subjects: Subject[]; organizations: Organization[]; occupations: Occupation[]; relationships: Relationship[]; notes: Note[] } }
   | { type: 'RESET_TO_SAMPLE' }
   | { type: 'RELOAD_FROM_STORAGE' };
 
@@ -143,6 +145,18 @@ function contactReducer(state: ContactState, action: ContactAction): ContactStat
       return { ...state, isLoading: action.payload };
     case 'SET_ERROR':
       return { ...state, error: action.payload };
+    case 'SET_ALL_DATA':
+      return {
+        ...state,
+        contacts: action.payload.contacts,
+        subjects: action.payload.subjects,
+        organizations: action.payload.organizations,
+        occupations: action.payload.occupations,
+        relationships: action.payload.relationships,
+        notes: action.payload.notes,
+        isLoading: false,
+        error: null
+      };
     case 'RESET_TO_SAMPLE':
       const sampleData = getSampleData();
       console.log('ContactContext: Resetting to sample data:', sampleData);
@@ -242,77 +256,52 @@ const ContactContext = createContext<{
   addNote: (note: Omit<Note, 'id' | 'createdAt'>) => void;
   resetToSample: () => void;
   reloadFromStorage: () => void;
+  // New async methods for unidirectional data flow
+  updateContactAsync: (id: number, updates: Partial<Contact>) => Promise<void>;
+  addContactAsync: (contact: Omit<Contact, 'id'>) => Promise<void>;
+  deleteContactAsync: (id: number) => Promise<void>;
+  addSubjectAsync: (subject: Omit<Subject, 'id'>) => Promise<void>;
+  addOrganizationAsync: (organization: Omit<Organization, 'id'>) => Promise<void>;
+  addOccupationAsync: (occupation: Omit<Occupation, 'id'>) => Promise<void>;
+  addRelationshipAsync: (relationship: Omit<Relationship, 'id'>) => Promise<void>;
+  addNoteAsync: (note: Omit<Note, 'id' | 'createdAt'>) => Promise<void>;
 } | null>(null);
 
 export function ContactProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(contactReducer, initialState);
 
-  // Load data from localStorage on mount
+  // Load data using DataService on mount
   useEffect(() => {
-    console.log('ContactContext: Starting data load...');
-    const savedData = localStorage.getItem('circle-data');
-    if (savedData) {
+    console.log('ContactContext: Starting data load using DataService...');
+    
+    const loadData = async () => {
       try {
-        const data = JSON.parse(savedData);
-        console.log('ContactContext: Loaded from localStorage:', data);
+        dispatch({ type: 'SET_LOADING', payload: true });
+        dispatch({ type: 'SET_ERROR', payload: null });
         
-        // Check if the data format is valid (has proper subjects/relationships arrays)
-        const isValidData = data.subjects && Array.isArray(data.subjects) && 
-                           data.relationships && Array.isArray(data.relationships) &&
-                           data.contacts && Array.isArray(data.contacts);
+        const data = await dataService.getAllData();
+        console.log('ContactContext: Loaded data from DataService:', data);
         
-        if (!isValidData) {
-          console.warn('ContactContext: Invalid data format detected, clearing localStorage');
-          localStorage.removeItem('circle-data');
-          throw new Error('Invalid data format');
-        }
-        
-                  // Load base data first
-          dispatch({ type: 'SET_SUBJECTS', payload: data.subjects });
-          dispatch({ type: 'SET_ORGANIZATIONS', payload: data.organizations || [] });
-          dispatch({ type: 'SET_OCCUPATIONS', payload: data.occupations || [] });
-          dispatch({ type: 'SET_RELATIONSHIPS', payload: data.relationships });
-          dispatch({ type: 'SET_NOTES', payload: data.notes || [] });
-        
-        // Reconstruct contacts with proper subject and relationship objects
-        const reconstructedContacts = data.contacts.map((contact: any) => ({
-          ...contact,
-          occupation: data.occupations?.find((o: any) => o.id === contact.occupation) || null,
-          organization: data.organizations?.find((org: any) => org.id === contact.organization) || null,
-          subjects: (contact.subjects || [])
-            .map((subjectId: string) => data.subjects.find((s: any) => s.id === subjectId))
-            .filter(Boolean),
-          relationships: (contact.relationships || [])
-            .map((relationshipId: string) => data.relationships.find((r: any) => r.id === relationshipId))
-            .filter(Boolean)
-        }));
-        console.log('ContactContext: Reconstructed contacts with subjects:', reconstructedContacts);
-        dispatch({ type: 'SET_CONTACTS', payload: reconstructedContacts });
-        
+        dispatch({ type: 'SET_ALL_DATA', payload: data });
       } catch (error) {
-        console.error('Failed to parse saved data:', error);
-        // Clear corrupted data and use fresh sample data
-        localStorage.removeItem('circle-data');
-        const sampleData = getSampleData();
-        console.log('ContactContext: Using fresh sample data:', sampleData);
-        dispatch({ type: 'SET_SUBJECTS', payload: sampleData.subjects });
-        dispatch({ type: 'SET_ORGANIZATIONS', payload: sampleData.organizations });
-        dispatch({ type: 'SET_OCCUPATIONS', payload: sampleData.occupations });
-        dispatch({ type: 'SET_RELATIONSHIPS', payload: sampleData.relationships });
-        dispatch({ type: 'SET_NOTES', payload: sampleData.notes });
-        dispatch({ type: 'SET_CONTACTS', payload: sampleData.contacts });
+        console.error('ContactContext: Failed to load data:', error);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to load data' });
+        dispatch({ type: 'SET_LOADING', payload: false });
+        
+        // Fallback to sample data
+        try {
+          const sampleData = getSampleData();
+          console.log('ContactContext: Using fallback sample data:', sampleData);
+          dispatch({ type: 'SET_ALL_DATA', payload: sampleData });
+        } catch (fallbackError) {
+          console.error('ContactContext: Even sample data failed:', fallbackError);
+          dispatch({ type: 'SET_ERROR', payload: 'Failed to load any data' });
+          dispatch({ type: 'SET_LOADING', payload: false });
+        }
       }
-    } else {
-      const sampleData = getSampleData();
-      console.log('ContactContext: No saved data, using sample data:', sampleData);
-      // Load in correct order: subjects, relationships, notes first, then contacts
-      dispatch({ type: 'SET_SUBJECTS', payload: sampleData.subjects });
-      dispatch({ type: 'SET_ORGANIZATIONS', payload: sampleData.organizations });
-      dispatch({ type: 'SET_OCCUPATIONS', payload: sampleData.occupations });
-      dispatch({ type: 'SET_RELATIONSHIPS', payload: sampleData.relationships });
-      dispatch({ type: 'SET_NOTES', payload: sampleData.notes });
-      dispatch({ type: 'SET_CONTACTS', payload: sampleData.contacts });
-    }
+    };
+    
+    loadData();
   }, []);
 
   // Save data to localStorage whenever state changes
@@ -338,6 +327,7 @@ export function ContactProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.contacts, state.subjects, state.organizations, state.occupations, state.relationships, state.notes, state.isLoading]);
 
+  // Legacy synchronous methods (for backward compatibility)
   const addContact = (contact: Omit<Contact, 'id'>) => {
     const newContact = { ...contact, id: Date.now() };
     dispatch({ type: 'ADD_CONTACT', payload: newContact });
@@ -380,14 +370,181 @@ export function ContactProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'ADD_NOTE', payload: newNote });
   };
 
-  const resetToSample = () => {
-    // Clear localStorage to force fresh sample data
-    localStorage.removeItem('circle-data');
-    dispatch({ type: 'RESET_TO_SAMPLE' });
+  // New async methods for unidirectional data flow
+  const updateContactAsync = async (id: number, updates: Partial<Contact>) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      // Update via DataService
+      await dataService.updateContact(id, updates);
+      
+      // Reload all data to ensure consistency
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to update contact:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      dispatch({ type: 'SET_ERROR', payload: `Failed to update contact: ${errorMessage}` });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
   };
 
-  const reloadFromStorage = () => {
-    dispatch({ type: 'RELOAD_FROM_STORAGE' });
+  const addContactAsync = async (contact: Omit<Contact, 'id'>) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      await dataService.addContact(contact);
+      
+      // Reload all data to ensure consistency
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to add contact:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      dispatch({ type: 'SET_ERROR', payload: `Failed to add contact: ${errorMessage}` });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
+  };
+
+  const deleteContactAsync = async (id: number) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      await dataService.deleteContact(id);
+      
+      // Reload all data to ensure consistency
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to delete contact:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      dispatch({ type: 'SET_ERROR', payload: `Failed to delete contact: ${errorMessage}` });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
+  };
+
+  const addSubjectAsync = async (subject: Omit<Subject, 'id'>) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      await dataService.addSubject(subject);
+      
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to add subject:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      dispatch({ type: 'SET_ERROR', payload: `Failed to add subject: ${errorMessage}` });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
+  };
+
+  const addOrganizationAsync = async (organization: Omit<Organization, 'id'>) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      await dataService.addOrganization(organization);
+      
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to add organization:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      dispatch({ type: 'SET_ERROR', payload: `Failed to add organization: ${errorMessage}` });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
+  };
+
+  const addOccupationAsync = async (occupation: Omit<Occupation, 'id'>) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      await dataService.addOccupation(occupation);
+      
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to add occupation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      dispatch({ type: 'SET_ERROR', payload: `Failed to add occupation: ${errorMessage}` });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
+  };
+
+  const addRelationshipAsync = async (relationship: Omit<Relationship, 'id'>) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      await dataService.addRelationship(relationship);
+      
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to add relationship:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      dispatch({ type: 'SET_ERROR', payload: `Failed to add relationship: ${errorMessage}` });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
+  };
+
+  const addNoteAsync = async (note: Omit<Note, 'id' | 'createdAt'>) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      await dataService.addNote(note);
+      
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to add note:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      dispatch({ type: 'SET_ERROR', payload: `Failed to add note: ${errorMessage}` });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
+  };
+
+  const resetToSample = async () => {
+    try {
+      // Clear localStorage to force fresh sample data
+      localStorage.removeItem('circle-data');
+      dispatch({ type: 'SET_LOADING', payload: true });
+      
+      // Get fresh sample data
+      const sampleData = getSampleData();
+      dispatch({ type: 'SET_ALL_DATA', payload: sampleData });
+    } catch (error) {
+      console.error('Failed to reset to sample data:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to reset to sample data' });
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const reloadFromStorage = async () => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const data = await dataService.getAllData();
+      dispatch({ type: 'SET_ALL_DATA', payload: data });
+    } catch (error) {
+      console.error('Failed to reload from storage:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to reload data' });
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
   };
 
   return (
@@ -404,6 +561,15 @@ export function ContactProvider({ children }: { children: React.ReactNode }) {
         addNote,
         resetToSample,
         reloadFromStorage,
+        // New async methods
+        updateContactAsync,
+        addContactAsync,
+        deleteContactAsync,
+        addSubjectAsync,
+        addOrganizationAsync,
+        addOccupationAsync,
+        addRelationshipAsync,
+        addNoteAsync,
       }}
     >
       {children}

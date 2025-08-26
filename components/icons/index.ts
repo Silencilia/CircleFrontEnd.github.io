@@ -7,3 +7,4 @@ export { default as MemoIconSelected } from './MemoIconSelected';
 export { default as UserIcon } from './UserIcon';
 export { default as UserIconSelected } from './UserIconSelected';
 export { default as DevIcon } from './DevIcon';
+export { default as DeleteIcon } from './DeleteIcon';

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Plus, Mic } from 'lucide-react';
 import { GREETINGS } from '../data/strings';
+import { IconButton } from './Button';
 
 const TalkToCircle: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -36,9 +37,11 @@ const TalkToCircle: React.FC = () => {
           <div className="bg-circle-white border border-circle-neutral-variant rounded-[25px] p-0 flex items-center justify-between gap-[20px] w-full min-h-[48px] py-1">
             <div className="flex items-center gap-4 flex-1 px-1.5">
               {/* File Upload Button */}
-              <div className="flex items-center justify-center p-1.5 w-12 h-12 rounded-[25px] hover:bg-circle-neutral-variant transition-colors">
-                <Plus className="w-[22px] h-[22px] text-circle-primary" />
-              </div>
+              <IconButton 
+                icon={Plus} 
+                aria-label="Add file"
+                onClick={() => {/* TODO: Implement file upload */}}
+              />
               {/* Textarea Input Field */}
               <textarea
                 ref={textareaRef}
@@ -52,9 +55,11 @@ const TalkToCircle: React.FC = () => {
             
             {/* Voice Input Button */}
             <div className="pr-[5px]">
-              <div className="flex items-center justify-center p-1.5 w-12 h-12 rounded-[25px] hover:bg-circle-neutral-variant transition-colors">
-                <Mic className="w-[22px] h-[22px] text-[#1E1E1E]" />
-              </div>
+              <IconButton 
+                icon={Mic} 
+                aria-label="Voice input"
+                onClick={() => {/* TODO: Implement voice input */}}
+              />
             </div>
           </div>
         </div>

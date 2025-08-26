@@ -1,5 +1,6 @@
 import React from 'react';
 import { Contact, Subject, useContacts } from '../contexts/ContactContext';
+import { SubjectTag, OverflowTag } from './Tag';
 
 interface ContactCardSimpleProps {
   contact: Contact;
@@ -65,21 +66,22 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
         {safeSubjects.length > 0 ? (
           <>
             {visibleSubjects.map((subject: Subject) => (
-              <div
-                key={subject.id}
-                className="px-1 py-0.5 bg-[#E76835] rounded-md flex-shrink-0 flex items-center justify-center w-15 h-5"
-              >
-                <span className="font-inter font-medium text-[11px] leading-4 text-white text-center tracking-[0.5px]">
-                  {subject.label}
-                </span>
-              </div>
+              <SubjectTag 
+                key={subject.id} 
+                subject={subject} 
+                contactId={contact.id}
+                fillColor="bg-[#E76835]"
+                className="w-15"
+                editable={true}
+                deletable={true}
+              />
             ))}
             {hiddenCount > 0 && (
-              <div className="px-1 py-0.5 bg-[#E76835] rounded-md flex-shrink-0 flex items-center justify-center w-15 h-5">
-                <span className="font-inter font-medium text-[11px] leading-4 text-white text-center tracking-[0.5px]">
-                  +{hiddenCount}
-                </span>
-              </div>
+              <OverflowTag 
+                count={hiddenCount} 
+                fillColor="bg-[#E76835]"
+                className="w-15"
+              />
             )}
           </>
         ) : (

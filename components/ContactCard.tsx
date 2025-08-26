@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Contact, Subject, useContacts } from '../contexts/ContactContext';
+import { SubjectTag, RelationshipTag, OverflowTag } from './Tag';
 
 interface ContactCardProps {
   contact: Contact;
@@ -181,14 +182,12 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
         {/* Relationship Tag */}
         {primaryRelationship && (
           <div className="flex flex-row flex-wrap items-start content-start gap-0 w-full">
-            <div 
-              className="px-1 py-0.5 bg-circle-primary rounded-md flex items-center justify-center h-5 flex-shrink-0"
-              style={{ minWidth: `${Math.max(primaryRelationship.label.length * 8, 34)}px` }}
-            >
-              <span className="font-inter font-medium text-[11px] leading-4 text-white text-center tracking-[0.5px]">
-                {primaryRelationship.label}
-              </span>
-            </div>
+            <RelationshipTag 
+              relationship={primaryRelationship} 
+              contactId={contact.id}
+              editable={true}
+              deletable={true}
+            />
           </div>
         )}
 
@@ -200,15 +199,8 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
         >
           <div className="flex flex-row flex-wrap items-start content-start gap-1 w-full">
             {subjects.map((subject: Subject) => (
-              <div
-                key={`measure-${subject.id}`}
-                data-subject-tag
-                className="px-1 py-0.5 bg-circle-secondary rounded-md flex items-center justify-center h-5 flex-shrink-0"
-                style={{ minWidth: `${Math.max(subject.label.length * 8, 34)}px` }}
-              >
-                <span className="font-inter font-medium text-[11px] leading-4 text-white text-center tracking-[0.5px]">
-                  {subject.label}
-                </span>
+              <div key={`measure-${subject.id}`} data-subject-tag>
+                <SubjectTag subject={subject} />
               </div>
             ))}
           </div>
@@ -219,22 +211,16 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
           {subjects.length > 0 ? (
             <>
               {visibleSubjects.map((subject: Subject) => (
-                <div
-                  key={subject.id}
-                  className="px-1 py-0.5 bg-circle-secondary rounded-md flex items-center justify-center h-5 flex-shrink-0"
-                  style={{ minWidth: `${Math.max(subject.label.length * 8, 34)}px` }}
-                >
-                  <span className="font-inter font-medium text-[11px] leading-4 text-white text-center tracking-[0.5px]">
-                    {subject.label}
-                  </span>
-                </div>
+                <SubjectTag 
+                  key={subject.id} 
+                  subject={subject} 
+                  contactId={contact.id}
+                  editable={true}
+                  deletable={true}
+                />
               ))}
               {showOverflow && (
-                <div className="px-1 py-0.5 bg-circle-secondary rounded-md flex items-center justify-center h-5 flex-shrink-0">
-                  <span className="font-inter font-medium text-[11px] leading-4 text-white text-center tracking-[0.5px]">
-                    +{hiddenCount}
-                  </span>
-                </div>
+                <OverflowTag count={hiddenCount} />
               )}
             </>
           ) : (
