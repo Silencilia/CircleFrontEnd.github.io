@@ -3,7 +3,7 @@ import { CircleIcon, MemoIcon, ContactsIcon, UserIcon, DevIcon } from './icons';
 import { NavigationButton } from './Button';
 
 interface NavigationBarProps {
-  currentPage?: 'note' | 'memo' | 'contacts' | 'user';
+  currentPage?: 'note' | 'memo' | 'contacts' | 'user' | 'developer';
 }
 
 /**
