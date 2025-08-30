@@ -3,13 +3,18 @@
 import React from 'react';
 import NavigationBar from '../../components/NavigationBar';
 import { DeleteTagButton, SubjectTag, RelationshipTag } from '../../components/Tag';
+import NoteCard from '../../components/NoteCard';
+import ContactCardDetail from '../../components/ContactCardDetail';
+import { useContacts } from '../../contexts/ContactContext';
 
 export default function DeveloperPage() {
+  const { state } = useContacts();
+  
   return (
     <div className="flex flex-col min-h-screen bg-[#FBF7F3]">
       {/* Main content area */}
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center space-y-8">
+      <div className="flex-1 flex items-center justify-center py-8">
+        <div className="text-center space-y-8 w-full max-w-4xl">
           <div>
             <h1 className="font-merriweather font-normal text-display-large text-circle-primary mb-4">
               Developer Page
@@ -82,34 +87,72 @@ export default function DeveloperPage() {
             <div className="flex flex-col items-center space-y-4">
               {/* Editable Subject Tag */}
               <div className="flex items-center gap-4">
-                <span className="font-inter text-sm text-circle-primary">Subject (hover to see delete):</span>
+                <span className="font-inter text-sm text-circle-primary">Subject:</span>
                 <SubjectTag 
                   subject={{ id: 1, label: 'coffee', category: 'activity' }}
                   editable={true}
-                  deletable={true}
                   onEditComplete={() => console.log('Subject edited')}
-                  onDeleteComplete={() => console.log('Subject deleted')}
                 />
               </div>
               
               {/* Editable Relationship Tag */}
               <div className="flex items-center gap-4">
-                <span className="font-inter text-sm text-circle-primary">Relationship (hover to see delete):</span>
+                <span className="font-inter text-sm text-circle-primary">Relationship:</span>
                 <RelationshipTag 
                   relationship={{ id: 1, label: 'friend', category: 'personal' }}
                   editable={true}
-                  deletable={true}
                   onEditComplete={() => console.log('Relationship edited')}
-                  onDeleteComplete={() => console.log('Relationship deleted')}
                 />
               </div>
             </div>
             
             <div className="text-xs text-gray-500 max-w-md mx-auto">
               <p>• Click on tags to edit text (Enter to save, Escape to cancel)</p>
-              <p>• Hover over tags to see delete button (5px gap)</p>
-              <p>• Delete button appears to the right of tag text</p>
               <p>• All changes log to console for testing</p>
+            </div>
+          </div>
+
+          {/* NoteCard Section */}
+          <div className="space-y-6">
+            <h2 className="font-inter font-semibold text-xl text-circle-primary">
+              NoteCard Component
+            </h2>
+            
+            <div className="flex flex-col items-center space-y-4">
+              {state.notes.slice(0, 3).map((note) => (
+                <NoteCard key={note.id} note={note} />
+              ))}
+            </div>
+            
+            <div className="text-xs text-gray-500 max-w-md mx-auto">
+              <p>• Shows note timestamp, sentiment tags, and description</p>
+              <p>• Text is truncated to fit within 3 rows (60px height)</p>
+              <p>• Displays sentiment, event, and location as tags</p>
+              <p>• Uses 24h time format and 5px gaps between sentiment tags</p>
+            </div>
+          </div>
+
+          {/* ContactCardDetail Section */}
+          <div className="space-y-6">
+            <h2 className="font-inter font-semibold text-xl text-circle-primary">
+              ContactCardDetail Component
+            </h2>
+            
+            <div className="flex flex-col items-center space-y-4">
+              {state.contacts.slice(0, 1).map((contact) => (
+                <ContactCardDetail 
+                  key={contact.id} 
+                  contact={contact}
+                  onMinimize={() => console.log('Contact detail minimized')}
+                />
+              ))}
+            </div>
+            
+            <div className="text-xs text-gray-500 max-w-md mx-auto">
+              <p>• Shows detailed contact information with notes and tags</p>
+              <p>• Notes section has scrollable container (540px height)</p>
+              <p>• Tags section has scrollable container (95px height)</p>
+              <p>• Uses CalendarIcon, MinimizeIcon, and NoteIcon</p>
             </div>
           </div>
         </div>

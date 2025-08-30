@@ -1,12 +1,14 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Contact, Subject, useContacts } from '../contexts/ContactContext';
 import { SubjectTag, RelationshipTag, OverflowTag } from './Tag';
+import { MenuIcon } from './icons';
 
 interface ContactCardProps {
   contact: Contact;
+  onMenuClick: () => void;
 }
 
-const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
+const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick }) => {
   const { state } = useContacts();
   const subjectsRef = useRef<HTMLDivElement>(null);
   const [visibleSubjects, setVisibleSubjects] = useState<Subject[]>([]);
@@ -151,9 +153,13 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
           
           {/* Menu Button */}
           <div className="w-4 h-4 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 8H13M3 4H13M3 12H13" stroke="#1E1E1E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <button
+              onClick={onMenuClick}
+              className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
+              aria-label="Open contact details"
+            >
+              <MenuIcon />
+            </button>
           </div>
         </div>
         
@@ -186,7 +192,6 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
               relationship={primaryRelationship} 
               contactId={contact.id}
               editable={true}
-              deletable={true}
             />
           </div>
         )}
@@ -216,7 +221,6 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact }) => {
                   subject={subject} 
                   contactId={contact.id}
                   editable={true}
-                  deletable={true}
                 />
               ))}
               {showOverflow && (

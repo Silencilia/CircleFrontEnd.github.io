@@ -2,21 +2,23 @@
   "name": "circle",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://Silencilia.github.io"
+  "homepage": "https://Silencilia.github.io",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "export": "next export",
     "start": "next start",
     "test": "next test",
-    "eject": "next eject"
+    "eject": "next eject",
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/react-datepicker": "^6.2.0",
     "clsx": "^2.0.0",
     "lucide-react": "^0.294.0",
     "next": "^14.2.32",
     "react": "^18",
+    "react-datepicker": "^8.7.0",
     "react-dom": "^18",
     "tailwind-merge": "^2.0.0"
   },
@@ -31,5 +33,4 @@
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
   }
-  
 }

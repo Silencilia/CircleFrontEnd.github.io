@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Tag from './Tag';
-import { Subject, useContacts } from '../../contexts/ContactContext';
-import ConfirmationDialog from '../ConfirmationDialog';
+import { Subject } from '../../contexts/ContactContext';
 
 interface SubjectTagProps {
   subject: Subject;
@@ -11,9 +10,7 @@ interface SubjectTagProps {
   className?: string;
   onClick?: (subject: Subject) => void;
   editable?: boolean;
-  deletable?: boolean;
   onEditComplete?: () => void;
-  onDeleteComplete?: () => void;
 }
 
 const SubjectTag: React.FC<SubjectTagProps> = ({
@@ -24,13 +21,8 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
   className = '',
   onClick,
   editable = false,
-  deletable = false,
   onEditComplete,
-  onDeleteComplete,
 }) => {
-  const { updateContactAsync, state } = useContacts();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
   const handleEdit = async (newLabel: string) => {
     try {
       // TODO: Update the subject in the database
@@ -49,73 +41,17 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
     }
   };
 
-  const handleDeleteClick = () => {
-    setShowDeleteDialog(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    setShowDeleteDialog(false);
-    
-    try {
-      if (contactId && updateContactAsync) {
-        // Get the current contact from the context
-        const currentContact = state.contacts.find(c => c.id === contactId);
-        
-        if (currentContact) {
-          // Remove this subject ID from the contact's subjectIds array
-          const updatedSubjectIds = currentContact.subjectIds.filter(id => id !== subject.id);
-          
-          console.log(`Removing subject ${subject.id}: "${subject.label}" from contact ${contactId}`);
-          
-          // Update the contact with the new subjectIds array
-          await updateContactAsync(contactId, { subjectIds: updatedSubjectIds });
-          
-          if (onDeleteComplete) {
-            onDeleteComplete();
-          }
-        }
-      } else {
-        // If no contactId provided, just log the action
-        console.log(`Deleting subject ${subject.id}: "${subject.label}"`);
-        if (onDeleteComplete) {
-          onDeleteComplete();
-        }
-      }
-    } catch (error) {
-      console.error('Failed to delete subject:', error);
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setShowDeleteDialog(false);
-  };
-
   return (
-    <>
-      <Tag
-        fillColor={fillColor}
-        textColor={textColor}
-        className={className}
-        onClick={onClick ? () => onClick(subject) : undefined}
-        editable={editable}
-        onEdit={editable ? handleEdit : undefined}
-        onDelete={deletable ? handleDeleteClick : undefined}
-        showDelete={deletable}
-      >
-        {subject.label}
-      </Tag>
-      
-      <ConfirmationDialog
-        isOpen={showDeleteDialog}
-        title="Remove Subject"
-        message={`Are you sure you want to remove "${subject.label}" from this contact?`}
-        confirmText="Remove"
-        cancelText="Cancel"
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        isDestructive={true}
-      />
-    </>
+    <Tag
+      fillColor={fillColor}
+      textColor={textColor}
+      className={className}
+      onClick={onClick ? () => onClick(subject) : undefined}
+      editable={editable}
+      onEdit={editable ? handleEdit : undefined}
+    >
+      {subject.label}
+    </Tag>
   );
 };
 

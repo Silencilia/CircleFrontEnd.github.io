@@ -1,0 +1,5 @@
+---
+description:When using colors, the theme colors saved in tailwind.config.js should be referenced whenever possible. If using additional colors seems necessary, advise first and ask for the user's approval. Never hard-code colors.
+globs:
+alwaysApply: true
+---
