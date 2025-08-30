@@ -1,4 +1,4 @@
-import { Contact, Subject, Organization, Occupation, Relationship, Note } from '../contexts/ContactContext';
+import { Contact, Subject, Organization, Occupation, Relationship, Sentiment, Note } from '../contexts/ContactContext';
 import { getSampleData } from './sampleData';
 
 export interface DataService {
@@ -9,6 +9,7 @@ export interface DataService {
   addOrganization(organization: Omit<Organization, 'id'>): Promise<Organization>;
   addOccupation(occupation: Omit<Occupation, 'id'>): Promise<Occupation>;
   addRelationship(relationship: Omit<Relationship, 'id'>): Promise<Relationship>;
+  addSentiment(sentiment: Omit<Sentiment, 'id'>): Promise<Sentiment>;
   addNote(note: Omit<Note, 'id' | 'createdAt'>): Promise<Note>;
   getAllData(): Promise<{
     contacts: Contact[];
@@ -16,6 +17,7 @@ export interface DataService {
     organizations: Organization[];
     occupations: Occupation[];
     relationships: Relationship[];
+    sentiments: Sentiment[];
     notes: Note[];
   }>;
 }
@@ -28,6 +30,7 @@ export class MockDataService implements DataService {
     organizations: Organization[];
     occupations: Occupation[];
     relationships: Relationship[];
+    sentiments: Sentiment[];
     notes: Note[];
   };
 
@@ -61,6 +64,7 @@ export class MockDataService implements DataService {
            data.contacts && Array.isArray(data.contacts) &&
            data.organizations && Array.isArray(data.organizations) &&
            data.occupations && Array.isArray(data.occupations) &&
+           data.sentiments && Array.isArray(data.sentiments) &&
            data.notes && Array.isArray(data.notes);
   }
 
@@ -170,6 +174,19 @@ export class MockDataService implements DataService {
     return newRelationship;
   }
 
+  async addSentiment(sentiment: Omit<Sentiment, 'id'>): Promise<Sentiment> {
+    await this.simulateDelay();
+    
+    const newSentiment = { 
+      ...sentiment, 
+      id: Date.now() 
+    };
+    
+    this.data.sentiments.push(newSentiment);
+    this.saveData();
+    return newSentiment;
+  }
+
   async addNote(note: Omit<Note, 'id' | 'createdAt'>): Promise<Note> {
     await this.simulateDelay();
     
@@ -190,6 +207,7 @@ export class MockDataService implements DataService {
     organizations: Organization[];
     occupations: Occupation[];
     relationships: Relationship[];
+    sentiments: Sentiment[];
     notes: Note[];
   }> {
     await this.simulateDelay();
@@ -204,6 +222,7 @@ export class MockDataService implements DataService {
       organizations: [...this.data.organizations],
       occupations: [...this.data.occupations],
       relationships: [...this.data.relationships],
+      sentiments: [...this.data.sentiments],
       notes: [...this.data.notes]
     };
   }

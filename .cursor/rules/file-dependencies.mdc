@@ -1,0 +1,5 @@
+---
+description: Whenever a file, component, function, or variable is renamed，moved, or modified, all the other files related to such modifications should be identified and updated accordingly if necessary.
+globs:
+alwaysApply: true
+---

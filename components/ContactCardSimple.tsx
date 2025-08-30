@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Contact, Subject, useContacts } from '../contexts/ContactContext';
 import { SubjectTag, OverflowTag } from './Tag';
 
@@ -8,6 +8,7 @@ interface ContactCardSimpleProps {
 
 const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
   const { state } = useContacts();
+  const [measuredTagCount, setMeasuredTagCount] = useState(0);
   
   // Look up the actual data using IDs
   const occupation = contact.occupationId ? state.occupations.find(o => o.id === contact.occupationId) : null;
@@ -15,6 +16,11 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
 
   // Ensure subjects is always an array
   const safeSubjects = Array.isArray(subjects) ? subjects : [];
+
+  // Initialize measuredTagCount when subjects change
+  useEffect(() => {
+    setMeasuredTagCount(safeSubjects.length);
+  }, [safeSubjects]);
 
   // Calculate how many subjects can fit in the container
   // Container width: w-54 (216px), subject width: w-15 (60px), gap: 4px
@@ -73,7 +79,6 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
                 fillColor="bg-[#E76835]"
                 className="w-15"
                 editable={true}
-                deletable={true}
               />
             ))}
             {hiddenCount > 0 && (

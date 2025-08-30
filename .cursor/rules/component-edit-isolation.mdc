@@ -1,0 +1,5 @@
+---
+description: When a user clearly specify the component to be edited, this should be the only component that is edited. If you think other components or files should also be edited in respondence to the current edits, advise the user and ask for approval before you proceed.
+globs:
+alwaysApply: true
+---
