@@ -1,0 +1,198 @@
+---
+Use the below guidelines for text field related in-line editing functionality. Please note that these guidelines do not apply to tag (e.g. sentiment tags, subject tags, relationship tags) in-line editing.
+
+If for any reason the guidelines appear inappropriate or unapplicable in a specific case, notify the user first, give your advice, and ask for approval before proceeding.
+
+Guidelines:
+
+description: Comprehensive guide for implementing in-line editing in the Circle application, covering both simple properties and entity relationships with consistent UI patterns and best practices.
+
+#In-Line Editing Implementation Rules
+
+## Data Type Classification
+
+### Simple Properties
+- Direct string/number values stored on main entity (e.g., name, birthDate)
+- Single update operation required
+- Use direct property update pattern
+
+### Entity Relationships  
+- References to separate entities via foreign keys (e.g., occupationId, organizationId)
+- May require entity creation + relationship linking
+- Use complex entity management pattern
+
+## Required Implementation Patterns
+
+### 1. State Management
+```typescript
+const [isEditing, setIsEditing] = useState(false);
+const [editValue, setEditValue] = useState(currentValue);
+const [originalValue, setOriginalValue] = useState(currentValue); // For rollback
+const [isSaving, setIsSaving] = useState(false);
+const contentEditableRef = useRef<HTMLElement>(null);
+```
+
+### 2. ContentEditable Implementation
+- Always use `react-contenteditable` package
+- Apply `EDITING_MODE_PADDING` from `data/variables.ts` for consistent padding
+- Use consistent focus styling: `focus:ring-2 focus:ring-inset focus:ring-circle-primary`
+- Implement proper cursor positioning on focus
+
+### 3. Button Components
+- **Save operations**: Use `SaveButton` component from `components/Button`
+- **Cancel operations**: Use `CancelButton` component from `components/Button`
+- Position buttons to the right of editable content
+- Disable buttons during async operations
+
+### 4. Event Handling
+- **Enter key**: Save (prevent default, no shift key)
+- **Escape key**: Cancel
+- **Blur**: Auto-save with 100ms timeout
+- **Click**: Enter edit mode
+
+### 5. Error Handling
+- Never exit editing mode on save errors
+- Rollback to original values on errors
+- Provide user feedback for failed operations
+- Log errors for debugging
+
+## Simple Property Pattern
+
+```typescript
+const handleSave = async () => {
+  const trimmedValue = editValue.trim();
+  if (trimmedValue !== currentValue) {
+    try {
+      setIsSaving(true);
+      await updateEntityAsync(entityId, { fieldName: trimmedValue });
+    } catch (error) {
+      setEditValue(originalValue);
+      return; // Don't exit editing mode
+    } finally {
+      setIsSaving(false);
+    }
+  }
+  setIsEditing(false);
+};
+```
+
+## Entity Relationship Pattern
+
+```typescript
+const handleSave = async () => {
+  const cleanValue = editValue.replace(/<[^>]*>/g, '').trim();
+  
+  if (cleanValue !== (relatedEntity?.title || '')) {
+    try {
+      if (cleanValue === '') {
+        await updateEntityAsync(entityId, { relatedEntityId: null });
+      } else {
+        let existingEntity = state.entities.find(e => e.title === cleanValue);
+        if (!existingEntity) {
+          await addEntityAsync({ title: cleanValue });
+          existingEntity = state.entities.find(e => e.title === cleanValue);
+        }
+        if (existingEntity) {
+          await updateEntityAsync(entityId, { relatedEntityId: existingEntity.id });
+        }
+      }
+    } catch (error) {
+      setEditValue(relatedEntity?.title || '');
+      return; // Don't exit editing mode
+    }
+  }
+  setIsEditing(false);
+};
+```
+
+## Required Styling
+
+### Edit Mode
+```typescript
+className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50`}
+style={{
+  minHeight: '20px',
+  wordWrap: 'break-word',
+  whiteSpace: 'pre-wrap'
+}}
+```
+
+### Clickable Display Mode
+```typescript
+className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200"
+title="Click to edit"
+```
+
+## Mouse Drag Integration
+
+When implementing in-line editing in scrollable containers:
+- Disable mouse drag functionality during editing
+- Use `isAnyFieldEditing` state to track editing mode
+- Check for `[contenteditable="true"]` elements before enabling drag
+
+## Content Sanitization
+
+Always sanitize user input:
+```typescript
+const cleanValue = editValue.replace(/<[^>]*>/g, '').trim();
+```
+
+## Focus Management
+
+Implement proper focus handling:
+```typescript
+setTimeout(() => {
+  if (contentEditableRef.current) {
+    contentEditableRef.current.focus();
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.selectNodeContents(contentEditableRef.current);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
+}, 10);
+```
+
+## State Synchronization
+
+Use useEffect to sync local state with context changes:
+```typescript
+useEffect(() => {
+  setEditValue(currentValue);
+}, [currentValue]);
+```
+
+## Accessibility Requirements
+
+- Support keyboard navigation (Enter/Escape)
+- Provide screen reader accessible titles and labels
+- Maintain logical tab order
+- Announce errors to screen readers
+
+## Performance Guidelines
+
+- Debounce rapid changes for large text inputs
+- Lazy load related entities when needed
+- Memoize expensive computations
+- Avoid unnecessary re-renders
+
+## Testing Requirements
+
+- Test save/cancel operations
+- Test error handling and rollback
+- Test keyboard shortcuts
+- Test focus management
+- Test entity creation and linking
+- Test state synchronization
+
+globs: ["**/*.tsx", "**/*.ts"]
+alwaysApply: true
+---
+
+----------------------END OF GUIDELINES----------------------------
+
+globs:
+
+alwaysApply: true
+---

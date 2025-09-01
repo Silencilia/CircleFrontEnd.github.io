@@ -90,6 +90,7 @@ export default function DeveloperPage() {
                 <span className="font-inter text-sm text-circle-primary">Subject:</span>
                 <SubjectTag 
                   subject={{ id: 1, label: 'coffee', category: 'activity' }}
+                  contactId={state.contacts[0]?.id || 1}
                   editable={true}
                   onEditComplete={() => console.log('Subject edited')}
                 />

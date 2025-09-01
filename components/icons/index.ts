@@ -11,4 +11,5 @@ export { default as DeleteIcon } from './DeleteIcon';
 export { default as MenuIcon } from './MenuIcon';
 export { default as CalendarIcon } from './CalendarIcon';
 export { default as MinimizeIcon } from './MinimizeIcon';
+export { default as MaximizeIcon } from './MaximizeIcon';
 export { default as NoteIcon } from './NoteIcon';

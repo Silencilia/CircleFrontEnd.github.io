@@ -11,6 +11,7 @@ export interface DataService {
   addRelationship(relationship: Omit<Relationship, 'id'>): Promise<Relationship>;
   addSentiment(sentiment: Omit<Sentiment, 'id'>): Promise<Sentiment>;
   addNote(note: Omit<Note, 'id' | 'createdAt'>): Promise<Note>;
+  updateNote(id: number, updates: Partial<Note>): Promise<Note>;
   getAllData(): Promise<{
     contacts: Contact[];
     subjects: Subject[];
@@ -21,6 +22,26 @@ export interface DataService {
     notes: Note[];
   }>;
 }
+
+// Helper function to safely access localStorage
+const getLocalStorage = (key: string): string | null => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return window.localStorage.getItem(key);
+  }
+  return null;
+};
+
+const setLocalStorage = (key: string, value: string): void => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem(key, value);
+  }
+};
+
+const removeLocalStorage = (key: string): void => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.removeItem(key);
+  }
+};
 
 // Mock implementation that simulates database operations
 export class MockDataService implements DataService {
@@ -35,27 +56,31 @@ export class MockDataService implements DataService {
   };
 
   constructor() {
-    this.data = this.loadData();
+    // Initialize with sample data first, then try to load from localStorage
+    this.data = getSampleData();
+    // Load from localStorage only on the client side
+    if (typeof window !== 'undefined') {
+      this.loadData();
+    }
   }
 
   private loadData() {
-    const savedData = localStorage.getItem('circle-data');
+    const savedData = getLocalStorage('circle-data');
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
         // Validate data structure
         if (this.isValidData(parsed)) {
-          return parsed;
+          this.data = parsed;
         } else {
           console.warn('MockDataService: Invalid data format, using sample data');
-          localStorage.removeItem('circle-data');
+          removeLocalStorage('circle-data');
         }
       } catch (error) {
         console.error('MockDataService: Failed to parse saved data, using sample data');
-        localStorage.removeItem('circle-data');
+        removeLocalStorage('circle-data');
       }
     }
-    return getSampleData();
   }
 
   private isValidData(data: any): boolean {
@@ -69,7 +94,7 @@ export class MockDataService implements DataService {
   }
 
   private saveData(): void {
-    localStorage.setItem('circle-data', JSON.stringify(this.data));
+    setLocalStorage('circle-data', JSON.stringify(this.data));
   }
 
   private simulateDelay(): Promise<void> {
@@ -112,8 +137,9 @@ export class MockDataService implements DataService {
   async deleteContact(id: number): Promise<void> {
     await this.simulateDelay();
     
+    this.loadData(); // Ensure data is loaded
     const initialLength = this.data.contacts.length;
-    this.data.contacts = this.data.contacts.filter(c => c.id !== id);
+    this.data.contacts = this.data.contacts.filter((c: Contact) => c.id !== id);
     
     if (this.data.contacts.length === initialLength) {
       throw new Error(`Contact with id ${id} not found`);
@@ -201,6 +227,24 @@ export class MockDataService implements DataService {
     return newNote;
   }
 
+  async updateNote(id: number, updates: Partial<Note>): Promise<Note> {
+    await this.simulateDelay();
+    
+    const noteIndex = this.data.notes.findIndex(n => n.id === id);
+    if (noteIndex === -1) {
+      throw new Error(`Note with id ${id} not found`);
+    }
+    
+    // Update the note
+    this.data.notes[noteIndex] = { 
+      ...this.data.notes[noteIndex], 
+      ...updates 
+    };
+    
+    this.saveData();
+    return this.data.notes[noteIndex];
+  }
+
   async getAllData(): Promise<{
     contacts: Contact[];
     subjects: Subject[];
@@ -210,10 +254,25 @@ export class MockDataService implements DataService {
     sentiments: Sentiment[];
     notes: Note[];
   }> {
+    console.log('📡 MockDataService: getAllData called');
+    console.log('🔍 MockDataService: Current internal data source:', {
+      isFromLocalStorage: this.data !== getSampleData(),
+      contactsCount: this.data.contacts.length,
+      sampleContactName: this.data.contacts[0]?.name || 'none'
+    });
+    
     await this.simulateDelay();
     
     // Reload from localStorage to get latest data
-    this.data = this.loadData();
+    console.log('🔄 MockDataService: Reloading from localStorage before returning data');
+    this.loadData();
+    
+    console.log('📤 MockDataService: Returning data to caller:', {
+      contactsCount: this.data.contacts.length,
+      notesCount: this.data.notes.length,
+      sampleContactName: this.data.contacts[0]?.name || 'none',
+      dataSource: this.data !== getSampleData() ? 'localStorage' : 'sampleData'
+    });
     
     // Return a copy to prevent direct mutations
     return {

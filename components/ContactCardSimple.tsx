@@ -59,11 +59,19 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
         <div className="font-inter font-medium text-base leading-6 text-circle-primary truncate">
           {contact.name}
         </div>
-        <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate h-[20px]">
-          {occupation?.title || ''}
+        <div className={`font-inter text-sm leading-5 text-circle-primary truncate h-[20px] ${
+          occupation?.title 
+            ? 'font-normal' 
+            : 'font-normal italic opacity-50'
+        }`}>
+          {occupation?.title || 'no occupation'}
         </div>
-        <div className="font-inter font-normal text-sm leading-5 text-circle-primary truncate h-[20px]">
-          {contact.birthDate ? formatBirthDate(contact.birthDate) : ''}
+        <div className={`font-inter text-sm leading-5 text-circle-primary truncate h-[20px] ${
+          contact.birthDate 
+            ? 'font-normal' 
+            : 'font-normal italic opacity-50'
+        }`}>
+          {contact.birthDate ? formatBirthDate(contact.birthDate) : 'no birth date'}
         </div>
       </div>
       

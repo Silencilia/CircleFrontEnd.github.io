@@ -143,11 +143,19 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick }) => {
             <div className="font-inter font-medium text-base leading-6 text-circle-primary">
               {contact.name}
             </div>
-            <div className="font-inter font-normal text-sm leading-5 text-circle-primary h-[20px]">
-              {occupation?.title || ''}
+            <div className={`font-inter text-sm leading-5 h-[20px] ${
+              occupation?.title 
+                ? 'font-normal text-circle-primary' 
+                : 'font-normal text-circle-primary italic opacity-50'
+            }`}>
+              {occupation?.title || 'no occupation'}
             </div>
-            <div className="font-inter font-normal text-sm leading-5 text-circle-primary h-[20px]">
-              {organization?.name || ''}
+            <div className={`font-inter text-sm leading-5 h-[20px] ${
+              organization?.name 
+                ? 'font-normal text-circle-primary' 
+                : 'font-normal text-circle-primary italic opacity-50'
+            }`}>
+              {organization?.name || 'no organization'}
             </div>
           </div>
           
@@ -165,8 +173,12 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick }) => {
         
         {/* Birthdate and Notes Column */}
         <div className="flex flex-col gap-0 h-fit">
-          <div className="font-inter font-normal text-sm leading-5 text-circle-primary h-[20px]">
-            {contact.birthDate ? formatBirthDate(contact.birthDate) : ''}
+          <div className={`font-inter text-sm leading-5 h-[20px] ${
+            contact.birthDate 
+              ? 'font-normal text-circle-primary' 
+              : 'font-normal text-circle-primary italic opacity-50'
+          }`}>
+            {contact.birthDate ? formatBirthDate(contact.birthDate) : 'no birth date'}
           </div>
           <div className="flex flex-row items-center gap-2 flex-shrink-0">
             {/* Edit Icon */}
@@ -205,7 +217,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick }) => {
           <div className="flex flex-row flex-wrap items-start content-start gap-1 w-full">
             {subjects.map((subject: Subject) => (
               <div key={`measure-${subject.id}`} data-subject-tag>
-                <SubjectTag subject={subject} />
+                <SubjectTag subject={subject} contactId={contact.id} />
               </div>
             ))}
           </div>
