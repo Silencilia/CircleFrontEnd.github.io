@@ -1,0 +1,5 @@
+---
+description:Whenever you fix a user-described  bug or error, save a summarization of what to avoid and what to pay attention to in guidelines/bug-tracking.md. You should always refer back to this file when you are making any edits.
+globs:
+alwaysApply: true
+---

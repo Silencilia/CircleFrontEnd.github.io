@@ -1,5 +1,5 @@
 ---
-description: Whenever a new icon's SVG is provided by the user, this icon should be saved as a separate file under the "icons" folder. Graphic assets should never be hardcoded.
+description: Whenever a new icon's SVG is provided by the user, this icon should be saved as a separate file under the "icons" folder. Graphic assets should never be hardcoded. Use saved reusable icons in the "icons" folder whenever possible. Icons should never have a boarder stroke around them.
 globs:
 alwaysApply: true
 ---

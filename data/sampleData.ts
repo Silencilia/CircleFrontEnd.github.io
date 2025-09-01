@@ -80,701 +80,463 @@ export const sampleRelationships: Relationship[] = [
 ];
 
 export const sampleSentiments: Sentiment[] = [
-  { id: 1, label: 'positive', category: 'positive' },
-  { id: 2, label: 'neutral', category: 'neutral' },
-  { id: 3, label: 'negative', category: 'negative' },
-  { id: 4, label: 'excited', category: 'positive' },
-  { id: 5, label: 'happy', category: 'positive' },
-  { id: 6, label: 'satisfied', category: 'positive' },
+  { id: 1, label: 'excited', category: 'positive' },
+  { id: 2, label: 'happy', category: 'positive' },
+  { id: 3, label: 'enthusiastic', category: 'positive' },
+  { id: 4, label: 'satisfied', category: 'positive' },
+  { id: 5, label: 'optimistic', category: 'positive' },
+  { id: 6, label: 'neutral', category: 'neutral' },
   { id: 7, label: 'calm', category: 'neutral' },
-  { id: 8, label: 'indifferent', category: 'neutral' },
-  { id: 9, label: 'frustrated', category: 'negative' },
-  { id: 10, label: 'disappointed', category: 'negative' }
+  { id: 8, label: 'focused', category: 'neutral' },
+  { id: 9, label: 'concerned', category: 'negative' },
+  { id: 10, label: 'frustrated', category: 'negative' },
+  { id: 11, label: 'worried', category: 'negative' },
+  { id: 12, label: 'disappointed', category: 'negative' }
 ];
 
 export const sampleNotes: Note[] = [
   // Alex Johnson (Contact 1) - 5 notes
   {
     id: 1,
-    text: 'Had coffee and discussed new project ideas. We talked about potential collaboration opportunities and shared insights about the current market trends. The conversation was very productive and we agreed to follow up next week.',
-    person: 'Alex Johnson',
+    text: 'Had an amazing coffee meeting with Alex at the new downtown café. We discussed potential collaboration opportunities and shared insights about current market trends. The conversation was incredibly productive and we agreed to follow up next week with a concrete proposal.',
     time: 'Dec 15, 2024 2:00 PM',
-    location: 'Starbucks Downtown',
-    event: 'Coffee meeting',
-    sentiment: 'positive',
-    contactIds: [1],
-    createdAt: '2024-12-15T14:00:00Z'
+    sentimentIds: [1, 3], // excited, enthusiastic
+    contactIds: [1]
   },
   {
     id: 2,
-    text: 'Met at the tech conference and discussed AI trends. Alex shared interesting insights about machine learning applications in their current project. Great networking opportunity.',
-    person: 'Alex Johnson',
+    text: 'Met Alex at the tech conference and had an engaging discussion about AI trends. Alex shared fascinating insights about machine learning applications in their current project. This was a great networking opportunity that could lead to future collaborations.',
     time: 'Dec 10, 2024 4:30 PM',
-    location: 'Tech Conference Center',
-    event: 'Tech conference',
-    sentiment: 'positive',
-    contactIds: [1],
-    createdAt: '2024-12-10T16:30:00Z'
+    sentimentIds: [1], // excited
+    contactIds: [1]
   },
   {
     id: 3,
-    text: 'Quick lunch meeting to discuss potential partnership. Alex mentioned they\'re looking for developers with React experience. Promised to connect them with our team.',
-    person: 'Alex Johnson',
+    text: 'Quick lunch meeting to discuss potential partnership opportunities. Alex mentioned they\'re actively looking for developers with React experience for their upcoming project. I promised to connect them with our development team.',
     time: 'Dec 5, 2024 12:00 PM',
-    location: 'Local Deli',
-    event: 'Lunch meeting',
-    sentiment: 'neutral',
-    contactIds: [1],
-    createdAt: '2024-12-05T12:00:00Z'
+    sentimentIds: [6], // neutral
+    contactIds: [1]
   },
   {
     id: 4,
-    text: 'Phone call about project timeline. Alex expressed concerns about meeting the deadline. Offered to help review the code and provide suggestions.',
-    person: 'Alex Johnson',
+    text: 'Phone call about project timeline concerns. Alex expressed some worries about meeting the aggressive deadline for their product launch. I offered to help review their code architecture and provide optimization suggestions.',
     time: 'Nov 28, 2024 3:00 PM',
-    location: 'Phone call',
-    event: 'Project review call',
-    sentiment: 'neutral',
-    contactIds: [1],
-    createdAt: '2024-11-28T15:00:00Z'
+    sentimentIds: [9, 6], // concerned, neutral
+    contactIds: [1]
   },
   {
     id: 5,
-    text: 'Met at the gym and chatted about work-life balance. Alex mentioned they\'ve been working long hours and feeling stressed. Suggested some time management techniques.',
-    person: 'Alex Johnson',
+    text: 'Ran into Alex at the gym and had a candid conversation about work-life balance. Alex mentioned they\'ve been working long hours recently and feeling the stress. I suggested some time management techniques that have worked for me.',
     time: 'Nov 20, 2024 6:00 PM',
-    location: 'Fitness Center',
-    event: 'Gym session',
-    sentiment: 'positive',
-    contactIds: [1],
-    createdAt: '2024-11-20T18:00:00Z'
+    sentimentIds: [9, 7], // concerned, calm
+    contactIds: [1]
   },
 
   // Sarah Chen (Contact 2) - 5 notes
   {
     id: 6,
-    text: 'Team lunch meeting about Q1 strategy. Discussed upcoming projects and resource allocation. Some concerns were raised about timeline feasibility.',
-    person: 'Sarah Chen',
+    text: 'Team lunch meeting focused on Q1 strategy planning. Sarah led an excellent discussion about upcoming projects and resource allocation. However, some concerns were raised about the feasibility of our ambitious timeline.',
     time: 'Dec 12, 2024 12:00 PM',
-    location: 'Office Conference Room',
-    event: 'Team meeting',
-    sentiment: 'neutral',
-    contactIds: [2],
-    createdAt: '2024-12-12T12:00:00Z'
+    sentimentIds: [9, 8], // concerned, focused
+    contactIds: [2]
   },
   {
     id: 7,
-    text: 'Coffee chat about career development. Sarah shared her interest in moving into product management. Discussed potential opportunities and skills she should develop.',
-    person: 'Sarah Chen',
+    text: 'Had an inspiring coffee chat about Sarah\'s career development goals. She shared her strong interest in transitioning into product management and asked for advice. We discussed potential opportunities and skills she should develop.',
     time: 'Dec 8, 2024 10:00 AM',
-    location: 'Office Kitchen',
-    event: 'Career discussion',
-    sentiment: 'positive',
-    contactIds: [2],
-    createdAt: '2024-12-08T10:00:00Z'
+    sentimentIds: [1, 5], // excited, optimistic
+    contactIds: [2]
   },
   {
     id: 8,
-    text: 'Quick hallway conversation about the new design system. Sarah had some feedback about the color palette and suggested improvements for accessibility.',
-    person: 'Sarah Chen',
+    text: 'Quick hallway conversation about the new design system implementation. Sarah provided valuable feedback about the color palette and suggested important improvements for accessibility compliance. Her attention to detail is impressive.',
     time: 'Dec 3, 2024 2:30 PM',
-    location: 'Office Hallway',
-    event: 'Design feedback',
-    sentiment: 'positive',
-    contactIds: [2],
-    createdAt: '2024-12-03T14:30:00Z'
+    sentimentIds: [8, 4], // focused, satisfied
+    contactIds: [2]
   },
   {
     id: 9,
-    text: 'Met at the art gallery opening. Sarah was excited about the new exhibition and we discussed our shared interest in contemporary art. Great cultural experience.',
-    person: 'Sarah Chen',
+    text: 'Attended the contemporary art gallery opening together. Sarah was genuinely excited about the new exhibition and we had a wonderful discussion about modern artistic trends. It was a great cultural experience that deepened our friendship.',
     time: 'Nov 25, 2024 7:00 PM',
-    location: 'Modern Art Gallery',
-    event: 'Gallery opening',
-    sentiment: 'positive',
-    contactIds: [2],
-    createdAt: '2024-11-25T19:00:00Z'
+    sentimentIds: [1, 2], // excited, happy
+    contactIds: [2]
   },
   {
     id: 10,
-    text: 'Phone call about project collaboration. Sarah mentioned some challenges with cross-team communication. Offered to help facilitate a meeting between the teams.',
-    person: 'Sarah Chen',
+    text: 'Phone call regarding cross-team project collaboration challenges. Sarah mentioned some communication issues between departments that are affecting project timelines. I offered to help facilitate a meeting between the teams.',
     time: 'Nov 18, 2024 4:00 PM',
-    location: 'Phone call',
-    event: 'Project collaboration call',
-    sentiment: 'neutral',
-    contactIds: [2],
-    createdAt: '2024-11-18T16:00:00Z'
+    sentimentIds: [6, 9], // neutral, concerned
+    contactIds: [2]
   },
 
   // Michael Rodriguez (Contact 3) - 5 notes
   {
     id: 11,
-    text: 'Client presentation went poorly. Technical difficulties and unprepared responses led to a negative impression. Need to improve preparation for future meetings.',
-    person: 'Michael Rodriguez',
+    text: 'The client presentation went poorly due to unexpected technical difficulties and some unprepared responses to their questions. This created a negative impression that we\'ll need to work hard to overcome in future meetings.',
     time: 'Dec 10, 2024 10:00 AM',
-    location: 'Client Office',
-    event: 'Client presentation',
-    sentiment: 'negative',
-    contactIds: [3],
-    createdAt: '2024-12-10T10:00:00Z'
+    sentimentIds: [10, 11, 12], // frustrated, worried, disappointed
+    contactIds: [3]
   },
   {
     id: 12,
-    text: 'Met for lunch to discuss the failed presentation. Michael was clearly frustrated and disappointed. Helped him analyze what went wrong and plan improvements.',
-    person: 'Michael Rodriguez',
+    text: 'Met Michael for lunch to debrief after the failed presentation. He was clearly frustrated and disappointed with how things went. We spent time analyzing what went wrong and developing a comprehensive plan for improvement.',
     time: 'Dec 11, 2024 1:00 PM',
-    location: 'Mexican Restaurant',
-    event: 'Post-presentation debrief',
-    sentiment: 'negative',
-    contactIds: [3],
-    createdAt: '2024-12-11T13:00:00Z'
+    sentimentIds: [12, 10], // disappointed, frustrated
+    contactIds: [3]
   },
   {
     id: 13,
-    text: 'Quick coffee meeting about upcoming project. Michael seemed more confident this time and had better prepared materials. Good to see the improvement.',
-    person: 'Michael Rodriguez',
+    text: 'Coffee meeting about the upcoming project launch. Michael seemed much more confident this time and had significantly better prepared materials. It\'s encouraging to see the marked improvement in his preparation and presentation skills.',
     time: 'Dec 5, 2024 9:00 AM',
-    location: 'Coffee Shop',
-    event: 'Project planning',
-    sentiment: 'positive',
-    contactIds: [3],
-    createdAt: '2024-12-05T09:00:00Z'
+    sentimentIds: [5, 4], // optimistic, satisfied
+    contactIds: [3]
   },
   {
     id: 14,
-    text: 'Met at the gym and discussed work stress. Michael mentioned he\'s been working on presentation skills and taking public speaking classes. Great initiative.',
-    person: 'Michael Rodriguez',
+    text: 'Bumped into Michael at the gym and discussed work-related stress management. He mentioned he\'s been proactively working on his presentation skills and even enrolled in public speaking classes. Great personal development initiative.',
     time: 'Nov 30, 2024 6:00 PM',
-    location: 'Fitness Center',
-    event: 'Gym workout',
-    sentiment: 'positive',
-    contactIds: [3],
-    createdAt: '2024-11-30T18:00:00Z'
+    sentimentIds: [5, 2], // optimistic, happy
+    contactIds: [3]
   },
   {
     id: 15,
-    text: 'Phone call about team dynamics. Michael expressed concerns about some team members not pulling their weight. Suggested having a team meeting to address issues.',
-    person: 'Michael Rodriguez',
+    text: 'Phone call about team dynamics and productivity issues. Michael expressed concerns about some team members not contributing their fair share to project deliverables. I suggested organizing a team meeting to address these issues directly.',
     time: 'Nov 22, 2024 3:30 PM',
-    location: 'Phone call',
-    event: 'Team issues discussion',
-    sentiment: 'negative',
-    contactIds: [3],
-    createdAt: '2024-11-22T15:30:00Z'
+    sentimentIds: [11, 9], // worried, concerned
+    contactIds: [3]
   },
 
   // Emily Watson (Contact 4) - 5 notes
   {
     id: 16,
-    text: 'Successful product launch celebration. Team worked hard and delivered on time. Everyone was excited about the positive feedback from early users.',
-    person: 'Emily Watson',
+    text: 'Celebrated our successful product launch with the entire team! Everyone worked incredibly hard and we delivered everything on time. The early user feedback has been overwhelmingly positive, which makes all the effort worthwhile.',
     time: 'Dec 8, 2024 6:00 PM',
-    location: 'Company HQ',
-    event: 'Product launch',
-    sentiment: 'positive',
-    contactIds: [4],
-    createdAt: '2024-12-08T18:00:00Z'
+    sentimentIds: [1, 2, 4], // excited, happy, satisfied
+    contactIds: [4]
   },
   {
     id: 17,
-    text: 'Coffee meeting to discuss next product roadmap. Emily was enthusiastic about new features and shared some innovative ideas. Great strategic thinking.',
-    person: 'Emily Watson',
+    text: 'Coffee meeting to discuss the next product roadmap and upcoming features. Emily was incredibly enthusiastic about her innovative ideas for user experience improvements. Her strategic thinking and creative vision continue to impress me.',
     time: 'Dec 12, 2024 11:00 AM',
-    location: 'Office Coffee Bar',
-    event: 'Product roadmap discussion',
-    sentiment: 'positive',
-    contactIds: [4],
-    createdAt: '2024-12-12T11:00:00Z'
+    sentimentIds: [3, 1], // enthusiastic, excited
+    contactIds: [4]
   },
   {
     id: 18,
-    text: 'Quick hallway chat about user feedback. Emily mentioned some interesting insights from user interviews. Offered to help analyze the data.',
-    person: 'Emily Watson',
+    text: 'Quick hallway conversation about recent user feedback analysis. Emily shared some fascinating insights from the latest user interviews and usability testing sessions. I offered to help analyze the quantitative data to complement her qualitative findings.',
     time: 'Dec 6, 2024 3:00 PM',
-    location: 'Office Hallway',
-    event: 'User feedback discussion',
-    sentiment: 'neutral',
-    contactIds: [4],
-    createdAt: '2024-12-06T15:00:00Z'
+    sentimentIds: [8, 6], // focused, neutral
+    contactIds: [4]
   },
   {
     id: 19,
-    text: 'Met at the design workshop. Emily was leading a session on user experience principles. Great presentation skills and deep knowledge of the subject.',
-    person: 'Emily Watson',
+    text: 'Attended Emily\'s workshop on user experience design principles. She delivered an outstanding presentation with deep knowledge of the subject matter. Her ability to explain complex UX concepts clearly is truly remarkable.',
     time: 'Nov 28, 2024 2:00 PM',
-    location: 'Design Studio',
-    event: 'UX workshop',
-    sentiment: 'positive',
-    contactIds: [4],
-    createdAt: '2024-11-28T14:00:00Z'
+    sentimentIds: [4, 3], // satisfied, enthusiastic
+    contactIds: [4]
   },
   {
     id: 20,
-    text: 'Phone call about team collaboration. Emily mentioned some challenges with cross-functional communication. Suggested implementing regular sync meetings.',
-    person: 'Emily Watson',
+    text: 'Phone call about improving cross-functional team collaboration. Emily mentioned some challenges with communication between different departments that are impacting project efficiency. I suggested implementing regular synchronization meetings.',
     time: 'Nov 20, 2024 4:30 PM',
-    location: 'Phone call',
-    event: 'Team collaboration call',
-    sentiment: 'neutral',
-    contactIds: [4],
-    createdAt: '2024-11-20T16:30:00Z'
+    sentimentIds: [9, 8], // concerned, focused
+    contactIds: [4]
   },
 
   // David Kim (Contact 5) - 5 notes
   {
     id: 21,
-    text: 'Quick catch-up call with old colleague. Discussed industry changes and potential job opportunities. Good to reconnect after so long.',
-    person: 'David Kim',
+    text: 'Had a great catch-up call with my former colleague David. We discussed significant industry changes and explored potential job opportunities in the market. It was wonderful to reconnect after such a long time.',
     time: 'Dec 5, 2024 3:30 PM',
-    location: 'Phone call',
-    event: 'Catch-up call',
-    sentiment: 'positive',
-    contactIds: [5],
-    createdAt: '2024-12-05T15:30:00Z'
+    sentimentIds: [2, 6], // happy, neutral
+    contactIds: [5]
   },
   {
     id: 22,
-    text: 'Met for lunch to discuss potential collaboration. David shared some interesting project ideas and we explored ways to work together. Promising opportunities.',
-    person: 'David Kim',
+    text: 'Met David for lunch to discuss exciting collaboration possibilities. He shared several interesting project ideas and we thoroughly explored various ways we could work together professionally. The opportunities look very promising.',
     time: 'Dec 10, 2024 12:30 PM',
-    location: 'Korean BBQ Restaurant',
-    event: 'Collaboration discussion',
-    sentiment: 'positive',
-    contactIds: [5],
-    createdAt: '2024-12-10T12:30:00Z'
+    sentimentIds: [5, 3], // optimistic, enthusiastic
+    contactIds: [5]
   },
   {
     id: 23,
-    text: 'Quick coffee meeting about industry trends. David had some insightful observations about the market and shared valuable contacts. Great networking.',
-    person: 'David Kim',
+    text: 'Coffee meeting focused on current industry trends and market analysis. David shared some particularly insightful observations about market dynamics and provided valuable professional contacts. Excellent networking opportunity.',
     time: 'Dec 2, 2024 10:00 AM',
-    location: 'Local Coffee Shop',
-    event: 'Industry trends discussion',
-    sentiment: 'positive',
-    contactIds: [5],
-    createdAt: '2024-12-02T10:00:00Z'
+    sentimentIds: [3, 4], // enthusiastic, satisfied
+    contactIds: [5]
   },
   {
     id: 24,
-    text: 'Met at the startup meetup. David was presenting his new venture and looking for feedback. Great pitch and interesting business model.',
-    person: 'David Kim',
+    text: 'Attended the startup meetup where David was presenting his innovative new venture. He delivered an impressive pitch with a compelling business model that generated significant interest from potential investors.',
     time: 'Nov 25, 2024 7:30 PM',
-    location: 'Startup Hub',
-    event: 'Startup meetup',
-    sentiment: 'positive',
-    contactIds: [5],
-    createdAt: '2024-11-25T19:30:00Z'
+    sentimentIds: [1, 3], // excited, enthusiastic
+    contactIds: [5]
   },
   {
     id: 25,
-    text: 'Phone call about mentorship. David asked for advice on scaling his business and managing a growing team. Shared some lessons learned from experience.',
-    person: 'David Kim',
+    text: 'Phone call about mentorship and business scaling advice. David asked for guidance on managing his rapidly growing team and scaling business operations effectively. I shared lessons learned from my own entrepreneurial experience.',
     time: 'Nov 18, 2024 2:00 PM',
-    location: 'Phone call',
-    event: 'Mentorship call',
-    sentiment: 'positive',
-    contactIds: [5],
-    createdAt: '2024-11-18T14:00:00Z'
+    sentimentIds: [4, 7], // satisfied, calm
+    contactIds: [5]
   },
 
   // Lisa Thompson (Contact 6) - 5 notes
   {
     id: 26,
-    text: 'Met at the consulting workshop. Lisa was facilitating a session on strategic planning. Great facilitation skills and deep expertise in the subject.',
-    person: 'Lisa Thompson',
+    text: 'Attended Lisa\'s strategic planning workshop at the conference center. She demonstrated excellent facilitation skills and shared deep expertise in organizational strategy. The session provided valuable insights for our business planning.',
     time: 'Dec 3, 2024 1:00 PM',
-    location: 'Conference Center',
-    event: 'Strategic planning workshop',
-    sentiment: 'positive',
-    contactIds: [6],
-    createdAt: '2024-12-03T13:00:00Z'
+    sentimentIds: [4, 8], // satisfied, focused
+    contactIds: [6]
   },
   {
     id: 27,
-    text: 'Coffee meeting to discuss potential project collaboration. Lisa shared some interesting case studies and we explored partnership opportunities.',
-    person: 'Lisa Thompson',
+    text: 'Coffee meeting to explore potential project collaboration opportunities. Lisa shared fascinating case studies from her consulting work and we discussed various partnership possibilities that could benefit both our organizations.',
     time: 'Dec 8, 2024 9:00 AM',
-    location: 'Office Coffee Bar',
-    event: 'Project collaboration discussion',
-    sentiment: 'neutral',
-    contactIds: [6],
-    createdAt: '2024-12-08T09:00:00Z'
+    sentimentIds: [6, 5], // neutral, optimistic
+    contactIds: [6]
   },
   {
     id: 28,
-    text: 'Quick hallway conversation about industry insights. Lisa mentioned some interesting trends she\'s observed in her consulting work. Valuable perspective.',
-    person: 'Lisa Thompson',
+    text: 'Brief hallway conversation about valuable industry insights. Lisa mentioned some interesting trends she\'s observed through her extensive consulting work with various clients. Her perspective is always enlightening and well-informed.',
     time: 'Dec 1, 2024 4:00 PM',
-    location: 'Office Hallway',
-    event: 'Industry insights chat',
-    sentiment: 'positive',
-    contactIds: [6],
-    createdAt: '2024-12-01T16:00:00Z'
+    sentimentIds: [3, 8], // enthusiastic, focused
+    contactIds: [6]
   },
   {
     id: 29,
-    text: 'Met at the business networking event. Lisa was representing her consulting firm and looking for new clients. Great networking skills.',
-    person: 'Lisa Thompson',
+    text: 'Met Lisa at the business networking event downtown. She was effectively representing her consulting firm and actively seeking new client relationships. Her professional networking skills and business acumen are truly impressive.',
     time: 'Nov 27, 2024 6:00 PM',
-    location: 'Business Center',
-    event: 'Networking event',
-    sentiment: 'positive',
-    contactIds: [6],
-    createdAt: '2024-11-27T18:00:00Z'
+    sentimentIds: [2, 4], // happy, satisfied
+    contactIds: [6]
   },
   {
     id: 30,
-    text: 'Phone call about consulting project. Lisa asked for feedback on a proposal she was working on. Provided some suggestions for improvement.',
-    person: 'Lisa Thompson',
+    text: 'Phone call to provide feedback on Lisa\'s consulting proposal. She asked for my professional opinion on a comprehensive proposal she was developing for a major client. I provided detailed suggestions for improvement and refinement.',
     time: 'Nov 20, 2024 3:00 PM',
-    location: 'Phone call',
-    event: 'Proposal feedback call',
-    sentiment: 'neutral',
-    contactIds: [6],
-    createdAt: '2024-11-20T15:00:00Z'
+    sentimentIds: [6, 8], // neutral, focused
+    contactIds: [6]
   },
 
   // James Wilson (Contact 7) - 5 notes
   {
     id: 31,
-    text: 'Met at the business conference. James was presenting on digital transformation strategies. Great presentation and valuable insights for our industry.',
-    person: 'James Wilson',
+    text: 'Attended James\'s presentation on digital transformation strategies at the business conference. He delivered valuable insights that are highly relevant to our industry\'s current challenges and future opportunities.',
     time: 'Dec 1, 2024 2:00 PM',
-    location: 'Business Conference Center',
-    event: 'Digital transformation presentation',
-    sentiment: 'positive',
-    contactIds: [7],
-    createdAt: '2024-12-01T14:00:00Z'
+    sentimentIds: [4, 8], // satisfied, focused
+    contactIds: [7]
   },
   {
     id: 32,
-    text: 'Coffee meeting to discuss industry collaboration. James shared some interesting ideas about cross-industry partnerships and innovation.',
-    person: 'James Wilson',
+    text: 'Coffee meeting to discuss potential cross-industry collaboration initiatives. James shared innovative ideas about partnerships between different sectors and how they can drive innovation and mutual growth.',
     time: 'Dec 6, 2024 10:30 AM',
-    location: 'Local Coffee Shop',
-    event: 'Industry collaboration discussion',
-    sentiment: 'neutral',
-    contactIds: [7],
-    createdAt: '2024-12-06T10:30:00Z'
+    sentimentIds: [6, 3], // neutral, enthusiastic
+    contactIds: [7]
   },
   {
     id: 33,
-    text: 'Quick lunch meeting about market trends. James had some insightful observations about customer behavior changes and market opportunities.',
-    person: 'James Wilson',
+    text: 'Lunch meeting focused on current market trends and consumer behavior analysis. James provided insightful observations about changing customer preferences and emerging market opportunities that could impact our business strategy.',
     time: 'Dec 2, 2024 12:00 PM',
-    location: 'Office Cafeteria',
-    event: 'Market trends discussion',
-    sentiment: 'positive',
-    contactIds: [7],
-    createdAt: '2024-12-02T12:00:00Z'
+    sentimentIds: [8, 5], // focused, optimistic
+    contactIds: [7]
   },
   {
     id: 34,
-    text: 'Met at the innovation summit. James was moderating a panel on emerging technologies. Great moderation skills and deep knowledge.',
-    person: 'James Wilson',
+    text: 'Attended the innovation summit where James moderated a panel on emerging technologies. His excellent moderation skills and comprehensive knowledge of technological trends made for an engaging and informative session.',
     time: 'Nov 29, 2024 3:30 PM',
-    location: 'Innovation Center',
-    event: 'Technology panel discussion',
-    sentiment: 'positive',
-    contactIds: [7],
-    createdAt: '2024-11-29T15:30:00Z'
+    sentimentIds: [4, 3], // satisfied, enthusiastic
+    contactIds: [7]
   },
   {
     id: 35,
-    text: 'Phone call about strategic partnership. James mentioned some challenges with their current partnerships and asked for advice. Shared some best practices.',
-    person: 'James Wilson',
+    text: 'Phone call about strategic partnership challenges and opportunities. James mentioned some difficulties with their current partnerships and asked for advice based on my experience. I shared best practices for partnership management.',
     time: 'Nov 22, 2024 4:00 PM',
-    location: 'Phone call',
-    event: 'Partnership strategy call',
-    sentiment: 'neutral',
-    contactIds: [7],
-    createdAt: '2024-11-22T16:00:00Z'
+    sentimentIds: [6, 9], // neutral, concerned
+    contactIds: [7]
   },
 
   // Maria Garcia (Contact 8) - 5 notes
   {
     id: 36,
-    text: 'Met at the UX research conference. Maria was presenting her findings on user behavior patterns. Fascinating research and great presentation skills.',
-    person: 'Maria Garcia',
+    text: 'Attended Maria\'s presentation at the UX research conference about user behavior patterns. Her research findings were absolutely fascinating and her presentation skills were exceptional. Valuable insights for our product development.',
     time: 'Nov 28, 2024 11:00 AM',
-    location: 'UX Research Center',
-    event: 'User behavior presentation',
-    sentiment: 'positive',
-    contactIds: [8],
-    createdAt: '2024-11-28T11:00:00Z'
+    sentimentIds: [1, 4], // excited, satisfied
+    contactIds: [8]
   },
   {
     id: 37,
-    text: 'Coffee meeting to discuss research collaboration. Maria shared some interesting methodologies and we explored potential joint research projects.',
-    person: 'Maria Garcia',
+    text: 'Coffee meeting to explore research collaboration opportunities. Maria shared interesting methodologies from her academic work and we discussed potential joint research projects that could benefit both our organizations.',
     time: 'Dec 4, 2024 2:00 PM',
-    location: 'University Coffee Shop',
-    event: 'Research collaboration discussion',
-    sentiment: 'positive',
-    contactIds: [8],
-    createdAt: '2024-12-04T14:00:00Z'
+    sentimentIds: [3, 5], // enthusiastic, optimistic
+    contactIds: [8]
   },
   {
     id: 38,
-    text: 'Quick hallway conversation about user testing. Maria mentioned some interesting findings from recent usability studies. Valuable insights for our product.',
-    person: 'Maria Garcia',
+    text: 'Quick hallway conversation about recent user testing results. Maria mentioned some particularly interesting findings from her latest usability studies that could provide valuable insights for our product development roadmap.',
     time: 'Nov 30, 2024 3:00 PM',
-    location: 'University Hallway',
-    event: 'User testing discussion',
-    sentiment: 'neutral',
-    contactIds: [8],
-    createdAt: '2024-11-30T15:00:00Z'
+    sentimentIds: [6, 8], // neutral, focused
+    contactIds: [8]
   },
   {
     id: 39,
-    text: 'Met at the academic symposium. Maria was chairing a session on human-computer interaction. Great academic leadership and deep expertise.',
-    person: 'Maria Garcia',
+    text: 'Attended the academic symposium where Maria chaired a session on human-computer interaction. Her academic leadership and deep expertise in the field were clearly demonstrated through her excellent session management.',
     time: 'Nov 25, 2024 1:30 PM',
-    location: 'Academic Conference Center',
-    event: 'HCI symposium',
-    sentiment: 'positive',
-    contactIds: [8],
-    createdAt: '2024-11-25T13:30:00Z'
+    sentimentIds: [4, 3], // satisfied, enthusiastic
+    contactIds: [8]
   },
   {
     id: 40,
-    text: 'Phone call about research methodology. Maria asked for feedback on a research proposal she was developing. Provided some suggestions for improvement.',
-    person: 'Maria Garcia',
+    text: 'Phone call to provide feedback on Maria\'s research proposal. She asked for my input on a comprehensive research proposal she was developing for a major grant application. I provided constructive suggestions for improvement.',
     time: 'Nov 18, 2024 2:30 PM',
-    location: 'Phone call',
-    event: 'Research proposal feedback',
-    sentiment: 'neutral',
-    contactIds: [8],
-    createdAt: '2024-11-18T14:30:00Z'
+    sentimentIds: [6, 8], // neutral, focused
+    contactIds: [8]
   },
 
   // Robert Taylor (Contact 9) - 5 notes
   {
     id: 41,
-    text: 'Met at the sales conference. Robert was presenting on relationship building strategies. Great sales insights and valuable networking tips.',
-    person: 'Robert Taylor',
+    text: 'Attended Robert\'s presentation at the sales conference on relationship building strategies. He shared excellent sales insights and valuable networking techniques that could be applied across various business contexts.',
     time: 'Nov 25, 2024 10:00 AM',
-    location: 'Sales Conference Center',
-    event: 'Relationship building presentation',
-    sentiment: 'positive',
-    contactIds: [9],
-    createdAt: '2024-11-25T10:00:00Z'
+    sentimentIds: [4, 3], // satisfied, enthusiastic
+    contactIds: [9]
   },
   {
     id: 42,
-    text: 'Coffee meeting to discuss sales strategies. Robert shared some interesting approaches to customer acquisition and retention. Valuable sales techniques.',
-    person: 'Robert Taylor',
+    text: 'Coffee meeting to discuss effective sales strategies and techniques. Robert shared interesting approaches to customer acquisition and retention that have proven successful in his experience. Very valuable professional insights.',
     time: 'Dec 2, 2024 3:00 PM',
-    location: 'Office Coffee Bar',
-    event: 'Sales strategy discussion',
-    sentiment: 'positive',
-    contactIds: [9],
-    createdAt: '2024-12-02T15:00:00Z'
+    sentimentIds: [3, 8], // enthusiastic, focused
+    contactIds: [9]
   },
   {
     id: 43,
-    text: 'Quick lunch meeting about market expansion. Robert had some insights about entering new markets and building sales teams. Strategic thinking.',
-    person: 'Robert Taylor',
+    text: 'Lunch meeting about market expansion opportunities and challenges. Robert provided insights about entering new markets and building effective sales teams in different regions. His strategic thinking is impressive.',
     time: 'Nov 28, 2024 12:30 PM',
-    location: 'Business Restaurant',
-    event: 'Market expansion discussion',
-    sentiment: 'neutral',
-    contactIds: [9],
-    createdAt: '2024-11-28T12:30:00Z'
+    sentimentIds: [6, 5], // neutral, optimistic
+    contactIds: [9]
   },
   {
     id: 44,
-    text: 'Met at the business networking event. Robert was representing his company and looking for new business opportunities. Great networking skills.',
-    person: 'Robert Taylor',
+    text: 'Met Robert at the business networking event where he was representing his company. He was actively seeking new business opportunities and demonstrated excellent networking skills throughout the evening.',
     time: 'Nov 22, 2024 6:30 PM',
-    location: 'Business Center',
-    event: 'Business networking',
-    sentiment: 'positive',
-    contactIds: [9],
-    createdAt: '2024-11-22T18:30:00Z'
+    sentimentIds: [2, 4], // happy, satisfied
+    contactIds: [9]
   },
   {
     id: 45,
-    text: 'Phone call about sales training. Robert mentioned some challenges with his sales team and asked for advice on training programs. Shared some resources.',
-    person: 'Robert Taylor',
+    text: 'Phone call about sales training and team development challenges. Robert mentioned some difficulties with his sales team\'s performance and asked for advice on training programs. I shared relevant resources and recommendations.',
     time: 'Nov 15, 2024 4:30 PM',
-    location: 'Phone call',
-    event: 'Sales training discussion',
-    sentiment: 'neutral',
-    contactIds: [9],
-    createdAt: '2024-11-15T16:30:00Z'
+    sentimentIds: [6, 9], // neutral, concerned
+    contactIds: [9]
   },
 
   // Jennifer Lee (Contact 10) - 5 notes
   {
     id: 46,
-    text: 'Met at the content strategy workshop. Jennifer was leading a session on storytelling in marketing. Great presentation and valuable content insights.',
-    person: 'Jennifer Lee',
+    text: 'Attended Jennifer\'s content strategy workshop on storytelling in marketing. She delivered an outstanding presentation with valuable insights about content creation and audience engagement. Excellent professional development opportunity.',
     time: 'Nov 22, 2024 2:00 PM',
-    location: 'Marketing Center',
-    event: 'Content strategy workshop',
-    sentiment: 'positive',
-    contactIds: [10],
-    createdAt: '2024-11-22T14:00:00Z'
+    sentimentIds: [4, 3], // satisfied, enthusiastic
+    contactIds: [10]
   },
   {
     id: 47,
-    text: 'Coffee meeting to discuss content collaboration. Jennifer shared some interesting content ideas and we explored potential partnership opportunities.',
-    person: 'Jennifer Lee',
+    text: 'Coffee meeting to discuss potential content collaboration projects. Jennifer shared creative content ideas and we explored various partnership opportunities that could enhance both our marketing efforts significantly.',
     time: 'Nov 29, 2024 11:00 AM',
-    location: 'Local Coffee Shop',
-    event: 'Content collaboration discussion',
-    sentiment: 'positive',
-    contactIds: [10],
-    createdAt: '2024-11-29T11:00:00Z'
+    sentimentIds: [3, 5], // enthusiastic, optimistic
+    contactIds: [10]
   },
   {
     id: 48,
-    text: 'Quick lunch meeting about marketing trends. Jennifer had some insights about content marketing evolution and audience engagement strategies.',
-    person: 'Jennifer Lee',
+    text: 'Lunch meeting about current marketing trends and industry evolution. Jennifer provided insights about content marketing\'s changing landscape and shared effective audience engagement strategies from her recent campaigns.',
     time: 'Nov 26, 2024 1:00 PM',
-    location: 'Office Cafeteria',
-    event: 'Marketing trends discussion',
-    sentiment: 'neutral',
-    contactIds: [10],
-    createdAt: '2024-11-26T13:00:00Z'
+    sentimentIds: [6, 8], // neutral, focused
+    contactIds: [10]
   },
   {
     id: 49,
-    text: 'Met at the digital marketing summit. Jennifer was presenting on social media strategies. Great digital marketing expertise and practical tips.',
-    person: 'Jennifer Lee',
+    text: 'Attended the digital marketing summit where Jennifer presented on social media strategies. She demonstrated excellent digital marketing expertise and provided practical tips that attendees could implement immediately.',
     time: 'Nov 20, 2024 3:00 PM',
-    location: 'Digital Marketing Center',
-    event: 'Social media presentation',
-    sentiment: 'positive',
-    contactIds: [10],
-    createdAt: '2024-11-20T15:00:00Z'
+    sentimentIds: [4, 1], // satisfied, excited
+    contactIds: [10]
   },
   {
     id: 50,
-    text: 'Phone call about content strategy. Jennifer asked for feedback on a content calendar she was developing. Provided some suggestions for improvement.',
-    person: 'Jennifer Lee',
+    text: 'Phone call to provide feedback on Jennifer\'s content calendar proposal. She asked for my professional opinion on a comprehensive content calendar she was developing for a major client campaign. I provided detailed suggestions.',
     time: 'Nov 15, 2024 2:00 PM',
-    location: 'Phone call',
-    event: 'Content calendar feedback',
-    sentiment: 'neutral',
-    contactIds: [10],
-    createdAt: '2024-11-15T14:00:00Z'
+    sentimentIds: [6, 8], // neutral, focused
+    contactIds: [10]
   },
 
   // Christopher Brown (Contact 11) - 5 notes
   {
     id: 51,
-    text: 'Met at the operations conference. Christopher was presenting on process optimization strategies. Great operational insights and practical implementation tips.',
-    person: 'Christopher Brown',
+    text: 'Attended Christopher\'s presentation at the operations conference on process optimization strategies. He shared excellent operational insights and provided practical implementation tips that could significantly improve our efficiency.',
     time: 'Nov 20, 2024 9:00 AM',
-    location: 'Operations Conference Center',
-    event: 'Process optimization presentation',
-    sentiment: 'positive',
-    contactIds: [11],
-    createdAt: '2024-11-20T09:00:00Z'
+    sentimentIds: [4, 3], // satisfied, enthusiastic
+    contactIds: [11]
   },
   {
     id: 52,
-    text: 'Coffee meeting to discuss operational efficiency. Christopher shared some interesting approaches to streamlining business processes. Valuable insights.',
-    person: 'Christopher Brown',
+    text: 'Coffee meeting to discuss operational efficiency improvements and best practices. Christopher shared innovative approaches to streamlining business processes that have proven effective in his organization. Very valuable insights.',
     time: 'Nov 27, 2024 2:30 PM',
-    location: 'Office Coffee Bar',
-    event: 'Operational efficiency discussion',
-    sentiment: 'positive',
-    contactIds: [11],
-    createdAt: '2024-11-27T14:30:00Z'
+    sentimentIds: [3, 8], // enthusiastic, focused
+    contactIds: [11]
   },
   {
     id: 53,
-    text: 'Quick lunch meeting about team management. Christopher had some insights about building high-performing teams and managing remote workforces.',
-    person: 'Christopher Brown',
+    text: 'Lunch meeting about team management and leadership strategies. Christopher provided insights about building high-performing teams and effectively managing remote workforces in today\'s business environment.',
     time: 'Nov 24, 2024 12:00 PM',
-    location: 'Business Restaurant',
-    event: 'Team management discussion',
-    sentiment: 'neutral',
-    contactIds: [11],
-    createdAt: '2024-11-24T12:00:00Z'
+    sentimentIds: [6, 5], // neutral, optimistic
+    contactIds: [11]
   },
   {
     id: 54,
-    text: 'Met at the business process workshop. Christopher was facilitating a session on lean methodology. Great facilitation skills and deep expertise.',
-    person: 'Christopher Brown',
+    text: 'Attended the business process workshop where Christopher facilitated a session on lean methodology implementation. His facilitation skills and deep expertise in process improvement were clearly demonstrated.',
     time: 'Nov 18, 2024 1:00 PM',
-    location: 'Business Process Center',
-    event: 'Lean methodology workshop',
-    sentiment: 'positive',
-    contactIds: [11],
-    createdAt: '2024-11-18T13:00:00Z'
+    sentimentIds: [4, 8], // satisfied, focused
+    contactIds: [11]
   },
   {
     id: 55,
-    text: 'Phone call about process improvement. Christopher mentioned some challenges with their current processes and asked for advice. Shared some best practices.',
-    person: 'Christopher Brown',
+    text: 'Phone call about process improvement challenges and solutions. Christopher mentioned some difficulties with their current business processes and asked for advice based on my experience. I shared relevant best practices.',
     time: 'Nov 12, 2024 3:30 PM',
-    location: 'Phone call',
-    event: 'Process improvement call',
-    sentiment: 'neutral',
-    contactIds: [11],
-    createdAt: '2024-11-12T15:30:00Z'
+    sentimentIds: [6, 9], // neutral, concerned
+    contactIds: [11]
   },
 
   // Amanda Davis (Contact 12) - 5 notes
   {
     id: 56,
-    text: 'Met at the business analysis conference. Amanda was presenting on data-driven decision making. Great analytical insights and practical applications.',
-    person: 'Amanda Davis',
+    text: 'Attended Amanda\'s presentation at the business analysis conference on data-driven decision making. She shared excellent analytical insights and practical applications that could significantly improve our business intelligence.',
     time: 'Nov 18, 2024 11:00 AM',
-    location: 'Business Analysis Center',
-    event: 'Data-driven decision making presentation',
-    sentiment: 'positive',
-    contactIds: [12],
-    createdAt: '2024-11-18T11:00:00Z'
+    sentimentIds: [4, 3], // satisfied, enthusiastic
+    contactIds: [12]
   },
   {
     id: 57,
-    text: 'Coffee meeting to discuss analytics collaboration. Amanda shared some interesting data analysis techniques and we explored potential joint projects.',
-    person: 'Amanda Davis',
+    text: 'Coffee meeting to discuss analytics collaboration and data science opportunities. Amanda shared interesting data analysis techniques and we explored potential joint projects that could enhance our analytical capabilities.',
     time: 'Nov 25, 2024 10:00 AM',
-    location: 'Local Coffee Shop',
-    event: 'Analytics collaboration discussion',
-    sentiment: 'positive',
-    contactIds: [12],
-    createdAt: '2024-11-25T10:00:00Z'
+    sentimentIds: [3, 5], // enthusiastic, optimistic
+    contactIds: [12]
   },
   {
     id: 58,
-    text: 'Quick lunch meeting about business intelligence. Amanda had some insights about implementing BI tools and building data dashboards.',
-    person: 'Amanda Davis',
+    text: 'Lunch meeting about business intelligence implementation and dashboard development. Amanda provided insights about implementing BI tools effectively and shared best practices for building comprehensive data dashboards.',
     time: 'Nov 22, 2024 12:30 PM',
-    location: 'Office Cafeteria',
-    event: 'Business intelligence discussion',
-    sentiment: 'neutral',
-    contactIds: [12],
-    createdAt: '2024-11-22T12:30:00Z'
+    sentimentIds: [6, 8], // neutral, focused
+    contactIds: [12]
   },
   {
     id: 59,
-    text: 'Met at the data analytics workshop. Amanda was leading a session on predictive modeling. Great analytical skills and practical knowledge.',
-    person: 'Amanda Davis',
+    text: 'Attended the data analytics workshop where Amanda led a session on predictive modeling techniques. Her analytical skills and practical knowledge of advanced modeling techniques were truly impressive.',
     time: 'Nov 16, 2024 2:00 PM',
-    location: 'Data Analytics Center',
-    event: 'Predictive modeling workshop',
-    sentiment: 'positive',
-    contactIds: [12],
-    createdAt: '2024-11-16T14:00:00Z'
+    sentimentIds: [4, 1], // satisfied, excited
+    contactIds: [12]
   },
   {
     id: 60,
-    text: 'Phone call about data strategy. Amanda asked for feedback on a data governance framework she was developing. Provided some suggestions for improvement.',
-    person: 'Amanda Davis',
+    text: 'Phone call to provide feedback on Amanda\'s data governance framework proposal. She asked for my input on a comprehensive framework she was developing for organizational data management. I provided constructive suggestions.',
     time: 'Nov 10, 2024 4:00 PM',
-    location: 'Phone call',
-    event: 'Data governance feedback',
-    sentiment: 'neutral',
-    contactIds: [12],
-    createdAt: '2024-11-10T16:00:00Z'
+    sentimentIds: [6, 8], // neutral, focused
+    contactIds: [12]
   }
 ];
 
@@ -916,4 +678,37 @@ export function getSampleData() {
     sentiments: sampleSentiments,
     notes: sampleNotes
   };
+}
+
+// Create a mutable copy of sample data that can be updated
+let mutableSampleData = {
+  contacts: [...sampleContacts],
+  subjects: [...sampleSubjects],
+  organizations: [...sampleOrganizations],
+  occupations: [...sampleOccupations],
+  relationships: [...sampleRelationships],
+  sentiments: [...sampleSentiments],
+  notes: [...sampleNotes]
+};
+
+export function getMutableSampleData() {
+  return mutableSampleData;
+}
+
+export function updateMutableSampleData(newData: any) {
+  Object.assign(mutableSampleData, newData);
+  return mutableSampleData;
+}
+
+export function resetMutableSampleData() {
+  mutableSampleData = {
+    contacts: [...sampleContacts],
+    subjects: [...sampleSubjects],
+    organizations: [...sampleOrganizations],
+    occupations: [...sampleOccupations],
+    relationships: [...sampleRelationships],
+    sentiments: [...sampleSentiments],
+    notes: [...sampleNotes]
+  };
+  return mutableSampleData;
 }

@@ -74,23 +74,7 @@ export const GREETINGS = [
   "Ready to strengthen your social connections?",
 ] as const;
 
-// Common dimensions and spacing
-export const LAYOUT = {
-  CARD_HEIGHTS: {
-    CONTACT_INFO: '72px',
-    OCCUPATION: '20px',
-    ORGANIZATION: '20px',
-    BIRTH_DATE: '20px',
-    SUBJECTS: '45px',
-    NOTES_SECTION: '40px',
-  },
-  
-  SPACING: {
-    GAP_SMALL: 'gap-1',
-    GAP_MEDIUM: 'gap-3',
-    GAP_LARGE: 'gap-[20px]',
-  },
-} as const;
+
 
 // Export individual categories for easier imports
 export const NAV_STRINGS = STRINGS.NAV;

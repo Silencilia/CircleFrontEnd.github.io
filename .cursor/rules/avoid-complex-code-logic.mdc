@@ -1,0 +1,5 @@
+---
+description: The app is currently in development and testing. To avoid inconsistency and unexpected bugs, and to simplify the development process, avoid complex code logic whenever possible, even if it improves app performance. We can implement optimizations after the app development is complete.
+globs:
+alwaysApply: true
+---
