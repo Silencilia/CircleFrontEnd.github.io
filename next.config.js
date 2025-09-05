@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove the experimental.appDir line - it's deprecated in Next.js 14
+  // Use a custom distDir to avoid OneDrive syncing locks on .next
+  distDir: 'build',
 }
 
 module.exports = nextConfig

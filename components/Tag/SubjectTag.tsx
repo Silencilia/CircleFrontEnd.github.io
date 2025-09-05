@@ -1,4 +1,4 @@
-npmimport React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Subject, useContacts } from '../../contexts/ContactContext';
 import ContentEditable from 'react-contenteditable';
 import { DeleteIcon } from '../icons';

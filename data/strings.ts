@@ -82,3 +82,21 @@ export const CONTACT_STRINGS = STRINGS.CONTACT;
 export const LOADING_STRINGS = STRINGS.LOADING;
 export const ERROR_STRINGS = STRINGS.ERRORS;
 export const UI_STRINGS = STRINGS.UI;
+
+// Date formatting utilities that avoid timezone conversions
+export const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+] as const;
+
+export function formatYyyyMmDdToLong(dateStr: string): string {
+  // Expecting 'YYYY-MM-DD'; parse without using Date to avoid TZ shifts
+  const m = /^\s*(\d{4})-(\d{2})-(\d{2})\s*$/.exec(dateStr);
+  if (!m) return dateStr;
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const d = parseInt(m[3], 10);
+  if (!y || mo < 1 || mo > 12 || d < 1 || d > 31) return dateStr;
+  const monthName = MONTH_NAMES[mo - 1];
+  return `${monthName} ${d}, ${y}`;
+}

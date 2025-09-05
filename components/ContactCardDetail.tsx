@@ -6,6 +6,25 @@ import NoteCard from './NoteCard';
 import { CalendarIcon, MinimizeIcon, NoteIcon } from './icons';
 import { EDITING_MODE_PADDING } from '../data/variables';
 import { SaveButton, CancelButton } from './Button';
+import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from './DatePicker';
+import { formatYyyyMmDdToLong } from '../data/strings';
+
+// Helper to format to YYYY-MM-DD (Contact.birthDate format)
+function formatToIsoDate(value: DynamicPrecisionDateValue): string | undefined {
+  if (!value || value.precision === 'none' || !value.year) return undefined;
+  const year = value.year.toString().padStart(4, '0');
+  if (value.precision === 'year') {
+    return `${year}-01-01`;
+  }
+  if (!value.month) return undefined;
+  const month = String(value.month).padStart(2, '0');
+  if (value.precision === 'month') {
+    return `${year}-${month}-01`;
+  }
+  if (!value.day) return undefined;
+  const day = String(value.day).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 interface ContactCardDetailProps {
   contact: Contact;
@@ -37,6 +56,43 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const relationships = currentContact.relationshipIds ? currentContact.relationshipIds.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) as Relationship[] : [];
   const notes = currentContact.noteIds ? currentContact.noteIds.map(id => state.notes.find(n => n.id === id)).filter(Boolean) as Note[] : [];
 
+  // Birth date picker overlay state
+  const [isBirthDatePickerOpen, setIsBirthDatePickerOpen] = useState(false);
+  const [birthDateValue, setBirthDateValue] = useState<DynamicPrecisionDateValue>({ precision: 'none', year: null, month: null, day: null });
+
+  // Sync initial birth date to picker state when opening (parse YYYY-MM-DD as local)
+  const openBirthDatePicker = () => {
+    if (currentContact.birthDate) {
+      const b = currentContact.birthDate;
+      if (b.year && b.month && b.day) setBirthDateValue({ precision: 'day', year: b.year, month: b.month, day: b.day });
+      else if (b.year && b.month) setBirthDateValue({ precision: 'month', year: b.year, month: b.month, day: null });
+      else if (b.year) setBirthDateValue({ precision: 'year', year: b.year, month: null, day: null });
+      else setBirthDateValue({ precision: 'none', year: null, month: null, day: null });
+    } else {
+      setBirthDateValue({ precision: 'none', year: null, month: null, day: null });
+    }
+    setIsBirthDatePickerOpen(true);
+  };
+
+  const handleBirthDateConfirm = async (value: DynamicPrecisionDateValue) => {
+    try {
+      const birth = {
+        year: value.year ?? null,
+        month: value.precision === 'year' ? null : (value.month ?? null),
+        day: value.precision === 'day' ? (value.day ?? null) : null,
+      };
+      await updateContactAsync(currentContact.id, { birthDate: birth });
+      setIsBirthDatePickerOpen(false);
+    } catch (error) {
+      console.error('Failed to update birth date:', error);
+      setIsBirthDatePickerOpen(false);
+    }
+  };
+
+  const handleBirthDateCancel = () => {
+    setIsBirthDatePickerOpen(false);
+  };
+
   // Occupation editing state - moved after occupation is declared
   const [isOccupationEditing, setIsOccupationEditing] = useState(false);
   const [editOccupation, setEditOccupation] = useState(occupation?.title || '');
@@ -47,24 +103,14 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const [editOrganization, setEditOrganization] = useState(organization?.name || '');
   const organizationContentEditableRef = useRef<HTMLElement>(null);
 
-  // Format birth date
-  const formatBirthDate = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return dateString;
-      }
-      
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      };
-      
-      return date.toLocaleDateString('en-US', options);
-    } catch (error) {
-      return dateString;
-    }
+  // Format birth date without timezone conversion
+  const formatBirthDate = (birth?: Contact['birthDate']): string => {
+    if (!birth || (!birth.year && !birth.month && !birth.day)) return 'No birth date';
+    if (birth.year && !birth.month && !birth.day) return `${birth.year}`;
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    if (birth.year && birth.month && !birth.day) return `${months[birth.month - 1]}, ${birth.year}`;
+    if (birth.year && birth.month && birth.day) return `${months[birth.month - 1]} ${birth.day}, ${birth.year}`;
+    return 'No birth date';
   };
 
   // Mouse drag scrolling handlers - simpler approach
@@ -157,12 +203,16 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   };
 
   const handleNameSave = async () => {
-    console.log('Saving name:', editName.trim(), 'Current name:', currentContact.name);
-    if (editName.trim() !== currentContact.name) {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = nameContentEditableRef.current?.innerHTML ?? editName;
+    // Clean the input value to remove any HTML tags and trim whitespace
+    const cleanName = currentHtml.replace(/<[^>]*>/g, '').trim();
+    console.log('Saving name:', cleanName, 'Current name:', currentContact.name);
+    if (cleanName !== currentContact.name) {
       console.log('Updating contact with ID:', currentContact.id);
       try {
         setIsNameSaving(true);
-        await updateContactAsync(currentContact.id, { name: editName.trim() });
+        await updateContactAsync(currentContact.id, { name: cleanName });
         console.log('Name updated successfully');
       } catch (error) {
         console.error('Failed to update name:', error);
@@ -183,11 +233,21 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   };
 
   const handleNameKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       handleNameSave();
     } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
       handleNameCancel();
+    }
+  };
+
+  const handleNameKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
@@ -220,8 +280,10 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   };
 
   const handleOccupationSave = async () => {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = occupationContentEditableRef.current?.innerHTML ?? editOccupation;
     // Clean the input value to remove any HTML tags
-    const cleanOccupation = editOccupation.replace(/<[^>]*>/g, '').trim();
+    const cleanOccupation = currentHtml.replace(/<[^>]*>/g, '').trim();
     console.log('Saving occupation:', cleanOccupation, 'Current occupation:', occupation?.title);
     
     if (cleanOccupation !== (occupation?.title || '')) {
@@ -262,11 +324,21 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   };
 
   const handleOccupationKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       handleOccupationSave();
     } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
       handleOccupationCancel();
+    }
+  };
+
+  const handleOccupationKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
@@ -299,8 +371,10 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   };
 
   const handleOrganizationSave = async () => {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = organizationContentEditableRef.current?.innerHTML ?? editOrganization;
     // Clean the input value to remove any HTML tags
-    const cleanOrganization = editOrganization.replace(/<[^>]*>/g, '').trim();
+    const cleanOrganization = currentHtml.replace(/<[^>]*>/g, '').trim();
     console.log('Saving organization:', cleanOrganization, 'Current organization:', organization?.name);
     
     if (cleanOrganization !== (organization?.name || '')) {
@@ -341,11 +415,21 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   };
 
   const handleOrganizationKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       handleOrganizationSave();
     } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
       handleOrganizationCancel();
+    }
+  };
+
+  const handleOrganizationKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
@@ -359,6 +443,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   };
 
   return (
+    <>
     <div className="w-fit h-[889px] bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-[15px] flex flex-col gap-[40px]">
       {/* Contact Info Section */}
       <div className="w-fit h-fit flex flex-col gap-[10px]">
@@ -373,6 +458,8 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   html={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   onKeyDown={handleNameKeyDown}
+                  onKeyDownCapture={handleNameKeyDown}
+                  onKeyUp={handleNameKeyUp}
                   onBlur={handleNameBlur}
                   className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter font-medium text-base leading-6 text-circle-primary`}
                   style={{
@@ -411,6 +498,8 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                     html={editOccupation}
                     onChange={(e) => setEditOccupation(e.target.value)}
                     onKeyDown={handleOccupationKeyDown}
+                    onKeyDownCapture={handleOccupationKeyDown}
+                    onKeyUp={handleOccupationKeyUp}
                     onBlur={handleOccupationBlur}
                     className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
                     style={{
@@ -452,6 +541,8 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                     html={editOrganization}
                     onChange={(e) => setEditOrganization(e.target.value)}
                     onKeyDown={handleOrganizationKeyDown}
+                    onKeyDownCapture={handleOrganizationKeyDown}
+                    onKeyUp={handleOrganizationKeyUp}
                     onBlur={handleOrganizationBlur}
                     className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
                     style={{
@@ -501,9 +592,14 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         <div className="w-fit h-[20px] flex flex-col gap-0">
           <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
             <CalendarIcon width={16} height={16} className="text-circle-primary" />
-            <span className="font-inter font-normal text-sm leading-5 text-circle-primary tracking-[0.25px]">
-              {currentContact.birthDate ? formatBirthDate(currentContact.birthDate) : 'No birth date'}
-            </span>
+            <button
+              type="button"
+              onClick={openBirthDatePicker}
+              className="font-inter font-normal text-sm leading-5 text-circle-primary tracking-[0.25px] underline decoration-transparent hover:decoration-circle-primary/30 focus:decoration-circle-primary/50 rounded px-1 -mx-1"
+              title="Click to set birth date"
+            >
+              {formatBirthDate(currentContact.birthDate)}
+            </button>
           </div>
         </div>
       </div>
@@ -575,6 +671,26 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         </div>
       </div>
     </div>
+    {/* Birth Date Picker Overlay */}
+    {isBirthDatePickerOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-circle-primary/50"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) handleBirthDateCancel();
+        }}
+      >
+        <div className="mx-4">
+          <DynamicPrecisionDatePicker
+            value={birthDateValue}
+            onChange={setBirthDateValue}
+            label="Birth date picker"
+            onConfirm={handleBirthDateConfirm}
+            onCancel={handleBirthDateCancel}
+          />
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

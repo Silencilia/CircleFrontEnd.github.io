@@ -41,12 +41,18 @@ export interface Note {
   createdAt?: string;
 }
 
+export interface BirthDate {
+  year: number | null;
+  month: number | null; // 1-12
+  day: number | null;   // 1-31
+}
+
 export interface Contact {
   id: number;
   name: string;
   occupationId?: number;
   organizationId?: number;
-  birthDate?: string;
+  birthDate?: BirthDate;
   lastInteraction: number;
   subjectIds: number[];
   relationshipIds: number[];

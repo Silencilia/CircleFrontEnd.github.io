@@ -546,7 +546,7 @@ export const sampleContacts: Contact[] = [
     name: 'Alex Johnson',
     occupationId: 1,
     organizationId: 1,
-    birthDate: '1990-05-15',
+    birthDate: { year: 1990, month: 5, day: 15 },
     lastInteraction: 1734307200000, // Dec 15, 2024 timestamp
     subjectIds: [1, 2, 3, 6, 9, 13, 15, 22, 27, 29, 32],
     relationshipIds: [1, 5],
@@ -556,7 +556,7 @@ export const sampleContacts: Contact[] = [
     id: 2,
     name: 'Sarah Chen',
     // Removed occupationId and organizationId to test missing data
-    birthDate: '1988-09-22',
+    birthDate: { year: 1988, month: 9, day: 22 },
     lastInteraction: 1734048000000, // Dec 12, 2024 timestamp
     subjectIds: [4, 7, 10, 13, 14, 19, 21, 24, 26, 30],
     relationshipIds: [2, 4],
@@ -567,7 +567,7 @@ export const sampleContacts: Contact[] = [
     name: 'Michael Rodriguez',
     occupationId: 3,
     // Removed organizationId to test missing organization
-    birthDate: '1992-03-10',
+    birthDate: { year: 1992, month: 3, day: 10 },
     lastInteraction: 1733788800000, // Dec 10, 2024 timestamp
     subjectIds: [5, 8, 11, 14, 17, 19, 23, 28, 12, 16],
     relationshipIds: [1, 2],
@@ -589,7 +589,7 @@ export const sampleContacts: Contact[] = [
     name: 'David Kim',
     // Removed occupationId to test missing occupation
     organizationId: 5,
-    birthDate: '1991-07-18',
+    birthDate: { year: 1991, month: 7, day: 18 },
     lastInteraction: 1733356800000, // Dec 5, 2024 timestamp
     subjectIds: [3, 7, 10, 12, 14, 18, 21, 24, 26, 30],
     relationshipIds: [1, 2],
@@ -600,7 +600,7 @@ export const sampleContacts: Contact[] = [
     name: 'Lisa Thompson',
     occupationId: 6,
     organizationId: 6,
-    birthDate: '1987-12-03',
+    birthDate: { year: 1987, month: 12, day: 3 },
     lastInteraction: 1733184000000, // Dec 3, 2024 timestamp
     subjectIds: [1, 4, 8, 11, 15, 17, 19, 23, 28, 12],
     relationshipIds: [2, 6],
@@ -630,7 +630,7 @@ export const sampleContacts: Contact[] = [
     name: 'Robert Taylor',
     occupationId: 9,
     organizationId: 9,
-    birthDate: '1985-01-30',
+    birthDate: { year: 1985, month: 1, day: 30 },
     lastInteraction: 1732579200000, // Nov 25, 2024 timestamp
     subjectIds: [4, 7, 11, 14, 18, 19, 22, 28, 12, 15],
     relationshipIds: [2, 5],
@@ -651,7 +651,7 @@ export const sampleContacts: Contact[] = [
     name: 'Christopher Brown',
     occupationId: 11,
     organizationId: 11,
-    birthDate: '1988-12-14',
+    birthDate: { year: 1988, month: 12, day: 14 },
     lastInteraction: 1732233600000, // Nov 20, 2024 timestamp
     subjectIds: [2, 5, 9, 12, 15, 17, 21, 24, 26, 30],
     relationshipIds: [2, 4],

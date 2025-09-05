@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Contact, Subject, useContacts } from '../contexts/ContactContext';
 import { SubjectTag, OverflowTag } from './Tag';
+import { formatYyyyMmDdToLong } from '../data/strings';
 
 interface ContactCardSimpleProps {
   contact: Contact;
@@ -32,24 +33,25 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
   const visibleSubjects = safeSubjects.slice(0, maxVisibleSubjects);
   const hiddenCount = safeSubjects.length - maxVisibleSubjects;
 
-  // Format birth date from ISO format to "Month Date, Year" format
-  const formatBirthDate = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return dateString; // Return original if parsing fails
-      }
-      
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      };
-      
-      return date.toLocaleDateString('en-US', options);
-    } catch (error) {
-      return dateString; // Return original if any error occurs
+  // Format birth date without timezone conversion
+  const formatBirthDateFromFields = (birth?: Contact['birthDate']): string => {
+    if (!birth || (!birth.year && !birth.month && !birth.day)) return 'no birth date';
+    if (birth.year && !birth.month && !birth.day) return `${birth.year}`;
+    if (birth.year && birth.month && !birth.day) {
+      const months = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ];
+      return `${months[birth.month - 1]}, ${birth.year}`;
     }
+    if (birth.year && birth.month && birth.day) {
+      const months = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ];
+      return `${months[birth.month - 1]} ${birth.day}, ${birth.year}`;
+    }
+    return 'no birth date';
   };
 
   return (
@@ -67,11 +69,11 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
           {occupation?.title || 'no occupation'}
         </div>
         <div className={`font-inter text-sm leading-5 text-circle-primary truncate h-[20px] ${
-          contact.birthDate 
+          contact.birthDate && contact.birthDate.year 
             ? 'font-normal' 
             : 'font-normal italic opacity-50'
         }`}>
-          {contact.birthDate ? formatBirthDate(contact.birthDate) : 'no birth date'}
+          {formatBirthDateFromFields(contact.birthDate)}
         </div>
       </div>
       
