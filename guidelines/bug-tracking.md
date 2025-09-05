@@ -78,6 +78,13 @@ This file tracks bugs, their fixes, and key patterns to watch out for when makin
 **Fix**: Use `null` instead of `undefined`, add proper error handling
 **Prevention**: Always validate contact objects and handle async errors gracefully
 
+### UI Guideline: Center Developer Preview Components
+**Date**: [Current Date]
+**Context**: Components showcased on `app/developer/page.tsx` should be centered for consistent previews.
+**Decision**: Wrap developer preview sections with centered containers using `flex`, `items-center`, `justify-center`, and ensure inner wrappers use `mx-auto` and `items-center` as appropriate.
+**Implementation**: The DatePicker preview and all future preview sections are centered via container classes in `app/developer/page.tsx`.
+**Why**: Ensures consistent visual evaluation of components regardless of viewport width.
+
 ## Code Review Checklist
 
 Before making any edit, check:

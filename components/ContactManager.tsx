@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useContacts } from '../contexts/ContactContext';
+import { useContacts, Contact } from '../contexts/ContactContext';
+import { MONTH_NAMES } from '../data/strings';
 import { PrimaryButton, DeleteButton } from './Button';
 
 const ContactManager: React.FC = () => {
@@ -24,12 +25,23 @@ const ContactManager: React.FC = () => {
   };
 
   const handleAddContact = () => {
-    if (newContact.name && newContact.occupationId && newContact.birthDate) {
+    if (newContact.name && newContact.occupationId) {
+      let birth: Contact['birthDate'] | undefined = undefined;
+      if (newContact.birthDate) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(newContact.birthDate);
+        if (m) {
+          const year = parseInt(m[1], 10);
+          const month = parseInt(m[2], 10);
+          const day = parseInt(m[3], 10);
+          birth = { year: isNaN(year) ? null : year, month: isNaN(month) ? null : month, day: isNaN(day) ? null : day };
+        }
+      }
+
       addContact({
         name: newContact.name,
         occupationId: parseInt(newContact.occupationId),
         organizationId: newContact.organizationId ? parseInt(newContact.organizationId) : undefined,
-        birthDate: newContact.birthDate,
+        birthDate: birth,
         lastInteraction: newContact.lastInteraction ? new Date(newContact.lastInteraction).getTime() : Date.now(),
         subjectIds: newContact.subjectIds,
         relationshipIds: newContact.relationshipIds,
@@ -180,9 +192,18 @@ const ContactManager: React.FC = () => {
                 {organization && (
                   <p className="text-gray-600 text-sm mb-1">{organization.name}</p>
                 )}
-                {contact.birthDate && (
-                  <p className="text-gray-500 text-xs mb-1">Birth: {contact.birthDate}</p>
-                )}
+                {(() => {
+                  const b = contact.birthDate;
+                  let label = '';
+                  if (b && (b.year || b.month || b.day)) {
+                    if (b.year && !b.month && !b.day) label = `${b.year}`;
+                    else if (b.year && b.month && !b.day) label = `${MONTH_NAMES[b.month - 1]}, ${b.year}`;
+                    else if (b.year && b.month && b.day) label = `${MONTH_NAMES[b.month - 1]} ${b.day}, ${b.year}`;
+                  }
+                  return label ? (
+                    <p className="text-gray-500 text-xs mb-1">Birth: {label}</p>
+                  ) : null;
+                })()}
                 {contact.lastInteraction && (
                   <p className="text-gray-500 text-xs mb-2">Last: {formatTimestamp(contact.lastInteraction)}</p>
                 )}

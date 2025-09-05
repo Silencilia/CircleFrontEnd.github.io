@@ -13,3 +13,6 @@ export { default as CalendarIcon } from './CalendarIcon';
 export { default as MinimizeIcon } from './MinimizeIcon';
 export { default as MaximizeIcon } from './MaximizeIcon';
 export { default as NoteIcon } from './NoteIcon';
+export { default as ConfirmIcon } from './ConfirmIcon';
+export { default as CancelIcon } from './CancelIcon';
+export { default as DownIcon } from './DownIcon';

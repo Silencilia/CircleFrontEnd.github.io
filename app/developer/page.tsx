@@ -1,20 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import NavigationBar from '../../components/NavigationBar';
 import { DeleteTagButton, SubjectTag, RelationshipTag } from '../../components/Tag';
 import NoteCard from '../../components/NoteCard';
 import ContactCardDetail from '../../components/ContactCardDetail';
 import { useContacts } from '../../contexts/ContactContext';
+import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../../components/DatePicker';
 
 export default function DeveloperPage() {
   const { state } = useContacts();
+  const [dateValue, setDateValue] = useState<DynamicPrecisionDateValue>({ precision: 'none', year: null, month: null, day: null });
   
   return (
     <div className="flex flex-col min-h-screen bg-[#FBF7F3]">
       {/* Main content area */}
       <div className="flex-1 flex items-center justify-center py-8">
-        <div className="text-center space-y-8 w-full max-w-4xl">
+        <div className="text-center space-y-8 w-full max-w-4xl mx-auto flex flex-col items-center">
           <div>
             <h1 className="font-merriweather font-normal text-display-large text-circle-primary mb-4">
               Developer Page
@@ -24,6 +26,22 @@ export default function DeveloperPage() {
             </p>
           </div>
           
+          {/* DatePicker Section */}
+          <div className="space-y-4 w-full flex flex-col items-center">
+            <h2 className="font-inter font-semibold text-xl text-circle-primary text-center">DatePicker Component</h2>
+            <div className="w-full flex flex-col items-center">
+              <DynamicPrecisionDatePicker
+                value={dateValue}
+                onChange={setDateValue}
+                label="Birth date picker"
+              />
+              <div className="mt-3 bg-circle-neutral p-3 rounded w-[450px]">
+                <div className="font-inter text-body-small text-circle-primary">Component Data:</div>
+                <pre className="bg-circle-white p-3 rounded text-xs overflow-auto">{JSON.stringify(dateValue, null, 2)}</pre>
+              </div>
+            </div>
+          </div>
+
           {/* DeleteTagButton Review Section */}
           <div className="space-y-6">
             <h2 className="font-inter font-semibold text-xl text-circle-primary">

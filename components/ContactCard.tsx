@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Contact, Subject, useContacts } from '../contexts/ContactContext';
 import { SubjectTag, RelationshipTag, OverflowTag } from './Tag';
 import { MenuIcon } from './icons';
+import { formatYyyyMmDdToLong } from '../data/strings';
 
 interface ContactCardProps {
   contact: Contact;
@@ -36,24 +37,25 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick }) => {
     [contact.relationshipIds, state.relationships]
   );
 
-  // Format birth date from ISO format to "Month Date, Year" format
-  const formatBirthDate = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return dateString;
-      }
-      
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      };
-      
-      return date.toLocaleDateString('en-US', options);
-    } catch (error) {
-      return dateString;
+  // Format birth date without timezone conversion
+  const formatBirthDateFromFields = (birth?: Contact['birthDate']): string => {
+    if (!birth || (!birth.year && !birth.month && !birth.day)) return 'no birth date';
+    if (birth.year && !birth.month && !birth.day) return `${birth.year}`;
+    if (birth.year && birth.month && !birth.day) {
+      const months = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ];
+      return `${months[birth.month - 1]}, ${birth.year}`;
     }
+    if (birth.year && birth.month && birth.day) {
+      const months = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ];
+      return `${months[birth.month - 1]} ${birth.day}, ${birth.year}`;
+    }
+    return 'no birth date';
   };
 
   // Get the first relationship for display (if any)
@@ -174,11 +176,11 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick }) => {
         {/* Birthdate and Notes Column */}
         <div className="flex flex-col gap-0 h-fit">
           <div className={`font-inter text-sm leading-5 h-[20px] ${
-            contact.birthDate 
+            contact.birthDate && contact.birthDate.year 
               ? 'font-normal text-circle-primary' 
               : 'font-normal text-circle-primary italic opacity-50'
           }`}>
-            {contact.birthDate ? formatBirthDate(contact.birthDate) : 'no birth date'}
+            {formatBirthDateFromFields(contact.birthDate)}
           </div>
           <div className="flex flex-row items-center gap-2 flex-shrink-0">
             {/* Edit Icon */}
