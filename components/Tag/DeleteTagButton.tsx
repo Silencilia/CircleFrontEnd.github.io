@@ -1,18 +1,21 @@
 import React from 'react';
-import { DeleteIcon } from '../icons';
+import { DeleteTagIcon } from '../icons';
+import { COLORS } from '../../data/variables';
 
 interface DeleteTagButtonProps {
   onDelete: () => void;
   buttonColor?: string;
   iconStrokeColor?: string;
   className?: string;
+  size?: number;
 }
 
 const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
   onDelete,
-  buttonColor = '#FBF7F3',
-  iconStrokeColor = '#E76835',
+  buttonColor = COLORS.DELETE_TAG_FILL,
+  iconStrokeColor = COLORS.DELETE_TAG_STROKE,
   className = '',
+  size = 10,
 }) => {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling to parent tag
@@ -21,18 +24,18 @@ const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
 
   return (
     <button
+      onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
       onClick={handleClick}
       className={`
         flex items-center justify-center
-        w-[10px] h-[10px]
         rounded-[6px]
         hover:opacity-80 transition-opacity
         ${className}
       `}
-      style={{ backgroundColor: buttonColor }}
+      style={{ backgroundColor: buttonColor, width: `${size}px`, height: `${size}px` }}
       aria-label="Delete tag"
     >
-      <DeleteIcon strokeColor={iconStrokeColor} />
+      <DeleteTagIcon width={size} height={size} fillColor={buttonColor} strokeColor={iconStrokeColor} />
     </button>
   );
 };

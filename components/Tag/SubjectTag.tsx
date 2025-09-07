@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Subject, useContacts } from '../../contexts/ContactContext';
 import ContentEditable from 'react-contenteditable';
-import { DeleteIcon } from '../icons';
-import ConfirmationDialog from '../ConfirmationDialog';
+import { DeleteTagButton } from './index';
+import SubjectDeleteDialog from '../Dialogs/SubjectDeleteDialog';
 
 interface SubjectTagProps {
   subject: Subject;
@@ -157,32 +157,22 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
         
         {/* Delete button - only show when editing */}
         {isEditing && (
-          <button
-            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDeleteConfirm(true); }}
-            className="w-3 h-3 flex items-center justify-center rounded-full transition-colors bg-white hover:bg-gray-100"
-            title="Delete subject"
-          >
-            <DeleteIcon 
-              width={12} 
-              height={12} 
-              strokeColor="#E76835"
-              className="w-full h-full" 
-            />
-          </button>
+          <DeleteTagButton
+            size={12}
+            buttonColor="#FFFFFF"
+            iconStrokeColor="#E76835"
+            className="hover:bg-gray-100"
+            onDelete={() => setShowDeleteConfirm(true)}
+          />
         )}
       </div>
 
       {/* Confirmation Dialog */}
-      <ConfirmationDialog
+      <SubjectDeleteDialog
         isOpen={showDeleteConfirm}
-        title="Remove Subject"
-        message={`Are you sure you want to remove "${subject.label}" from this contact?`}
-        confirmText="Remove"
-        cancelText="Cancel"
+        subjectLabel={subject.label}
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(false)}
-        isDestructive={true}
       />
     </>
   );

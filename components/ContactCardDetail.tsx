@@ -33,6 +33,9 @@ interface ContactCardDetailProps {
 
 const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimize }) => {
   const { state, updateContactAsync, addOccupationAsync, addOrganizationAsync } = useContacts();
+  if (contact.isTrashed) {
+    return null;
+  }
   const notesContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -54,7 +57,9 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const organization = currentContact.organizationId ? state.organizations.find(org => org.id === currentContact.organizationId) : null;
   const subjects = currentContact.subjectIds ? currentContact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
   const relationships = currentContact.relationshipIds ? currentContact.relationshipIds.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) as Relationship[] : [];
-  const notes = currentContact.noteIds ? currentContact.noteIds.map(id => state.notes.find(n => n.id === id)).filter(Boolean) as Note[] : [];
+  const notes = currentContact.noteIds ? (currentContact.noteIds
+    .map(id => state.notes.find(n => n.id === id))
+    .filter((n): n is Note => Boolean(n && !n.isTrashed))) : [];
 
   // Birth date picker overlay state
   const [isBirthDatePickerOpen, setIsBirthDatePickerOpen] = useState(false);

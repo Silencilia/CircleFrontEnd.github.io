@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { Contact, Subject, useContacts } from '../contexts/ContactContext';
+import { Contact, Subject, useContacts, Relationship } from '../contexts/ContactContext';
 import { SubjectTag, RelationshipTag, OverflowTag } from './Tag';
 import { MenuIcon } from './icons';
 import { formatYyyyMmDdToLong } from '../data/strings';
@@ -7,9 +7,13 @@ import { formatYyyyMmDdToLong } from '../data/strings';
 interface ContactCardProps {
   contact: Contact;
   onMenuClick: () => void;
+  relationshipFilterIds?: number[];
 }
 
-const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick }) => {
+const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relationshipFilterIds = [] }) => {
+  if (contact.isTrashed) {
+    return null;
+  }
   const { state } = useContacts();
   const subjectsRef = useRef<HTMLDivElement>(null);
   const [visibleSubjects, setVisibleSubjects] = useState<Subject[]>([]);
@@ -58,8 +62,15 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick }) => {
     return 'no birth date';
   };
 
-  // Get the first relationship for display (if any)
-  const primaryRelationship = relationships?.[0];
+  // Prefer showing a relationship that matches the active filter (if any)
+  const primaryRelationship = useMemo(() => {
+    if (!relationships || relationships.length === 0) return undefined;
+    if (relationshipFilterIds && relationshipFilterIds.length > 0) {
+      const matched = (relationships as Relationship[]).find(r => relationshipFilterIds.includes(r.id));
+      if (matched) return matched;
+    }
+    return relationships[0] as Relationship | undefined;
+  }, [relationships, relationshipFilterIds]);
   
   // Measure how many subjects actually fit in 2 rows
   useEffect(() => {

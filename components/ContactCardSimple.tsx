@@ -8,6 +8,9 @@ interface ContactCardSimpleProps {
 }
 
 const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact }) => {
+  if (contact.isTrashed) {
+    return null;
+  }
   const { state } = useContacts();
   const [measuredTagCount, setMeasuredTagCount] = useState(0);
   

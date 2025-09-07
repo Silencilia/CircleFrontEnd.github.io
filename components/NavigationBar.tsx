@@ -60,10 +60,10 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) =
           
           {/* Memo Button */}
           <NavigationButton
+            href="/memo"
             icon={<MemoIcon width={30} height={30} />}
             label="Memo"
             isActive={currentPage === 'memo'}
-            onClick={() => {/* TODO: Implement memo navigation */}}
           />
           
           {/* Contacts Button */}

@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import ContentEditable from 'react-contenteditable';
-import { Note, useContacts } from '../contexts/ContactContext';
-import { MaximizeIcon, MinimizeIcon } from './icons';
+import { Contact, Note, useContacts } from '../contexts/ContactContext';
+import { MaximizeIcon, MinimizeIcon, DeleteIcon } from './icons';
 import { EDITING_MODE_PADDING } from '../data/variables';
 import { SaveButton, CancelButton } from './Button';
+import { contactReference } from '../data/referenceParsing';
+import ContactCardDetail from './ContactCardDetail';
 
 interface NoteCardProps {
   note: Note;
@@ -11,12 +14,16 @@ interface NoteCardProps {
 
 const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
   const { state, updateNoteAsync } = useContacts();
+  if (note.isTrashed) {
+    return null;
+  }
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(note.text);
   const [originalText, setOriginalText] = useState(note.text); // Store original for rollback
   const [isSaving, setIsSaving] = useState(false); // Add loading state
   const contentEditableRef = useRef<HTMLElement>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   
   // Get the sentiment labels from the sentiment IDs
   const sentimentLabels = (note.sentimentIds || []).map(id => {
@@ -177,22 +184,22 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
       {/* Note info - timestamp and sentiment */}
       <div className="w-[580px] flex flex-row justify-between items-start gap-[10px]">
         {/* Timestamp */}
-        <div className="flex flex-col justify-start items-start">
-          <div className="font-inter font-normal text-[14px] leading-[20px] text-circle-primary tracking-[0.25px] flex items-center">
+        <div className="flex flex-col justify-start items-start w-[115px] h-[40px]">
+          <div className="font-inter font-normal text-[14px] leading-[20px] text-circle-primary tracking-[0.25px] flex items-center w-[115px] h-[20px]">
             {date}
           </div>
-          <div className="font-inter font-normal text-[14px] leading-[20px] text-circle-primary tracking-[0.25px] flex items-center">
+          <div className="font-inter font-normal text-[14px] leading-[20px] text-circle-primary tracking-[0.25px] flex items-center w-[46px] h-[20px]">
             {time}
           </div>
         </div>
 
-        {/* Sentiment tags and menu icon row */}
-        <div className="flex flex-row justify-end items-center gap-[5px] w-fit">
-          {/* Sentiment tags */}
-          <div className="flex flex-row justify-end items-start gap-[5px]">
+        {/* Sentiment tags and action buttons */}
+        <div className="flex flex-row justify-end items-center gap-[10px] w-fit h-fit">
+          {/* Sentiment tags row */}
+          <div className="flex flex-row justify-end items-center gap-[5px] w-[242px] h-[20px]">
             {/* Sentiment tags - show up to 3 sentiments */}
             {sentimentLabels.slice(0, 3).map((label, index) => (
-              <div key={index} className="bg-circle-neutral rounded-[6px] p-[2px_5px] flex flex-row justify-center items-center">
+              <div key={index} className="bg-circle-neutral rounded-[6px] p-[2px_5px] flex flex-row justify-center items-center h-[20px]">
                 <div className="font-inter font-medium text-[11px] leading-[16px] text-circle-primary tracking-[0.5px] flex items-center justify-center text-center">
                   {label}
                 </div>
@@ -200,20 +207,38 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
             ))}
           </div>
 
-          {/* Maximize/Minimize icon button - only show when there's overflow */}
-          {hasOverflow && (
+          {/* Action buttons row */}
+          <div className="flex flex-row items-center gap-[5px] w-fit h-fit">
+            {/* Delete button */}
             <button
-              onClick={toggleExpanded}
+              onClick={async () => {
+                try {
+                  await updateNoteAsync(note.id, { isTrashed: true });
+                } catch (e) {
+                  console.error('Failed to trash note', e);
+                }
+              }}
               className="p-1 hover:bg-circle-neutral rounded transition-colors duration-200"
-              aria-label={isExpanded ? "Collapse note content" : "Expand note content"}
+              aria-label="Delete note"
             >
-              {isExpanded ? (
-                <MinimizeIcon width={16} height={16} className="text-circle-primary" />
-              ) : (
-                <MaximizeIcon width={16} height={16} className="text-circle-primary" />
-              )}
+              <DeleteIcon width={16} height={16} className="text-circle-primary" />
             </button>
-          )}
+
+            {/* Maximize/Minimize icon button - only show when there's overflow */}
+            {hasOverflow && (
+              <button
+                onClick={toggleExpanded}
+                className="p-1 hover:bg-circle-neutral rounded transition-colors duration-200"
+                aria-label={isExpanded ? "Collapse note content" : "Expand note content"}
+              >
+                {isExpanded ? (
+                  <MinimizeIcon width={16} height={16} className="text-circle-primary" />
+                ) : (
+                  <MaximizeIcon width={16} height={16} className="text-circle-primary" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -239,11 +264,25 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
           />
         ) : (
           <div 
-            onClick={handleEditClick}
+            onClick={(e) => {
+              const target = e.target as HTMLElement;
+              const isEditableText = target.dataset.editable === 'true' || !!target.closest('[data-editable="true"]');
+              if (isEditableText) {
+                handleEditClick();
+              }
+            }}
             className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200"
             title="Click to edit"
           >
-            {isExpanded ? note.text : truncatedText}
+            {contactReference(
+              isExpanded ? note.text : truncatedText,
+              state.contacts,
+              (contact) => {
+                if (contact) {
+                  setSelectedContact(contact);
+                }
+              }
+            )}
           </div>
         )}
       </div>
@@ -257,6 +296,20 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
           <CancelButton onClick={handleCancel} disabled={isSaving} />
         </div>
       )}
+      {/* Overlay for ContactCardDetail via portal to escape parent stacking contexts */}
+      {typeof window !== 'undefined' && selectedContact
+        ? createPortal(
+            (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]" onClick={(e) => { if (e.target === e.currentTarget) setSelectedContact(null); }}>
+                <ContactCardDetail 
+                  contact={selectedContact} 
+                  onMinimize={() => setSelectedContact(null)}
+                />
+              </div>
+            ),
+            document.body
+          )
+        : null}
     </div>
   );
 };

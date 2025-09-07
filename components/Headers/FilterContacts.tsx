@@ -1,18 +1,29 @@
 import React, { useState } from 'react';
+import { useContacts } from '../../contexts/ContactContext';
+import RelationshipFilterDropdown from './RelationshipFilterDropdown';
 
-const FilterContacts: React.FC = () => {
+interface FilterContactsProps {
+  onSearchChange: (query: string) => void;
+  onRelationshipFilterChange: (selectedIds: number[]) => void;
+}
+
+const FilterContacts: React.FC<FilterContactsProps> = ({
+  onSearchChange,
+  onRelationshipFilterChange,
+}) => {
+  const { state } = useContacts();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRelationship, setSelectedRelationship] = useState('All relationships');
+  const [selectedRelationshipIds, setSelectedRelationshipIds] = useState<number[]>([]);
 
-  // Placeholder filter function - to be implemented later
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    // TODO: Implement search filtering logic
+    const query = e.target.value;
+    setSearchQuery(query);
+    onSearchChange(query);
   };
 
-  const handleRelationshipChange = (relationship: string) => {
-    setSelectedRelationship(relationship);
-    // TODO: Implement relationship filtering logic
+  const handleRelationshipChange = (selectedIds: number[]) => {
+    setSelectedRelationshipIds(selectedIds);
+    onRelationshipFilterChange(selectedIds);
   };
 
   return (
@@ -38,22 +49,12 @@ const FilterContacts: React.FC = () => {
             </div>
           </div>
 
-          {/* Relationship Checker */}
-          <div className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-[25px] w-[240px] h-[30px] px-1.5">
-            <div className="flex flex-row items-center gap-4 flex-1">
-              <span className="h-5 font-inter font-medium text-sm leading-5 text-left text-circle-primary/35 pl-1.5 pr-2.5 flex-1">
-                {selectedRelationship}
-              </span>
-            </div>
-            <button
-              onClick={() => handleRelationshipChange('All relationships')}
-              className="flex items-center justify-center w-[30px] h-[30px] p-1"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 7.5L10 12.5L15 7.5" stroke="#1E1E1E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
+          {/* Relationship Filter Dropdown */}
+          <RelationshipFilterDropdown
+            relationships={state.relationships}
+            selectedRelationshipIds={selectedRelationshipIds}
+            onSelectionChange={handleRelationshipChange}
+          />
         </div>
       </div>
     </div>
