@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import HeaderContacts from '../../components/Headers/HeaderContacts';
 import ContactBook from '../../components/ContactBook';
 import NavigationBar from '../../components/NavigationBar';
@@ -8,6 +8,8 @@ import { useContacts } from '../../contexts/ContactContext';
 
 export default function ContactsPage() {
   const { state } = useContacts();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [relationshipFilterIds, setRelationshipFilterIds] = useState<number[]>([]);
 
   // Loading state
   if (state.isLoading || !state.contacts) {
@@ -21,16 +23,36 @@ export default function ContactsPage() {
     );
   }
 
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleRelationshipFilterChange = (selectedIds: number[]) => {
+    setRelationshipFilterIds(selectedIds);
+  };
+
   return (
     <div className="relative w-full min-h-screen bg-[#FBF7F3]">
       {/* HeaderContacts - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <HeaderContacts />
+        <HeaderContacts 
+          onSearchChange={handleSearchChange}
+          onRelationshipFilterChange={handleRelationshipFilterChange}
+        />
       </div>
       
-      {/* ContactBook - fills all available space between Header and NavBar */}
-      <div className="pt-[198px] pb-[80px] w-full h-full overflow-y-scroll">
-        <ContactBook contacts={state.contacts} />
+      {/* ContactBook fixed between header (198px) and navbar (80px) with its own scroll area */}
+      <div
+        className="fixed left-0 right-0 z-40"
+        style={{ top: 198, bottom: 80, overflowY: 'auto' }}
+      >
+        <div className="max-w-7xl mx-auto">
+          <ContactBook 
+            contacts={state.contacts} 
+            searchQuery={searchQuery}
+            relationshipFilterIds={relationshipFilterIds}
+          />
+        </div>
       </div>
       
       {/* NavigationBar - positioned at very bottom (80px height) */}

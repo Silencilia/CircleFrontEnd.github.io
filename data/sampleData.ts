@@ -1,4 +1,4 @@
-import { Contact, Subject, Relationship, Sentiment, Note, Organization, Occupation } from '../contexts/ContactContext';
+import { Contact, Subject, Relationship, Sentiment, Note, Organization, Occupation, Commitment } from '../contexts/ContactContext';
 
 export const sampleOrganizations: Organization[] = [
   { id: 1, name: 'TechCorp Inc.' },
@@ -98,35 +98,35 @@ export const sampleNotes: Note[] = [
   // Alex Johnson (Contact 1) - 5 notes
   {
     id: 1,
-    text: 'Had an amazing coffee meeting with Alex at the new downtown café. We discussed potential collaboration opportunities and shared insights about current market trends. The conversation was incredibly productive and we agreed to follow up next week with a concrete proposal.',
+    text: 'Had an amazing coffee meeting with {{contact:1}} at the new downtown café. We discussed potential collaboration opportunities and shared insights about current market trends. The conversation was incredibly productive and we agreed to follow up next week with a concrete proposal.',
     time: 'Dec 15, 2024 2:00 PM',
     sentimentIds: [1, 3], // excited, enthusiastic
     contactIds: [1]
   },
   {
     id: 2,
-    text: 'Met Alex at the tech conference and had an engaging discussion about AI trends. Alex shared fascinating insights about machine learning applications in their current project. This was a great networking opportunity that could lead to future collaborations.',
+    text: 'Met {{contact:1}} at the tech conference and had an engaging discussion about AI trends. {{contact:1}} shared fascinating insights about machine learning applications in their current project. This was a great networking opportunity that could lead to future collaborations.',
     time: 'Dec 10, 2024 4:30 PM',
     sentimentIds: [1], // excited
     contactIds: [1]
   },
   {
     id: 3,
-    text: 'Quick lunch meeting to discuss potential partnership opportunities. Alex mentioned they\'re actively looking for developers with React experience for their upcoming project. I promised to connect them with our development team.',
+    text: 'Quick lunch meeting to discuss potential partnership opportunities. {{contact:1}} mentioned they\'re actively looking for developers with React experience for their upcoming project. I promised to connect them with our development team.',
     time: 'Dec 5, 2024 12:00 PM',
     sentimentIds: [6], // neutral
     contactIds: [1]
   },
   {
     id: 4,
-    text: 'Phone call about project timeline concerns. Alex expressed some worries about meeting the aggressive deadline for their product launch. I offered to help review their code architecture and provide optimization suggestions.',
+    text: 'Phone call about project timeline concerns. {{contact:1}} expressed some worries about meeting the aggressive deadline for their product launch. I offered to help review their code architecture and provide optimization suggestions.',
     time: 'Nov 28, 2024 3:00 PM',
     sentimentIds: [9, 6], // concerned, neutral
     contactIds: [1]
   },
   {
     id: 5,
-    text: 'Ran into Alex at the gym and had a candid conversation about work-life balance. Alex mentioned they\'ve been working long hours recently and feeling the stress. I suggested some time management techniques that have worked for me.',
+    text: 'Ran into {{contact:1}} at the gym and had a candid conversation about work-life balance. {{contact:1}} mentioned they\'ve been working long hours recently and feeling the stress. I suggested some time management techniques that have worked for me.',
     time: 'Nov 20, 2024 6:00 PM',
     sentimentIds: [9, 7], // concerned, calm
     contactIds: [1]
@@ -135,35 +135,35 @@ export const sampleNotes: Note[] = [
   // Sarah Chen (Contact 2) - 5 notes
   {
     id: 6,
-    text: 'Team lunch meeting focused on Q1 strategy planning. Sarah led an excellent discussion about upcoming projects and resource allocation. However, some concerns were raised about the feasibility of our ambitious timeline.',
+    text: 'Team lunch meeting focused on Q1 strategy planning. {{contact:2}} led an excellent discussion about upcoming projects and resource allocation. However, some concerns were raised about the feasibility of our ambitious timeline.',
     time: 'Dec 12, 2024 12:00 PM',
     sentimentIds: [9, 8], // concerned, focused
     contactIds: [2]
   },
   {
     id: 7,
-    text: 'Had an inspiring coffee chat about Sarah\'s career development goals. She shared her strong interest in transitioning into product management and asked for advice. We discussed potential opportunities and skills she should develop.',
+    text: 'Had an inspiring coffee chat about {{contact:2}}\'s career development goals. She shared her strong interest in transitioning into product management and asked for advice. We discussed potential opportunities and skills she should develop.',
     time: 'Dec 8, 2024 10:00 AM',
     sentimentIds: [1, 5], // excited, optimistic
     contactIds: [2]
   },
   {
     id: 8,
-    text: 'Quick hallway conversation about the new design system implementation. Sarah provided valuable feedback about the color palette and suggested important improvements for accessibility compliance. Her attention to detail is impressive.',
+    text: 'Quick hallway conversation about the new design system implementation. {{contact:2}} provided valuable feedback about the color palette and suggested important improvements for accessibility compliance. Her attention to detail is impressive.',
     time: 'Dec 3, 2024 2:30 PM',
     sentimentIds: [8, 4], // focused, satisfied
     contactIds: [2]
   },
   {
     id: 9,
-    text: 'Attended the contemporary art gallery opening together. Sarah was genuinely excited about the new exhibition and we had a wonderful discussion about modern artistic trends. It was a great cultural experience that deepened our friendship.',
+    text: 'Attended the contemporary art gallery opening together. {{contact:2}} was genuinely excited about the new exhibition and we had a wonderful discussion about modern artistic trends. It was a great cultural experience that deepened our friendship.',
     time: 'Nov 25, 2024 7:00 PM',
     sentimentIds: [1, 2], // excited, happy
     contactIds: [2]
   },
   {
     id: 10,
-    text: 'Phone call regarding cross-team project collaboration challenges. Sarah mentioned some communication issues between departments that are affecting project timelines. I offered to help facilitate a meeting between the teams.',
+    text: 'Phone call regarding cross-team project collaboration challenges. {{contact:2}} mentioned some communication issues between departments that are affecting project timelines. I offered to help facilitate a meeting between the teams.',
     time: 'Nov 18, 2024 4:00 PM',
     sentimentIds: [6, 9], // neutral, concerned
     contactIds: [2]
@@ -179,28 +179,28 @@ export const sampleNotes: Note[] = [
   },
   {
     id: 12,
-    text: 'Met Michael for lunch to debrief after the failed presentation. He was clearly frustrated and disappointed with how things went. We spent time analyzing what went wrong and developing a comprehensive plan for improvement.',
+    text: 'Met {{contact:3}} for lunch to debrief after the failed presentation. He was clearly frustrated and disappointed with how things went. We spent time analyzing what went wrong and developing a comprehensive plan for improvement.',
     time: 'Dec 11, 2024 1:00 PM',
     sentimentIds: [12, 10], // disappointed, frustrated
     contactIds: [3]
   },
   {
     id: 13,
-    text: 'Coffee meeting about the upcoming project launch. Michael seemed much more confident this time and had significantly better prepared materials. It\'s encouraging to see the marked improvement in his preparation and presentation skills.',
+    text: 'Coffee meeting about the upcoming project launch. {{contact:3}} seemed much more confident this time and had significantly better prepared materials. It\'s encouraging to see the marked improvement in his preparation and presentation skills.',
     time: 'Dec 5, 2024 9:00 AM',
     sentimentIds: [5, 4], // optimistic, satisfied
     contactIds: [3]
   },
   {
     id: 14,
-    text: 'Bumped into Michael at the gym and discussed work-related stress management. He mentioned he\'s been proactively working on his presentation skills and even enrolled in public speaking classes. Great personal development initiative.',
+    text: 'Bumped into {{contact:3}} at the gym and discussed work-related stress management. He mentioned he\'s been proactively working on his presentation skills and even enrolled in public speaking classes. Great personal development initiative.',
     time: 'Nov 30, 2024 6:00 PM',
     sentimentIds: [5, 2], // optimistic, happy
     contactIds: [3]
   },
   {
     id: 15,
-    text: 'Phone call about team dynamics and productivity issues. Michael expressed concerns about some team members not contributing their fair share to project deliverables. I suggested organizing a team meeting to address these issues directly.',
+    text: 'Phone call about team dynamics and productivity issues. {{contact:3}} expressed concerns about some team members not contributing their fair share to project deliverables. I suggested organizing a team meeting to address these issues directly.',
     time: 'Nov 22, 2024 3:30 PM',
     sentimentIds: [11, 9], // worried, concerned
     contactIds: [3]
@@ -216,28 +216,28 @@ export const sampleNotes: Note[] = [
   },
   {
     id: 17,
-    text: 'Coffee meeting to discuss the next product roadmap and upcoming features. Emily was incredibly enthusiastic about her innovative ideas for user experience improvements. Her strategic thinking and creative vision continue to impress me.',
+    text: 'Coffee meeting to discuss the next product roadmap and upcoming features. {{contact:4}} was incredibly enthusiastic about her innovative ideas for user experience improvements. Her strategic thinking and creative vision continue to impress me.',
     time: 'Dec 12, 2024 11:00 AM',
     sentimentIds: [3, 1], // enthusiastic, excited
     contactIds: [4]
   },
   {
     id: 18,
-    text: 'Quick hallway conversation about recent user feedback analysis. Emily shared some fascinating insights from the latest user interviews and usability testing sessions. I offered to help analyze the quantitative data to complement her qualitative findings.',
+    text: 'Quick hallway conversation about recent user feedback analysis. {{contact:4}} shared some fascinating insights from the latest user interviews and usability testing sessions. I offered to help analyze the quantitative data to complement her qualitative findings.',
     time: 'Dec 6, 2024 3:00 PM',
     sentimentIds: [8, 6], // focused, neutral
     contactIds: [4]
   },
   {
     id: 19,
-    text: 'Attended Emily\'s workshop on user experience design principles. She delivered an outstanding presentation with deep knowledge of the subject matter. Her ability to explain complex UX concepts clearly is truly remarkable.',
+    text: 'Attended {{contact:4}}\'s workshop on user experience design principles. She delivered an outstanding presentation with deep knowledge of the subject matter. Her ability to explain complex UX concepts clearly is truly remarkable.',
     time: 'Nov 28, 2024 2:00 PM',
     sentimentIds: [4, 3], // satisfied, enthusiastic
     contactIds: [4]
   },
   {
     id: 20,
-    text: 'Phone call about improving cross-functional team collaboration. Emily mentioned some challenges with communication between different departments that are impacting project efficiency. I suggested implementing regular synchronization meetings.',
+    text: 'Phone call about improving cross-functional team collaboration. {{contact:4}} mentioned some challenges with communication between different departments that are impacting project efficiency. I suggested implementing regular synchronization meetings.',
     time: 'Nov 20, 2024 4:30 PM',
     sentimentIds: [9, 8], // concerned, focused
     contactIds: [4]
@@ -246,35 +246,35 @@ export const sampleNotes: Note[] = [
   // David Kim (Contact 5) - 5 notes
   {
     id: 21,
-    text: 'Had a great catch-up call with my former colleague David. We discussed significant industry changes and explored potential job opportunities in the market. It was wonderful to reconnect after such a long time.',
+    text: 'Had a great catch-up call with my former colleague {{contact:5}}. We discussed significant industry changes and explored potential job opportunities in the market. It was wonderful to reconnect after such a long time.',
     time: 'Dec 5, 2024 3:30 PM',
     sentimentIds: [2, 6], // happy, neutral
     contactIds: [5]
   },
   {
     id: 22,
-    text: 'Met David for lunch to discuss exciting collaboration possibilities. He shared several interesting project ideas and we thoroughly explored various ways we could work together professionally. The opportunities look very promising.',
+    text: 'Met {{contact:5}} for lunch to discuss exciting collaboration possibilities. He shared several interesting project ideas and we thoroughly explored various ways we could work together professionally. The opportunities look very promising.',
     time: 'Dec 10, 2024 12:30 PM',
     sentimentIds: [5, 3], // optimistic, enthusiastic
     contactIds: [5]
   },
   {
     id: 23,
-    text: 'Coffee meeting focused on current industry trends and market analysis. David shared some particularly insightful observations about market dynamics and provided valuable professional contacts. Excellent networking opportunity.',
+    text: 'Coffee meeting focused on current industry trends and market analysis. {{contact:5}} shared some particularly insightful observations about market dynamics and provided valuable professional contacts. Excellent networking opportunity.',
     time: 'Dec 2, 2024 10:00 AM',
     sentimentIds: [3, 4], // enthusiastic, satisfied
     contactIds: [5]
   },
   {
     id: 24,
-    text: 'Attended the startup meetup where David was presenting his innovative new venture. He delivered an impressive pitch with a compelling business model that generated significant interest from potential investors.',
+    text: 'Attended the startup meetup where {{contact:5}} was presenting his innovative new venture. He delivered an impressive pitch with a compelling business model that generated significant interest from potential investors.',
     time: 'Nov 25, 2024 7:30 PM',
     sentimentIds: [1, 3], // excited, enthusiastic
     contactIds: [5]
   },
   {
     id: 25,
-    text: 'Phone call about mentorship and business scaling advice. David asked for guidance on managing his rapidly growing team and scaling business operations effectively. I shared lessons learned from my own entrepreneurial experience.',
+    text: 'Phone call about mentorship and business scaling advice. {{contact:5}} asked for guidance on managing his rapidly growing team and scaling business operations effectively. I shared lessons learned from my own entrepreneurial experience.',
     time: 'Nov 18, 2024 2:00 PM',
     sentimentIds: [4, 7], // satisfied, calm
     contactIds: [5]
@@ -283,35 +283,35 @@ export const sampleNotes: Note[] = [
   // Lisa Thompson (Contact 6) - 5 notes
   {
     id: 26,
-    text: 'Attended Lisa\'s strategic planning workshop at the conference center. She demonstrated excellent facilitation skills and shared deep expertise in organizational strategy. The session provided valuable insights for our business planning.',
+    text: 'Attended {{contact:6}}\'s strategic planning workshop at the conference center. She demonstrated excellent facilitation skills and shared deep expertise in organizational strategy. The session provided valuable insights for our business planning.',
     time: 'Dec 3, 2024 1:00 PM',
     sentimentIds: [4, 8], // satisfied, focused
     contactIds: [6]
   },
   {
     id: 27,
-    text: 'Coffee meeting to explore potential project collaboration opportunities. Lisa shared fascinating case studies from her consulting work and we discussed various partnership possibilities that could benefit both our organizations.',
+    text: 'Coffee meeting to explore potential project collaboration opportunities. {{contact:6}} shared fascinating case studies from her consulting work and we discussed various partnership possibilities that could benefit both our organizations.',
     time: 'Dec 8, 2024 9:00 AM',
     sentimentIds: [6, 5], // neutral, optimistic
     contactIds: [6]
   },
   {
     id: 28,
-    text: 'Brief hallway conversation about valuable industry insights. Lisa mentioned some interesting trends she\'s observed through her extensive consulting work with various clients. Her perspective is always enlightening and well-informed.',
+    text: 'Brief hallway conversation about valuable industry insights. {{contact:6}} mentioned some interesting trends she\'s observed through her extensive consulting work with various clients. Her perspective is always enlightening and well-informed.',
     time: 'Dec 1, 2024 4:00 PM',
     sentimentIds: [3, 8], // enthusiastic, focused
     contactIds: [6]
   },
   {
     id: 29,
-    text: 'Met Lisa at the business networking event downtown. She was effectively representing her consulting firm and actively seeking new client relationships. Her professional networking skills and business acumen are truly impressive.',
+    text: 'Met {{contact:6}} at the business networking event downtown. She was effectively representing her consulting firm and actively seeking new client relationships. Her professional networking skills and business acumen are truly impressive.',
     time: 'Nov 27, 2024 6:00 PM',
     sentimentIds: [2, 4], // happy, satisfied
     contactIds: [6]
   },
   {
     id: 30,
-    text: 'Phone call to provide feedback on Lisa\'s consulting proposal. She asked for my professional opinion on a comprehensive proposal she was developing for a major client. I provided detailed suggestions for improvement and refinement.',
+    text: 'Phone call to provide feedback on {{contact:6}}\'s consulting proposal. She asked for my professional opinion on a comprehensive proposal she was developing for a major client. I provided detailed suggestions for improvement and refinement.',
     time: 'Nov 20, 2024 3:00 PM',
     sentimentIds: [6, 8], // neutral, focused
     contactIds: [6]
@@ -320,35 +320,35 @@ export const sampleNotes: Note[] = [
   // James Wilson (Contact 7) - 5 notes
   {
     id: 31,
-    text: 'Attended James\'s presentation on digital transformation strategies at the business conference. He delivered valuable insights that are highly relevant to our industry\'s current challenges and future opportunities.',
+    text: 'Attended {{contact:7}}\'s presentation on digital transformation strategies at the business conference. He delivered valuable insights that are highly relevant to our industry\'s current challenges and future opportunities.',
     time: 'Dec 1, 2024 2:00 PM',
     sentimentIds: [4, 8], // satisfied, focused
     contactIds: [7]
   },
   {
     id: 32,
-    text: 'Coffee meeting to discuss potential cross-industry collaboration initiatives. James shared innovative ideas about partnerships between different sectors and how they can drive innovation and mutual growth.',
+    text: 'Coffee meeting to discuss potential cross-industry collaboration initiatives. {{contact:7}} shared innovative ideas about partnerships between different sectors and how they can drive innovation and mutual growth.',
     time: 'Dec 6, 2024 10:30 AM',
     sentimentIds: [6, 3], // neutral, enthusiastic
     contactIds: [7]
   },
   {
     id: 33,
-    text: 'Lunch meeting focused on current market trends and consumer behavior analysis. James provided insightful observations about changing customer preferences and emerging market opportunities that could impact our business strategy.',
+    text: 'Lunch meeting focused on current market trends and consumer behavior analysis. {{contact:7}} provided insightful observations about changing customer preferences and emerging market opportunities that could impact our business strategy.',
     time: 'Dec 2, 2024 12:00 PM',
     sentimentIds: [8, 5], // focused, optimistic
     contactIds: [7]
   },
   {
     id: 34,
-    text: 'Attended the innovation summit where James moderated a panel on emerging technologies. His excellent moderation skills and comprehensive knowledge of technological trends made for an engaging and informative session.',
+    text: 'Attended the innovation summit where {{contact:7}} moderated a panel on emerging technologies. His excellent moderation skills and comprehensive knowledge of technological trends made for an engaging and informative session.',
     time: 'Nov 29, 2024 3:30 PM',
     sentimentIds: [4, 3], // satisfied, enthusiastic
     contactIds: [7]
   },
   {
     id: 35,
-    text: 'Phone call about strategic partnership challenges and opportunities. James mentioned some difficulties with their current partnerships and asked for advice based on my experience. I shared best practices for partnership management.',
+    text: 'Phone call about strategic partnership challenges and opportunities. {{contact:7}} mentioned some difficulties with their current partnerships and asked for advice based on my experience. I shared best practices for partnership management.',
     time: 'Nov 22, 2024 4:00 PM',
     sentimentIds: [6, 9], // neutral, concerned
     contactIds: [7]
@@ -357,35 +357,35 @@ export const sampleNotes: Note[] = [
   // Maria Garcia (Contact 8) - 5 notes
   {
     id: 36,
-    text: 'Attended Maria\'s presentation at the UX research conference about user behavior patterns. Her research findings were absolutely fascinating and her presentation skills were exceptional. Valuable insights for our product development.',
+    text: 'Attended {{contact:8}}\'s presentation at the UX research conference about user behavior patterns. Her research findings were absolutely fascinating and her presentation skills were exceptional. Valuable insights for our product development.',
     time: 'Nov 28, 2024 11:00 AM',
     sentimentIds: [1, 4], // excited, satisfied
     contactIds: [8]
   },
   {
     id: 37,
-    text: 'Coffee meeting to explore research collaboration opportunities. Maria shared interesting methodologies from her academic work and we discussed potential joint research projects that could benefit both our organizations.',
+    text: 'Coffee meeting to explore research collaboration opportunities. {{contact:8}} shared interesting methodologies from her academic work and we discussed potential joint research projects that could benefit both our organizations.',
     time: 'Dec 4, 2024 2:00 PM',
     sentimentIds: [3, 5], // enthusiastic, optimistic
     contactIds: [8]
   },
   {
     id: 38,
-    text: 'Quick hallway conversation about recent user testing results. Maria mentioned some particularly interesting findings from her latest usability studies that could provide valuable insights for our product development roadmap.',
+    text: 'Quick hallway conversation about recent user testing results. {{contact:8}} mentioned some particularly interesting findings from her latest usability studies that could provide valuable insights for our product development roadmap.',
     time: 'Nov 30, 2024 3:00 PM',
     sentimentIds: [6, 8], // neutral, focused
     contactIds: [8]
   },
   {
     id: 39,
-    text: 'Attended the academic symposium where Maria chaired a session on human-computer interaction. Her academic leadership and deep expertise in the field were clearly demonstrated through her excellent session management.',
+    text: 'Attended the academic symposium where {{contact:8}} chaired a session on human-computer interaction. Her academic leadership and deep expertise in the field were clearly demonstrated through her excellent session management.',
     time: 'Nov 25, 2024 1:30 PM',
     sentimentIds: [4, 3], // satisfied, enthusiastic
     contactIds: [8]
   },
   {
     id: 40,
-    text: 'Phone call to provide feedback on Maria\'s research proposal. She asked for my input on a comprehensive research proposal she was developing for a major grant application. I provided constructive suggestions for improvement.',
+    text: 'Phone call to provide feedback on {{contact:8}}\'s research proposal. She asked for my input on a comprehensive research proposal she was developing for a major grant application. I provided constructive suggestions for improvement.',
     time: 'Nov 18, 2024 2:30 PM',
     sentimentIds: [6, 8], // neutral, focused
     contactIds: [8]
@@ -394,35 +394,35 @@ export const sampleNotes: Note[] = [
   // Robert Taylor (Contact 9) - 5 notes
   {
     id: 41,
-    text: 'Attended Robert\'s presentation at the sales conference on relationship building strategies. He shared excellent sales insights and valuable networking techniques that could be applied across various business contexts.',
+    text: 'Attended {{contact:9}}\'s presentation at the sales conference on relationship building strategies. He shared excellent sales insights and valuable networking techniques that could be applied across various business contexts.',
     time: 'Nov 25, 2024 10:00 AM',
     sentimentIds: [4, 3], // satisfied, enthusiastic
     contactIds: [9]
   },
   {
     id: 42,
-    text: 'Coffee meeting to discuss effective sales strategies and techniques. Robert shared interesting approaches to customer acquisition and retention that have proven successful in his experience. Very valuable professional insights.',
+    text: 'Coffee meeting to discuss effective sales strategies and techniques. {{contact:9}} shared interesting approaches to customer acquisition and retention that have proven successful in his experience. Very valuable professional insights.',
     time: 'Dec 2, 2024 3:00 PM',
     sentimentIds: [3, 8], // enthusiastic, focused
     contactIds: [9]
   },
   {
     id: 43,
-    text: 'Lunch meeting about market expansion opportunities and challenges. Robert provided insights about entering new markets and building effective sales teams in different regions. His strategic thinking is impressive.',
+    text: 'Lunch meeting about market expansion opportunities and challenges. {{contact:9}} provided insights about entering new markets and building effective sales teams in different regions. His strategic thinking is impressive.',
     time: 'Nov 28, 2024 12:30 PM',
     sentimentIds: [6, 5], // neutral, optimistic
     contactIds: [9]
   },
   {
     id: 44,
-    text: 'Met Robert at the business networking event where he was representing his company. He was actively seeking new business opportunities and demonstrated excellent networking skills throughout the evening.',
+    text: 'Met {{contact:9}} at the business networking event where he was representing his company. He was actively seeking new business opportunities and demonstrated excellent networking skills throughout the evening.',
     time: 'Nov 22, 2024 6:30 PM',
     sentimentIds: [2, 4], // happy, satisfied
     contactIds: [9]
   },
   {
     id: 45,
-    text: 'Phone call about sales training and team development challenges. Robert mentioned some difficulties with his sales team\'s performance and asked for advice on training programs. I shared relevant resources and recommendations.',
+    text: 'Phone call about sales training and team development challenges. {{contact:9}} mentioned some difficulties with his sales team\'s performance and asked for advice on training programs. I shared relevant resources and recommendations.',
     time: 'Nov 15, 2024 4:30 PM',
     sentimentIds: [6, 9], // neutral, concerned
     contactIds: [9]
@@ -431,35 +431,35 @@ export const sampleNotes: Note[] = [
   // Jennifer Lee (Contact 10) - 5 notes
   {
     id: 46,
-    text: 'Attended Jennifer\'s content strategy workshop on storytelling in marketing. She delivered an outstanding presentation with valuable insights about content creation and audience engagement. Excellent professional development opportunity.',
+    text: 'Attended {{contact:10}}\'s content strategy workshop on storytelling in marketing. She delivered an outstanding presentation with valuable insights about content creation and audience engagement. Excellent professional development opportunity.',
     time: 'Nov 22, 2024 2:00 PM',
     sentimentIds: [4, 3], // satisfied, enthusiastic
     contactIds: [10]
   },
   {
     id: 47,
-    text: 'Coffee meeting to discuss potential content collaboration projects. Jennifer shared creative content ideas and we explored various partnership opportunities that could enhance both our marketing efforts significantly.',
+    text: 'Coffee meeting to discuss potential content collaboration projects. {{contact:10}} shared creative content ideas and we explored various partnership opportunities that could enhance both our marketing efforts significantly.',
     time: 'Nov 29, 2024 11:00 AM',
     sentimentIds: [3, 5], // enthusiastic, optimistic
     contactIds: [10]
   },
   {
     id: 48,
-    text: 'Lunch meeting about current marketing trends and industry evolution. Jennifer provided insights about content marketing\'s changing landscape and shared effective audience engagement strategies from her recent campaigns.',
+    text: 'Lunch meeting about current marketing trends and industry evolution. {{contact:10}} provided insights about content marketing\'s changing landscape and shared effective audience engagement strategies from her recent campaigns.',
     time: 'Nov 26, 2024 1:00 PM',
     sentimentIds: [6, 8], // neutral, focused
     contactIds: [10]
   },
   {
     id: 49,
-    text: 'Attended the digital marketing summit where Jennifer presented on social media strategies. She demonstrated excellent digital marketing expertise and provided practical tips that attendees could implement immediately.',
+    text: 'Attended the digital marketing summit where {{contact:10}} presented on social media strategies. She demonstrated excellent digital marketing expertise and provided practical tips that attendees could implement immediately.',
     time: 'Nov 20, 2024 3:00 PM',
     sentimentIds: [4, 1], // satisfied, excited
     contactIds: [10]
   },
   {
     id: 50,
-    text: 'Phone call to provide feedback on Jennifer\'s content calendar proposal. She asked for my professional opinion on a comprehensive content calendar she was developing for a major client campaign. I provided detailed suggestions.',
+    text: 'Phone call to provide feedback on {{contact:10}}\'s content calendar proposal. She asked for my professional opinion on a comprehensive content calendar she was developing for a major client campaign. I provided detailed suggestions.',
     time: 'Nov 15, 2024 2:00 PM',
     sentimentIds: [6, 8], // neutral, focused
     contactIds: [10]
@@ -468,35 +468,35 @@ export const sampleNotes: Note[] = [
   // Christopher Brown (Contact 11) - 5 notes
   {
     id: 51,
-    text: 'Attended Christopher\'s presentation at the operations conference on process optimization strategies. He shared excellent operational insights and provided practical implementation tips that could significantly improve our efficiency.',
+    text: 'Attended {{contact:11}}\'s presentation at the operations conference on process optimization strategies. He shared excellent operational insights and provided practical implementation tips that could significantly improve our efficiency.',
     time: 'Nov 20, 2024 9:00 AM',
     sentimentIds: [4, 3], // satisfied, enthusiastic
     contactIds: [11]
   },
   {
     id: 52,
-    text: 'Coffee meeting to discuss operational efficiency improvements and best practices. Christopher shared innovative approaches to streamlining business processes that have proven effective in his organization. Very valuable insights.',
+    text: 'Coffee meeting to discuss operational efficiency improvements and best practices. {{contact:11}} shared innovative approaches to streamlining business processes that have proven effective in his organization. Very valuable insights.',
     time: 'Nov 27, 2024 2:30 PM',
     sentimentIds: [3, 8], // enthusiastic, focused
     contactIds: [11]
   },
   {
     id: 53,
-    text: 'Lunch meeting about team management and leadership strategies. Christopher provided insights about building high-performing teams and effectively managing remote workforces in today\'s business environment.',
+    text: 'Lunch meeting about team management and leadership strategies. {{contact:11}} provided insights about building high-performing teams and effectively managing remote workforces in today\'s business environment.',
     time: 'Nov 24, 2024 12:00 PM',
     sentimentIds: [6, 5], // neutral, optimistic
     contactIds: [11]
   },
   {
     id: 54,
-    text: 'Attended the business process workshop where Christopher facilitated a session on lean methodology implementation. His facilitation skills and deep expertise in process improvement were clearly demonstrated.',
+    text: 'Attended the business process workshop where {{contact:11}} facilitated a session on lean methodology implementation. His facilitation skills and deep expertise in process improvement were clearly demonstrated.',
     time: 'Nov 18, 2024 1:00 PM',
     sentimentIds: [4, 8], // satisfied, focused
     contactIds: [11]
   },
   {
     id: 55,
-    text: 'Phone call about process improvement challenges and solutions. Christopher mentioned some difficulties with their current business processes and asked for advice based on my experience. I shared relevant best practices.',
+    text: 'Phone call about process improvement challenges and solutions. {{contact:11}} mentioned some difficulties with their current business processes and asked for advice based on my experience. I shared relevant best practices.',
     time: 'Nov 12, 2024 3:30 PM',
     sentimentIds: [6, 9], // neutral, concerned
     contactIds: [11]
@@ -505,39 +505,54 @@ export const sampleNotes: Note[] = [
   // Amanda Davis (Contact 12) - 5 notes
   {
     id: 56,
-    text: 'Attended Amanda\'s presentation at the business analysis conference on data-driven decision making. She shared excellent analytical insights and practical applications that could significantly improve our business intelligence.',
+    text: 'Attended {{contact:12}}\'s presentation at the business analysis conference on data-driven decision making. She shared excellent analytical insights and practical applications that could significantly improve our business intelligence.',
     time: 'Nov 18, 2024 11:00 AM',
     sentimentIds: [4, 3], // satisfied, enthusiastic
     contactIds: [12]
   },
   {
     id: 57,
-    text: 'Coffee meeting to discuss analytics collaboration and data science opportunities. Amanda shared interesting data analysis techniques and we explored potential joint projects that could enhance our analytical capabilities.',
+    text: 'Coffee meeting to discuss analytics collaboration and data science opportunities. {{contact:12}} shared interesting data analysis techniques and we explored potential joint projects that could enhance our analytical capabilities.',
     time: 'Nov 25, 2024 10:00 AM',
     sentimentIds: [3, 5], // enthusiastic, optimistic
     contactIds: [12]
   },
   {
     id: 58,
-    text: 'Lunch meeting about business intelligence implementation and dashboard development. Amanda provided insights about implementing BI tools effectively and shared best practices for building comprehensive data dashboards.',
+    text: 'Lunch meeting about business intelligence implementation and dashboard development. {{contact:12}} provided insights about implementing BI tools effectively and shared best practices for building comprehensive data dashboards.',
     time: 'Nov 22, 2024 12:30 PM',
     sentimentIds: [6, 8], // neutral, focused
     contactIds: [12]
   },
   {
     id: 59,
-    text: 'Attended the data analytics workshop where Amanda led a session on predictive modeling techniques. Her analytical skills and practical knowledge of advanced modeling techniques were truly impressive.',
+    text: 'Attended the data analytics workshop where {{contact:12}} led a session on predictive modeling techniques. Her analytical skills and practical knowledge of advanced modeling techniques were truly impressive.',
     time: 'Nov 16, 2024 2:00 PM',
     sentimentIds: [4, 1], // satisfied, excited
     contactIds: [12]
   },
   {
     id: 60,
-    text: 'Phone call to provide feedback on Amanda\'s data governance framework proposal. She asked for my input on a comprehensive framework she was developing for organizational data management. I provided constructive suggestions.',
+    text: 'Phone call to provide feedback on {{contact:12}}\'s data governance framework proposal. She asked for my input on a comprehensive framework she was developing for organizational data management. I provided constructive suggestions.',
     time: 'Nov 10, 2024 4:00 PM',
     sentimentIds: [6, 8], // neutral, focused
     contactIds: [12]
   }
+];
+
+export const sampleCommitments: Commitment[] = [
+  { id: 1, text: 'Follow up with Alex about proposal draft', time: 'Dec 16, 2024 09:00', contactIds: [1], isTrashed: false },
+  { id: 2, text: 'Send portfolio to Sarah', time: 'Dec 17, 2024 14:00', contactIds: [2], isTrashed: false },
+  { id: 3, text: 'Book coffee with Michael next week', time: 'Dec 18, 2024 10:00', contactIds: [3], isTrashed: false },
+  { id: 4, text: 'Email Emily UX research summary', time: 'Dec 19, 2024 11:30', contactIds: [4], isTrashed: false },
+  { id: 5, text: 'Share market report with David', time: 'Dec 20, 2024 16:00', contactIds: [5], isTrashed: false },
+  { id: 6, text: 'Schedule strategy call with Lisa', time: 'Dec 21, 2024 13:00', contactIds: [6], isTrashed: false },
+  { id: 7, text: 'Introduce James to product team', time: 'Dec 22, 2024 15:00', contactIds: [7], isTrashed: false },
+  { id: 8, text: 'Review Maria’s paper draft', time: 'Dec 23, 2024 18:00', contactIds: [8], isTrashed: false },
+  { id: 9, text: 'Prep sales deck for Robert', time: 'Dec 24, 2024 09:30', contactIds: [9], isTrashed: false },
+  { id: 10, text: 'Outline content plan for Jennifer', time: 'Dec 26, 2024 08:30', contactIds: [10], isTrashed: false },
+  { id: 11, text: 'Send ops checklist to Christopher', time: 'Dec 27, 2024 17:00', contactIds: [11], isTrashed: false },
+  { id: 12, text: 'Provide BI feedback to Amanda', time: 'Dec 28, 2024 12:00', contactIds: [12], isTrashed: false },
 ];
 
 export const sampleContacts: Contact[] = [
@@ -676,7 +691,8 @@ export function getSampleData() {
     occupations: sampleOccupations,
     relationships: sampleRelationships,
     sentiments: sampleSentiments,
-    notes: sampleNotes
+    notes: sampleNotes,
+    commitments: sampleCommitments
   };
 }
 
@@ -688,7 +704,8 @@ let mutableSampleData = {
   occupations: [...sampleOccupations],
   relationships: [...sampleRelationships],
   sentiments: [...sampleSentiments],
-  notes: [...sampleNotes]
+  notes: [...sampleNotes],
+  commitments: [...sampleCommitments]
 };
 
 export function getMutableSampleData() {
@@ -708,7 +725,8 @@ export function resetMutableSampleData() {
     occupations: [...sampleOccupations],
     relationships: [...sampleRelationships],
     sentiments: [...sampleSentiments],
-    notes: [...sampleNotes]
+    notes: [...sampleNotes],
+    commitments: [...sampleCommitments]
   };
   return mutableSampleData;
 }

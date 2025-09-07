@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import NavigationBar from '../../components/NavigationBar';
 import { DeleteTagButton, SubjectTag, RelationshipTag } from '../../components/Tag';
 import NoteCard from '../../components/NoteCard';
+import CommitmentCard from '../../components/CommitmentCard';
 import ContactCardDetail from '../../components/ContactCardDetail';
 import { useContacts } from '../../contexts/ContactContext';
 import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../../components/DatePicker';
@@ -138,7 +139,7 @@ export default function DeveloperPage() {
             </h2>
             
             <div className="flex flex-col items-center space-y-4">
-              {state.notes.slice(0, 3).map((note) => (
+              {state.notes.filter(n => !n.isTrashed).slice(0, 3).map((note) => (
                 <NoteCard key={note.id} note={note} />
               ))}
             </div>
@@ -151,6 +152,24 @@ export default function DeveloperPage() {
             </div>
           </div>
 
+
+          {/* CommitmentCard Section */}
+          <div className="space-y-6">
+            <h2 className="font-inter font-semibold text-xl text-circle-primary">
+              CommitmentCard Component
+            </h2>
+            <div className="flex flex-row flex-wrap gap-4 items-start justify-center">
+              {state.commitments.filter(c => !c.isTrashed).slice(0, 4).map((c) => (
+                <CommitmentCard key={c.id} commitment={c} />
+              ))}
+            </div>
+            <div className="text-xs text-gray-500 max-w-md mx-auto text-center">
+              <p>• Shows due date/time and description</p>
+              <p>• Text truncates to 80px when collapsed; expands with Maximize</p>
+              <p>• Uses DeleteIcon and Maximize/Minimize icons like NoteCard</p>
+            </div>
+          </div>
+
           {/* ContactCardDetail Section */}
           <div className="space-y-6">
             <h2 className="font-inter font-semibold text-xl text-circle-primary">
@@ -158,7 +177,7 @@ export default function DeveloperPage() {
             </h2>
             
             <div className="flex flex-col items-center space-y-4">
-              {state.contacts.slice(0, 1).map((contact) => (
+              {state.contacts.filter(c => !c.isTrashed).slice(0, 1).map((contact) => (
                 <ContactCardDetail 
                   key={contact.id} 
                   contact={contact}

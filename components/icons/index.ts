@@ -16,3 +16,4 @@ export { default as NoteIcon } from './NoteIcon';
 export { default as ConfirmIcon } from './ConfirmIcon';
 export { default as CancelIcon } from './CancelIcon';
 export { default as DownIcon } from './DownIcon';
+export { default as DeleteTagIcon } from './DeleteTagIcon';

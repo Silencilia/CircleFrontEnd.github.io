@@ -100,3 +100,15 @@ export function formatYyyyMmDdToLong(dateStr: string): string {
   const monthName = MONTH_NAMES[mo - 1];
   return `${monthName} ${d}, ${y}`;
 }
+
+// Replace template tokens like {{contact:ID}} with the contact's current name
+import { Contact } from '../contexts/ContactContext';
+export function resolveContactTokens(text: string, contacts: Contact[]): string {
+  if (!text) return text;
+  const re = /\{\{\s*contact\s*:\s*(\d+)\s*\}\}/g;
+  return text.replace(re, (_match, idStr) => {
+    const id = Number(idStr);
+    const contact = contacts?.find(c => c.id === id);
+    return contact?.name ?? _match;
+  });
+}

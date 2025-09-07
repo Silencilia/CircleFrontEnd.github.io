@@ -1,23 +1,23 @@
 import React from 'react';
-import TitleContacts from './TitleContacts';
-import FilterContacts from './FilterContacts';
+import TitleMemo from './TitleMemo';
+import FilterMemo from './FilterMemo';
 
-interface HeaderContactsProps {
+interface HeaderMemoProps {
   onSearchChange: (query: string) => void;
   onRelationshipFilterChange: (selectedIds: number[]) => void;
 }
 
-const HeaderContacts: React.FC<HeaderContactsProps> = ({
+const HeaderMemo: React.FC<HeaderMemoProps> = ({
   onSearchChange,
   onRelationshipFilterChange,
 }) => {
   return (
     <div className="w-full bg-circle-neutral flex flex-col gap-0">
       {/* TitleContacts - Above */}
-      <TitleContacts />
+      <TitleMemo />
       
-      {/* FilterContacts - Below */}
-      <FilterContacts 
+      {/* FilterMemo - Below */}
+      <FilterMemo 
         onSearchChange={onSearchChange}
         onRelationshipFilterChange={onRelationshipFilterChange}
       />
@@ -25,4 +25,4 @@ const HeaderContacts: React.FC<HeaderContactsProps> = ({
   );
 };
 
-export default HeaderContacts;
+export default HeaderMemo;

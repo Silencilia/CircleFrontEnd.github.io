@@ -25,3 +25,9 @@ export const LAYOUT = {
 export const CARD_HEIGHTS = LAYOUT.CARD_HEIGHTS;
 export const SPACING = LAYOUT.SPACING;
 export const EDITING_MODE_PADDING = LAYOUT.EDITING_MODE_PADDING;
+
+// Color variables for tag controls
+export const COLORS = {
+  DELETE_TAG_FILL: '#FBF7F3',
+  DELETE_TAG_STROKE: '#E76835',
+} as const;

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useContacts } from '../../contexts/ContactContext';
 import RelationshipFilterDropdown from './RelationshipFilterDropdown';
 
-interface FilterContactsProps {
+interface FilterMemoProps {
   onSearchChange: (query: string) => void;
   onRelationshipFilterChange: (selectedIds: number[]) => void;
 }
 
-const FilterContacts: React.FC<FilterContactsProps> = ({
+const FilterMemo: React.FC<FilterMemoProps> = ({
   onSearchChange,
   onRelationshipFilterChange,
 }) => {
@@ -41,7 +41,7 @@ const FilterContacts: React.FC<FilterContactsProps> = ({
               </div>
               <input
                 type="text"
-                placeholder="Search contacts"
+                placeholder="Search memos"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="h-5 font-inter font-medium text-sm leading-5 text-left text-circle-primary/35 placeholder-circle-primary/35 focus:outline-none pl-1.5 pr-2.5 flex-1"
@@ -61,4 +61,4 @@ const FilterContacts: React.FC<FilterContactsProps> = ({
   );
 };
 
-export default FilterContacts;
+export default FilterMemo;

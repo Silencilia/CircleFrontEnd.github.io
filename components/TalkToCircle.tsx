@@ -34,7 +34,7 @@ const TalkToCircle: React.FC = () => {
           </div>
           
           {/* Input Section */}
-          <div className="bg-circle-white border border-circle-neutral-variant rounded-[25px] p-0 flex items-center justify-between gap-[20px] w-full min-h-[48px] py-1">
+          <div className="bg-circle-white border border-circle-neutral-variant rounded-full p-0 flex items-center justify-between gap-[20px] w-full min-h-[48px] py-1">
             <div className="flex items-center gap-4 flex-1 px-1.5">
               {/* File Upload Button */}
               <IconButton 

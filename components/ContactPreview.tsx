@@ -73,8 +73,8 @@ const ContactPreview: React.FC<ContactPreviewProps> = ({ contacts }) => {
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // Use contacts directly without strict validation for now
-  const validContacts = contacts || [];
+  // Use contacts directly without strict validation for now, filter out trashed
+  const validContacts = (contacts || []).filter(c => !c.isTrashed);
 
   return (
     <div className="w-full bg-circle-neutral px-4 pt-0 pb-6">
