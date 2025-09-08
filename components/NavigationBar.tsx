@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { CircleIcon, MemoIcon, ContactsIcon, UserIcon, DevIcon } from './icons';
+import { CircleIcon, DraftIcon, MemoIcon, ContactsIcon, DevIcon } from './icons';
 import { NavigationButton } from './Button';
 
 interface NavigationBarProps {
-  currentPage?: 'note' | 'memo' | 'contacts' | 'user' | 'developer';
+  currentPage?: 'note' | 'draft' | 'memo' | 'contacts' | 'user' | 'developer';
 }
 
 /**
@@ -27,6 +27,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) =
       const newHeight = `calc(${buttonHeight} + ${padding})`;
       setNavigationBarHeight(newHeight);
       console.log('NavigationBarHeight:', newHeight); // Add this line
+      // Expose height globally so pages can offset content and avoid overlap
+      document.documentElement.style.setProperty('--NavigationBarHeight', newHeight);
     };
 
     // Set initial height
@@ -58,6 +60,14 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) =
             isActive={currentPage === 'note'}
           />
           
+          {/* Draft Button */}
+          <NavigationButton
+            href="/draft"
+            icon={<DraftIcon width={30} height={30} />}
+            label="Draft"
+            isActive={currentPage === 'draft'}
+          />
+          
           {/* Memo Button */}
           <NavigationButton
             href="/memo"
@@ -74,14 +84,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) =
             isActive={currentPage === 'contacts'}
           />
           
-          {/* User Button */}
-          <NavigationButton
-            icon={<UserIcon width={30} height={30} />}
-            label="User"
-            isActive={currentPage === 'user'}
-            onClick={() => {/* TODO: Implement user navigation */}}
-          />
-
           {/* Dev Button */}
           <NavigationButton
             href="/developer"

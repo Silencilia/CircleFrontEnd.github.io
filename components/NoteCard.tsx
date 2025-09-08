@@ -6,7 +6,7 @@ import { MaximizeIcon, MinimizeIcon, DeleteIcon } from './icons';
 import { EDITING_MODE_PADDING } from '../data/variables';
 import { SaveButton, CancelButton } from './Button';
 import { contactReference } from '../data/referenceParsing';
-import ContactCardDetail from './ContactCardDetail';
+import ContactCardDetail, { isContactDetailOpen } from './ContactCardDetail';
 
 interface NoteCardProps {
   note: Note;
@@ -279,6 +279,10 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
               state.contacts,
               (contact) => {
                 if (contact) {
+                  // Prevent opening if this contact's detail is already open anywhere
+                  if (isContactDetailOpen(contact.id)) {
+                    return;
+                  }
                   setSelectedContact(contact);
                 }
               }

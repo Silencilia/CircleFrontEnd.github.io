@@ -1,4 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import ContactCardDetail from './ContactCardDetail';
 import ContactCardSimple from './ContactCardSimple';
 import { Contact, Subject } from '../contexts/ContactContext';
 
@@ -8,6 +10,7 @@ interface ContactPreviewProps {
 
 const ContactPreview: React.FC<ContactPreviewProps> = ({ contacts }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -78,7 +81,7 @@ const ContactPreview: React.FC<ContactPreviewProps> = ({ contacts }) => {
 
   return (
     <div className="w-full bg-circle-neutral px-4 pt-0 pb-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         <div 
           ref={scrollRef}
           className={`flex gap-4 overflow-x-auto pb-4 scrollbar-hide select-none ${
@@ -99,6 +102,7 @@ const ContactPreview: React.FC<ContactPreviewProps> = ({ contacts }) => {
               <div key={contact.id} className="flex-shrink-0">
                 <ContactCardSimple
                   contact={contact}
+                  onMenuClick={() => setSelectedContact(contact)}
                 />
               </div>
             ))
@@ -116,6 +120,21 @@ const ContactPreview: React.FC<ContactPreviewProps> = ({ contacts }) => {
           </span>
         </div>
       </div>
+
+      {/* Overlay for ContactCardDetail via portal */}
+      {typeof window !== 'undefined' && selectedContact
+        ? createPortal(
+            (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]" onClick={(e) => { if (e.target === e.currentTarget) setSelectedContact(null); }}>
+                <ContactCardDetail 
+                  contact={selectedContact} 
+                  onMinimize={() => setSelectedContact(null)}
+                />
+              </div>
+            ),
+            document.body
+          )
+        : null}
     </div>
   );
 };
