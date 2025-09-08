@@ -2,14 +2,14 @@ import React from 'react';
 import { TitleHeight } from './TitleHeight';
 import { AccountButton } from '../Button';
 
-const TitleCircle: React.FC = () => {
+const TitleDraft: React.FC = () => {
   return (
     <div 
       className="w-full bg-circle-neutral flex items-center justify-center relative"
       style={{ height: TitleHeight }}
     >
       <div className="font-merriweather font-normal text-display-small text-center text-circle-primary">
-        Circle
+        Draft
       </div>
 
       {/* Right actions row with 30px horizontal padding, vertically centered */}
@@ -20,4 +20,5 @@ const TitleCircle: React.FC = () => {
   );
 };
 
-export default TitleCircle;
+export default TitleDraft;
+

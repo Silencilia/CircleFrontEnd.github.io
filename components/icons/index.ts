@@ -1,5 +1,6 @@
 export { default as CircleIcon } from './CircleIcon';
 export { default as CircleIconSelected } from './CircleIconSelected';
+export { default as DraftIcon } from './DraftIcon';
 export { default as ContactsIcon } from './ContactsIcon';
 export { default as ContactsIconSelected } from './ContactsIconSelected';
 export { default as MemoIcon } from './MemoIcon';
@@ -17,3 +18,6 @@ export { default as ConfirmIcon } from './ConfirmIcon';
 export { default as CancelIcon } from './CancelIcon';
 export { default as DownIcon } from './DownIcon';
 export { default as DeleteTagIcon } from './DeleteTagIcon';
+export { default as PlusIcon } from './PlusIcon';
+export { default as SpeakerIcon } from './SpeakerIcon';
+export { default as UpIcon } from './UpIcon';

@@ -105,10 +105,10 @@ export const sampleNotes: Note[] = [
   },
   {
     id: 2,
-    text: 'Met {{contact:1}} at the tech conference and had an engaging discussion about AI trends. {{contact:1}} shared fascinating insights about machine learning applications in their current project. This was a great networking opportunity that could lead to future collaborations.',
+    text: 'Met {{contact:1}} and {{contact:2}} at the tech conference and had an engaging discussion about AI trends. {{contact:1}} shared fascinating insights about machine learning applications in their current project. This was a great networking opportunity that could lead to future collaborations.',
     time: 'Dec 10, 2024 4:30 PM',
     sentimentIds: [1], // excited
-    contactIds: [1]
+    contactIds: [1, 2]
   },
   {
     id: 3,
@@ -142,10 +142,10 @@ export const sampleNotes: Note[] = [
   },
   {
     id: 7,
-    text: 'Had an inspiring coffee chat about {{contact:2}}\'s career development goals. She shared her strong interest in transitioning into product management and asked for advice. We discussed potential opportunities and skills she should develop.',
+    text: 'Had an inspiring coffee chat with {{contact:3}} about {{contact:2}}\'s career development goals. She shared her strong interest in transitioning into product management and asked for advice. We discussed potential opportunities and skills she should develop.',
     time: 'Dec 8, 2024 10:00 AM',
     sentimentIds: [1, 5], // excited, optimistic
-    contactIds: [2]
+    contactIds: [2, 3]
   },
   {
     id: 8,
@@ -186,10 +186,10 @@ export const sampleNotes: Note[] = [
   },
   {
     id: 13,
-    text: 'Coffee meeting about the upcoming project launch. {{contact:3}} seemed much more confident this time and had significantly better prepared materials. It\'s encouraging to see the marked improvement in his preparation and presentation skills.',
+    text: 'Coffee meeting about the upcoming project launch with {{contact:1}}. {{contact:3}} seemed much more confident this time and had significantly better prepared materials. It\'s encouraging to see the marked improvement in his preparation and presentation skills.',
     time: 'Dec 5, 2024 9:00 AM',
     sentimentIds: [5, 4], // optimistic, satisfied
-    contactIds: [3]
+    contactIds: [3, 1]
   },
   {
     id: 14,
@@ -246,10 +246,10 @@ export const sampleNotes: Note[] = [
   // David Kim (Contact 5) - 5 notes
   {
     id: 21,
-    text: 'Had a great catch-up call with my former colleague {{contact:5}}. We discussed significant industry changes and explored potential job opportunities in the market. It was wonderful to reconnect after such a long time.',
+    text: 'Had a great catch-up call with my former colleague {{contact:5}} and {{contact:4}}. We discussed significant industry changes and explored potential job opportunities in the market. It was wonderful to reconnect after such a long time.',
     time: 'Dec 5, 2024 3:30 PM',
     sentimentIds: [2, 6], // happy, neutral
-    contactIds: [5]
+    contactIds: [5, 4]
   },
   {
     id: 22,
@@ -357,10 +357,10 @@ export const sampleNotes: Note[] = [
   // Maria Garcia (Contact 8) - 5 notes
   {
     id: 36,
-    text: 'Attended {{contact:8}}\'s presentation at the UX research conference about user behavior patterns. Her research findings were absolutely fascinating and her presentation skills were exceptional. Valuable insights for our product development.',
+    text: 'Attended {{contact:8}}\'s presentation at the UX research conference about user behavior patterns with {{contact:10}}. Her research findings were absolutely fascinating and her presentation skills were exceptional. Valuable insights for our product development.',
     time: 'Nov 28, 2024 11:00 AM',
     sentimentIds: [1, 4], // excited, satisfied
-    contactIds: [8]
+    contactIds: [8, 10]
   },
   {
     id: 37,
@@ -565,7 +565,7 @@ export const sampleContacts: Contact[] = [
     lastInteraction: 1734307200000, // Dec 15, 2024 timestamp
     subjectIds: [1, 2, 3, 6, 9, 13, 15, 22, 27, 29, 32],
     relationshipIds: [1, 5],
-    noteIds: [1, 2, 3, 4, 5]
+    noteIds: [1, 2, 3, 4, 5, 13]
   },
   {
     id: 2,
@@ -575,7 +575,7 @@ export const sampleContacts: Contact[] = [
     lastInteraction: 1734048000000, // Dec 12, 2024 timestamp
     subjectIds: [4, 7, 10, 13, 14, 19, 21, 24, 26, 30],
     relationshipIds: [2, 4],
-    noteIds: [6, 7, 8, 9, 10]
+    noteIds: [6, 7, 8, 9, 10, 2]
   },
   {
     id: 3,
@@ -586,7 +586,7 @@ export const sampleContacts: Contact[] = [
     lastInteraction: 1733788800000, // Dec 10, 2024 timestamp
     subjectIds: [5, 8, 11, 14, 17, 19, 23, 28, 12, 16],
     relationshipIds: [1, 2],
-    noteIds: [11, 12, 13, 14, 15]
+    noteIds: [11, 12, 13, 14, 15, 7]
   },
   {
     id: 4,
@@ -597,7 +597,7 @@ export const sampleContacts: Contact[] = [
     lastInteraction: 1733616000000, // Dec 8, 2024 timestamp
     subjectIds: [2, 6, 9, 13, 15, 20, 22, 25, 27, 29],
     relationshipIds: [2, 3],
-    noteIds: [16, 17, 18, 19, 20]
+    noteIds: [16, 17, 18, 19, 20, 21]
   },
   {
     id: 5,
@@ -659,7 +659,7 @@ export const sampleContacts: Contact[] = [
     lastInteraction: 1732406400000, // Nov 22, 2024 timestamp
     subjectIds: [3, 8, 10, 13, 16, 20, 23, 25, 27, 29],
     relationshipIds: [1, 6],
-    noteIds: [46, 47, 48, 49, 50]
+    noteIds: [46, 47, 48, 49, 50, 36]
   },
   {
     id: 11,

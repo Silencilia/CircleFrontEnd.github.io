@@ -6,3 +6,7 @@ export { default as DeleteButton } from './DeleteButton';
 export { default as SaveButton } from './SaveButton';
 export { default as CancelButton } from './CancelButton';
 export { default as TextButton } from './TextButton';
+export { default as AccountButton } from './AccountButton';
+export { default as UploadButton } from './UploadButton';
+export { default as VoiceButton } from './VoiceButton';
+export { default as SendButton } from './SendButton';

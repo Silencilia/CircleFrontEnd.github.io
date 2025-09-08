@@ -8,6 +8,7 @@ import CommitmentCard from '../../components/CommitmentCard';
 import ContactCardDetail from '../../components/ContactCardDetail';
 import { useContacts } from '../../contexts/ContactContext';
 import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../../components/DatePicker';
+import TalkToCircle from '../../components/TalkToCircle';
 
 export default function DeveloperPage() {
   const { state } = useContacts();
@@ -39,6 +40,21 @@ export default function DeveloperPage() {
               <div className="mt-3 bg-circle-neutral p-3 rounded w-[450px]">
                 <div className="font-inter text-body-small text-circle-primary">Component Data:</div>
                 <pre className="bg-circle-white p-3 rounded text-xs overflow-auto">{JSON.stringify(dateValue, null, 2)}</pre>
+              </div>
+            </div>
+          </div>
+
+          {/* TalkToCircle layout demos */}
+          <div className="space-y-6 w-full flex flex-col items-center">
+            <h2 className="font-inter font-semibold text-xl text-circle-primary">TalkToCircle Layouts</h2>
+            <div className="w-full flex flex-col items-center gap-6">
+              <div className="w-full flex flex-col items-center">
+                <span className="font-inter text-sm text-circle-primary mb-2">Single-row layout</span>
+                <TalkToCircle forceWrapped={false} />
+              </div>
+              <div className="w-full flex flex-col items-center">
+                <span className="font-inter text-sm text-circle-primary mb-2">Two-row layout</span>
+                <TalkToCircle forceWrapped={true} />
               </div>
             </div>
           </div>

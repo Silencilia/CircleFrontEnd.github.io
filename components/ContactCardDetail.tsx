@@ -9,6 +9,12 @@ import { SaveButton, CancelButton } from './Button';
 import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from './DatePicker';
 import { formatYyyyMmDdToLong } from '../data/strings';
 
+// Track which ContactCardDetail modals are currently open
+export const openContactDetailIds = new Set<number>();
+export function isContactDetailOpen(id: number): boolean {
+  return openContactDetailIds.has(id);
+}
+
 // Helper to format to YYYY-MM-DD (Contact.birthDate format)
 function formatToIsoDate(value: DynamicPrecisionDateValue): string | undefined {
   if (!value || value.precision === 'none' || !value.year) return undefined;
@@ -36,6 +42,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   if (contact.isTrashed) {
     return null;
   }
+  // Register this contact as open while the detail is mounted
+  useEffect(() => {
+    openContactDetailIds.add(contact.id);
+    return () => {
+      openContactDetailIds.delete(contact.id);
+    };
+  }, [contact.id]);
   const notesContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
