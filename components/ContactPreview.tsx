@@ -1,7 +1,8 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import ContactCardDetail from './ContactCardDetail';
-import ContactCardSimple from './ContactCardSimple';
+import ContactCardDetail from './Cards/ContactCardDetail';
+import NoteCardDetail from './Cards/NoteCardDetail';
+import ContactCardSimple from './Cards/ContactCardSimple';
 import { Contact, Subject } from '../contexts/ContactContext';
 
 interface ContactPreviewProps {
@@ -14,6 +15,7 @@ const ContactPreview: React.FC<ContactPreviewProps> = ({ contacts }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [selectedNote, setSelectedNote] = useState<import('../contexts/ContactContext').Note | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!scrollRef.current) return;
@@ -129,6 +131,30 @@ const ContactPreview: React.FC<ContactPreviewProps> = ({ contacts }) => {
                 <ContactCardDetail 
                   contact={selectedContact} 
                   onMinimize={() => setSelectedContact(null)}
+                  onOpenNote={(note) => {
+                    setSelectedNote(note);
+                    setSelectedContact(null);
+                  }}
+                  onOpenContactDetail={(nextContact) => setSelectedContact(nextContact)}
+                />
+              </div>
+            ),
+            document.body
+          )
+        : null}
+
+      {/* Overlay for NoteCardDetail via portal */}
+      {typeof window !== 'undefined' && selectedNote
+        ? createPortal(
+            (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]" onClick={(e) => { if (e.target === e.currentTarget) setSelectedNote(null); }}>
+                <NoteCardDetail 
+                  note={selectedNote}
+                  onMinimize={() => setSelectedNote(null)}
+                  onOpenContactDetail={(contact) => {
+                    setSelectedContact(contact);
+                    setSelectedNote(null);
+                  }}
                 />
               </div>
             ),

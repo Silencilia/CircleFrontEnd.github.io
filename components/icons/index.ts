@@ -21,3 +21,4 @@ export { default as DeleteTagIcon } from './DeleteTagIcon';
 export { default as PlusIcon } from './PlusIcon';
 export { default as SpeakerIcon } from './SpeakerIcon';
 export { default as UpIcon } from './UpIcon';
+export { default as BackIcon } from './BackIcon';

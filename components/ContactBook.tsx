@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import ContactCard from './ContactCard';
-import ContactCardDetail from './ContactCardDetail';
-import { Contact, useContacts } from '../contexts/ContactContext';
+import ContactCard from './Cards/ContactCard';
+import ContactCardDetail from './Cards/ContactCardDetail';
+import NoteCardDetail from './Cards/NoteCardDetail';
+import { Contact, Note, useContacts } from '../contexts/ContactContext';
 
 interface ContactBookProps {
   contacts: Contact[];
@@ -19,6 +20,7 @@ const ContactBook: React.FC<ContactBookProps> = ({
 }) => {
   const { state } = useContacts();
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
   // Filter contacts based on search query and relationship filter
   const filteredContacts = useMemo(() => {
@@ -60,6 +62,10 @@ const ContactBook: React.FC<ContactBookProps> = ({
 
   const handleCloseDetail = () => {
     setSelectedContact(null);
+  };
+
+  const handleCloseNoteDetail = () => {
+    setSelectedNote(null);
   };
 
   // Mount flag to safely use portal on client only
@@ -105,6 +111,32 @@ const ContactBook: React.FC<ContactBookProps> = ({
                 <ContactCardDetail 
                   contact={selectedContact} 
                   onMinimize={handleCloseDetail}
+                  onOpenNote={(note) => {
+                    // Open note overlay and close contact overlay
+                    setSelectedNote(note);
+                    setSelectedContact(null);
+                  }}
+                  onOpenContactDetail={(nextContact) => setSelectedContact(nextContact)}
+                />
+              </div>
+            ),
+            document.body
+          )
+        : null}
+
+      {/* Overlay for NoteCardDetail via portal */}
+      {isMounted && selectedNote
+        ? createPortal(
+            (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
+                <NoteCardDetail 
+                  note={selectedNote}
+                  onMinimize={handleCloseNoteDetail}
+                  onOpenContactDetail={(contact) => {
+                    // Switch to contact and close note overlay
+                    setSelectedContact(contact);
+                    setSelectedNote(null);
+                  }}
                 />
               </div>
             ),

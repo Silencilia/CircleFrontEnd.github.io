@@ -18,7 +18,7 @@ const PlusIcon: React.FC<PlusIconProps> = ({ width = 22, height = 22, className 
     >
       <path
         d="M11 4.58334V17.4167M4.58337 11H17.4167"
-        stroke="#262B35"
+        stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
