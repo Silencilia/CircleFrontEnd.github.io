@@ -1,3 +1,4 @@
+'use client';
 import React, { useRef, useEffect, useState } from 'react';
 import { GREETINGS, STRINGS } from '../data/strings';
 import { UploadButton, VoiceButton, SendButton } from './Button';
@@ -12,8 +13,8 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
   const [value, setValue] = useState('');
   const [isWrapped, setIsWrapped] = useState<boolean>(false);
 
-  // Greeting chosen once per mount so it doesn't change on unrelated state updates
-  const [greeting] = useState<string>(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+  // Deterministic initial greeting for SSR; randomize after mount on client only
+  const [greeting, setGreeting] = useState<string>(GREETINGS[0]);
 
   // Calculate height based on current layout constraints
   const calculateHeight = () => {
@@ -103,6 +104,8 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
   // Adjust on mount and on resize
   useEffect(() => {
     adjustHeight();
+    // Randomize greeting after hydration to avoid SSR/client mismatch
+    setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
     
     // Focus the textarea when component mounts (when user enters circle page)
     const el = textareaRef.current;

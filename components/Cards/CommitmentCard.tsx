@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Commitment } from '../contexts/ContactContext';
-import { DeleteIcon, MaximizeIcon } from './icons';
+import { Commitment } from '../../contexts/ContactContext';
+import { DeleteIcon, MaximizeIcon } from '../icons';
 
 interface CommitmentCardProps {
   commitment: Commitment;
@@ -65,7 +65,7 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
   // Maximize button does not change card height; reserved for future detailed view
 
   return (
-    <div className="w-[240px] h-fit bg-circle-neutral-variant rounded-[6px] p-[10px] flex flex-col gap-[15px]">
+    <div className="w-[240px] h-fit bg-circle-neutral-variant rounded-[12px] p-[10px] flex flex-col gap-[15px]">
       {/* Header row: timestamp and actions */}
       <div className="w-[220px] h-[40px] flex flex-row justify-between items-start gap-[10px]">
         {/* Timestamp */}
@@ -115,6 +115,3 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
 };
 
 export default CommitmentCard;
-
-
-

@@ -32,10 +32,60 @@ export interface Sentiment {
   category: string;
 }
 
+export interface TimeValue {
+  hour: number | null; // 0-23 (24-hour format)
+  minute: number | null; // 0-59
+}
+
+// Helpers for converting to/from TimeValue
+export function parseTimeToTimeValue(input: TimeValue | string | Date | null | undefined): TimeValue {
+  if (!input) return { hour: null, minute: null };
+  if (typeof (input as any).hour === 'number' || (input as any).hour === null) {
+    const tv = input as TimeValue;
+    const hour = tv.hour == null ? null : Math.max(0, Math.min(23, tv.hour));
+    const minute = tv.minute == null ? null : Math.max(0, Math.min(59, tv.minute));
+    return { hour, minute };
+  }
+  if (input instanceof Date) {
+    return { hour: input.getHours(), minute: input.getMinutes() };
+  }
+  if (typeof input === 'string') {
+    // Accept HH:mm or h:mm AM/PM
+    const hhmm24 = /^(\d{1,2}):(\d{2})$/;
+    const hhmm12 = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+    let m = input.match(hhmm24);
+    if (m) {
+      const h = Math.max(0, Math.min(23, parseInt(m[1], 10)));
+      const mm = Math.max(0, Math.min(59, parseInt(m[2], 10)));
+      return { hour: h, minute: mm };
+    }
+    m = input.match(hhmm12);
+    if (m) {
+      let h = Math.max(1, Math.min(12, parseInt(m[1], 10))) % 12; // 0..11
+      const mm = Math.max(0, Math.min(59, parseInt(m[2], 10)));
+      const ampm = m[3].toUpperCase();
+      if (ampm === 'PM') h += 12;
+      return { hour: h, minute: mm };
+    }
+  }
+  return { hour: null, minute: null };
+}
+
+export function formatTimeValueToString(value: TimeValue | null | undefined): string | undefined {
+  if (!value || value.hour == null || value.minute == null) return undefined;
+  return `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`;
+}
+
 export interface Note {
   id: number;
+  title: string;
   text: string;
-  time: string;
+  // Legacy time string kept for backward compatibility with sample data
+  time?: string;
+  // New structured time format
+  timeValue?: TimeValue;
+  // New precision-aware date matching Contact.birthDate structure
+  date?: PrecisionDate;
   sentimentIds: number[];
   contactIds: number[];
   createdAt?: string;
@@ -51,7 +101,7 @@ export interface Commitment {
   isTrashed: boolean;
 }
 
-export interface BirthDate {
+export interface PrecisionDate {
   year: number | null;
   month: number | null; // 1-12
   day: number | null;   // 1-31
@@ -62,7 +112,7 @@ export interface Contact {
   name: string;
   occupationId?: number;
   organizationId?: number;
-  birthDate?: BirthDate;
+  birthDate?: PrecisionDate;
   lastInteraction: number;
   subjectIds: number[];
   relationshipIds: number[];
@@ -214,6 +264,8 @@ interface ContactContextType {
   updateNoteAsync: (id: number, updates: Partial<Note>) => Promise<void>;
   addCommitmentAsync: (commitment: Omit<Commitment, 'id'>) => Promise<void>;
   updateCommitmentAsync: (id: number, updates: Partial<Commitment>) => Promise<void>;
+  // New contact creation
+  createNewContact: () => Promise<Contact>;
 }
 
 // Create context
@@ -503,6 +555,26 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const createNewContact = async (): Promise<Contact> => {
+    try {
+      // Create a new contact with default values
+      const newContact: Omit<Contact, 'id'> = {
+        name: 'New Contact',
+        lastInteraction: Date.now(),
+        subjectIds: [],
+        relationshipIds: [],
+        noteIds: []
+      };
+      
+      const createdContact = await dataService.addContact(newContact);
+      dispatch({ type: 'ADD_CONTACT', payload: createdContact });
+      return createdContact;
+    } catch (error) {
+      console.error('Failed to create new contact:', error);
+      throw error;
+    }
+  };
+
   const value: ContactContextType = {
     state,
     addContact: addContactSync,
@@ -526,6 +598,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     updateNoteAsync,
     addCommitmentAsync,
     updateCommitmentAsync,
+    createNewContact,
   };
 
   return (

@@ -1,17 +1,23 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import HeaderMemo from '../../components/Headers/HeaderMemo';
 import NavigationBar from '../../components/NavigationBar';
 import CommitmentBook, { COMMITMENT_BOOK_TARGET_HEIGHT } from '../../components/CommitmentBook';
-import { useContacts } from '../../contexts/ContactContext';
+import { useContacts, Note, Contact } from '../../contexts/ContactContext';
 import NoteBook from '../../components/NoteBook';
+import NoteCardDetail from '../../components/Cards/NoteCardDetail';
+import ContactCardDetail from '../../components/Cards/ContactCardDetail';
 
 export default function MemoPage() {
-  const { state } = useContacts();
+  const { state, addNoteAsync } = useContacts();
   const [searchQuery, setSearchQuery] = useState('');
   const [relationshipFilterIds, setRelationshipFilterIds] = useState<number[]>([]);
   const [commitmentBookHeight, setCommitmentBookHeight] = useState<number>(COMMITMENT_BOOK_TARGET_HEIGHT);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [pendingNewNote, setPendingNewNote] = useState(false);
 
   // Avoid conditional hook usage: render loading state inside return instead of early return
 
@@ -22,6 +28,37 @@ export default function MemoPage() {
   const handleRelationshipFilterChange = (selectedIds: number[]) => {
     setRelationshipFilterIds(selectedIds);
   };
+
+  const handleNewNoteClick = useCallback(async () => {
+    try {
+      setPendingNewNote(true);
+      const newNote: Omit<Note, 'id' | 'createdAt'> = {
+        title: 'Untitled',
+        text: '',
+        sentimentIds: [],
+        contactIds: [],
+        isTrashed: false,
+      } as unknown as Omit<Note, 'id' | 'createdAt'>;
+      await addNoteAsync(newNote);
+      // state will update; useEffect below will open the newest note
+    } catch (e) {
+      setPendingNewNote(false);
+      console.error('Failed to create new note', e);
+    }
+  }, [addNoteAsync]);
+
+  // When a new note is added, open the freshest one
+  React.useEffect(() => {
+    if (!pendingNewNote) return;
+    if (!state.notes || state.notes.length === 0) return;
+    const newest = [...state.notes]
+      .filter(n => !n.isTrashed)
+      .sort((a, b) => (new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()))[0];
+    if (newest) {
+      setSelectedNote(newest);
+      setPendingNewNote(false);
+    }
+  }, [state.notes, pendingNewNote]);
 
   // Filter notes based on search query and relationship filter
   const filteredNotes = useMemo(() => {
@@ -66,6 +103,7 @@ export default function MemoPage() {
         <HeaderMemo 
           onSearchChange={handleSearchChange}
           onRelationshipFilterChange={handleRelationshipFilterChange}
+          onNewNoteClick={handleNewNoteClick}
         />
       </div>
 
@@ -86,6 +124,43 @@ export default function MemoPage() {
       
       {/* NavigationBar - positioned at very bottom (80px height) */}
       <NavigationBar currentPage="memo" />
+
+      {/* Overlays for new/opened items */}
+      {typeof window !== 'undefined' && selectedNote
+        ? createPortal(
+            (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
+                <NoteCardDetail 
+                  note={selectedNote}
+                  onMinimize={() => setSelectedNote(null)}
+                  onOpenContactDetail={(contact) => {
+                    setSelectedContact(contact);
+                    setSelectedNote(null);
+                  }}
+                />
+              </div>
+            ),
+            document.body
+          )
+        : null}
+      {typeof window !== 'undefined' && selectedContact
+        ? createPortal(
+            (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
+                <ContactCardDetail 
+                  contact={selectedContact}
+                  onMinimize={() => setSelectedContact(null)}
+                  onOpenNote={(note) => {
+                    setSelectedNote(note);
+                    setSelectedContact(null);
+                  }}
+                  onOpenContactDetail={(next) => setSelectedContact(next)}
+                />
+              </div>
+            ),
+            document.body
+          )
+        : null}
     </div>
   );
 }

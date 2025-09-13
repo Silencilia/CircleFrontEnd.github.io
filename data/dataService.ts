@@ -67,6 +67,11 @@ export class MockDataService implements DataService {
     // Load from localStorage only on the client side
     if (typeof window !== 'undefined') {
       this.loadData();
+      // Ensure data is migrated to latest schema (e.g., note titles)
+      const changed = this.migrateData();
+      if (changed) {
+        this.saveData();
+      }
     }
   }
 
@@ -78,6 +83,11 @@ export class MockDataService implements DataService {
         // Validate data structure
         if (this.isValidData(parsed)) {
           this.data = parsed;
+          // Run migrations on loaded data
+          const changed = this.migrateData();
+          if (changed) {
+            this.saveData();
+          }
         } else {
           console.warn('MockDataService: Invalid data format, using sample data');
           removeLocalStorage('circle-data');
@@ -87,6 +97,36 @@ export class MockDataService implements DataService {
         removeLocalStorage('circle-data');
       }
     }
+  }
+
+  // Migrate saved data to ensure required fields exist
+  private migrateData(): boolean {
+    let changed = false;
+    // Backfill missing note titles
+    this.data.notes = this.data.notes.map((n: Note) => {
+      if (!n.title || (typeof n.title === 'string' && n.title.trim() === '')) {
+        const resolvedText = resolveContactTokens(n.text || '', this.data.contacts);
+        const generated = this.generateTitleFromText(resolvedText);
+        const updated: Note = { ...n, title: generated };
+        changed = true;
+        return updated;
+      }
+      return n;
+    });
+    return changed;
+  }
+
+  private generateTitleFromText(text: string): string {
+    const fallback = 'Untitled';
+    if (!text) return fallback;
+    // Use first sentence up to 70 chars, prefer breaking at punctuation
+    const trimmed = text.replace(/\s+/g, ' ').trim();
+    if (!trimmed) return fallback;
+    const sentenceMatch = trimmed.match(/^(.+?)([.!?])\s/);
+    const candidate = sentenceMatch ? sentenceMatch[1] : trimmed;
+    const maxLen = 70;
+    if (candidate.length <= maxLen) return candidate;
+    return candidate.slice(0, maxLen).trimEnd() + '…';
   }
 
   private isValidData(data: any): boolean {
@@ -225,8 +265,13 @@ export class MockDataService implements DataService {
     
     // Resolve any {{contact:ID}} tokens in text to the latest contact name
     const resolvedText = resolveContactTokens(note.text, this.data.contacts);
+    // Ensure title exists (generate from text if missing)
+    const ensuredTitle = (note as any).title && (note as any).title.trim().length > 0
+      ? (note as any).title
+      : this.generateTitleFromText(resolvedText);
     const newNote = { 
-      ...note, 
+      ...note,
+      title: ensuredTitle,
       text: resolvedText,
       id: Date.now(),
       createdAt: new Date().toISOString(),

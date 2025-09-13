@@ -1,19 +1,21 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ContentEditable from 'react-contenteditable';
-import { Contact, Subject, Relationship, Note, useContacts } from '../contexts/ContactContext';
-import { SubjectTag, RelationshipTag } from './Tag';
-import NoteCard from './NoteCard';
-import { CalendarIcon, MinimizeIcon, NoteIcon } from './icons';
-import { EDITING_MODE_PADDING } from '../data/variables';
-import { SaveButton, CancelButton } from './Button';
-import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from './DatePicker';
-import { formatYyyyMmDdToLong } from '../data/strings';
+import { Contact, Subject, Relationship, Note, useContacts } from '../../contexts/ContactContext';
+import { CardIndex, createSourceRecord, CardType, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
+import { SubjectTag, RelationshipTag } from '../Tag';
 
-// Track which ContactCardDetail modals are currently open
-export const openContactDetailIds = new Set<number>();
-export function isContactDetailOpen(id: number): boolean {
-  return openContactDetailIds.has(id);
-}
+const Type: CardType = 'contactCardDetail';
+import NoteCard from './NoteCard';
+import NoteCardDetail from './NoteCardDetail';
+import { CalendarIcon, MinimizeIcon, NoteIcon, BackIcon, DeleteIcon } from '../icons';
+import { EDITING_MODE_PADDING } from '../../data/variables';
+import { SaveButton, CancelButton, BackButton, DeleteButton } from '../Button';
+import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
+import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/BirthDatePicker';
+import { formatYyyyMmDdToLong } from '../../data/strings';
+import useCardNavigation from '../../hooks/useCardNavigation';
+
+// (Removed global open-contact tracking)
 
 // Helper to format to YYYY-MM-DD (Contact.birthDate format)
 function formatToIsoDate(value: DynamicPrecisionDateValue): string | undefined {
@@ -35,20 +37,17 @@ function formatToIsoDate(value: DynamicPrecisionDateValue): string | undefined {
 interface ContactCardDetailProps {
   contact: Contact;
   onMinimize?: () => void;
+  caller?: CardIndex | null;
+  onOpenNote?: (note: Note, caller: CardIndex) => void;
+  onOpenContactDetail?: (contact: Contact, caller: CardIndex) => void;
 }
 
-const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimize }) => {
+const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimize, caller, onOpenNote, onOpenContactDetail }) => {
   const { state, updateContactAsync, addOccupationAsync, addOrganizationAsync } = useContacts();
   if (contact.isTrashed) {
     return null;
   }
-  // Register this contact as open while the detail is mounted
-  useEffect(() => {
-    openContactDetailIds.add(contact.id);
-    return () => {
-      openContactDetailIds.delete(contact.id);
-    };
-  }, [contact.id]);
+  // (Removed registration of open contact detail)
   const notesContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -64,6 +63,8 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const [originalName, setOriginalName] = useState(currentContact.name); // Store original for rollback
   const [isNameSaving, setIsNameSaving] = useState(false); // Add loading state
   const nameContentEditableRef = useRef<HTMLElement>(null);
+  const [noteDetail, setNoteDetail] = useState<Note | null>(null);
+  const [noteDetailCaller, setNoteDetailCaller] = useState<CardIndex | null>(null);
 
   // Get related data
   const occupation = currentContact.occupationId ? state.occupations.find(o => o.id === currentContact.occupationId) : null;
@@ -77,6 +78,9 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   // Birth date picker overlay state
   const [isBirthDatePickerOpen, setIsBirthDatePickerOpen] = useState(false);
   const [birthDateValue, setBirthDateValue] = useState<DynamicPrecisionDateValue>({ precision: 'none', year: null, month: null, day: null });
+  
+  // Delete dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Sync initial birth date to picker state when opening (parse YYYY-MM-DD as local)
   const openBirthDatePicker = () => {
@@ -136,8 +140,11 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     // Check if the target is or contains a contenteditable element
     const target = e.target as HTMLElement;
     const isOverEditable = target.closest('[contenteditable="true"]');
+    // Do not start drag when clicking a contact reference or other interactive controls
+    const isOverContactRef = target.closest('[data-contact-ref="true"]');
+    const isOverButtonOrLink = target.closest('button, a, [role="button"], [role="link"]');
     
-    if (isOverEditable || !notesContainerRef.current) return;
+    if (isOverEditable || isOverContactRef || isOverButtonOrLink || !notesContainerRef.current) return;
     
     setIsDragging(true);
     setStartY(e.clientY - notesContainerRef.current.offsetTop);
@@ -460,9 +467,28 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     }, 100);
   };
 
+  // Delete contact handler
+  const handleDeleteContact = async () => {
+    try {
+      await updateContactAsync(currentContact.id, { isTrashed: true });
+      setShowDeleteDialog(false);
+      if (onMinimize) {
+        onMinimize();
+      }
+    } catch (error) {
+      console.error('Failed to delete contact:', error);
+    }
+  };
+
+  const { openNoteDetail: navOpenNoteDetail, handleBack } = useCardNavigation({
+    openNote: onOpenNote,
+    openContact: onOpenContactDetail,
+    closeCurrent: onMinimize,
+  });
+
   return (
     <>
-    <div className="w-fit h-[889px] bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-[15px] flex flex-col gap-[40px]">
+    <div className="w-fit h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-[15px] flex flex-col gap-[40px]">
       {/* Contact Info Section */}
       <div className="w-fit h-fit flex flex-col gap-[10px]">
         <div className="w-[600px] h-fit flex flex-row justify-between items-start gap-[136px]">
@@ -594,10 +620,36 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
             </div>
           </div>
 
-          {/* Right side - Minimize button and Edit/Save buttons */}
-          <div className="w-fit h-[16px] flex flex-row justify-end items-center gap-[10px]">
+          {/* Right side - Back, Delete, and Minimize buttons */}
+          <div className="w-fit h-[16px] flex flex-row justify-end items-center gap-[5px]">
+            {/* Back button */}
             <button
-              onClick={onMinimize}
+              onClick={() => handleBack('contactCardDetail', contact.id)}
+              className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
+              aria-label="Back"
+            >
+              <BackIcon width={16} height={16} className="text-circle-primary" />
+            </button>
+            
+            {/* Delete button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteDialog(true);
+              }}
+              className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
+              aria-label="Delete contact"
+            >
+              <DeleteIcon width={16} height={16} className="text-circle-primary" />
+            </button>
+            
+            {/* Minimize button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                clearCardIndexArray();
+                onMinimize?.();
+              }}
               className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
               aria-label="Minimize contact detail"
             >
@@ -623,7 +675,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
       </div>
 
       {/* Notes Section */}
-      <div className="w-fit h-[580px] flex flex-col gap-[20px]">
+      <div className="w-fit h-fit max-h-[580px] flex flex-col gap-[20px]">
         {/* Notes Header */}
         <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
           <NoteIcon width={16} height={16} className="text-circle-primary" />
@@ -635,7 +687,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         {/* Note Cards Container - Scrollable with mouse drag (disabled during editing) */}
         <div 
           ref={notesContainerRef}
-          className={`w-fit h-[540px] overflow-y-auto flex flex-col gap-[15px] select-none scrollbar-hide ${
+          className={`w-fit h-fit max-h-[540px] overflow-y-auto flex flex-col gap-[15px] select-none scrollbar-hide ${
             isAnyNoteEditing 
               ? 'cursor-default' 
               : isDragging 
@@ -652,40 +704,65 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               <NoteCard 
                 key={note.id} 
                 note={note}
+                caller={createSourceRecord('contactCardDetail', contact.id)}
+                isNestedInContactDetail={true}
+                currentContactId={contact.id}
+                onOpenNoteDetail={(n, source) => {
+                  const src = source || createSourceRecord('contactCardDetail', contact.id);
+                  navOpenNoteDetail(n, src);
+                  onMinimize?.();
+                }}
+                onOpenContactDetail={(nextContact, source) => {
+                  // Delegate to parent overlay manager if provided
+                  if (onOpenContactDetail) {
+                    onOpenContactDetail(nextContact, source || createSourceRecord('contactCardDetail', contact.id));
+                  } else {
+                    // No parent handler available; log for now
+                    console.log('Nested NoteCard requested opening contact detail for:', nextContact.name);
+                  }
+                }}
               />
             ))
           ) : (
-            <div className="text-center text-gray-500 italic py-8">
-              No notes available for this contact
+            <div className="text-center text-circle-primary/50 italic py-8 font-inter text-label-medium">
+              No notes recorded.
             </div>
           )}
         </div>
       </div>
 
       {/* Tags Section */}
-      <div className="w-fit h-[95px] flex flex-col gap-[5px] overflow-y-auto">
+      <div className="w-fit h-fit flex flex-col gap-[5px] overflow-y-auto">
         {/* Relationships */}
-        <div className="w-fit h-[20px] flex flex-row flex-wrap items-start content-start gap-[5px]">
-          {relationships.map((relationship) => (
-            <RelationshipTag
-              key={relationship.id}
-              relationship={relationship}
-              contactId={contact.id}
-              editable={false}
-            />
-          ))}
+        <div className="w-fit h-fit max-h-[20px] flex flex-row flex-wrap items-start content-start gap-[5px]">
+          {relationships.length > 0 ? (
+            relationships.map((relationship) => (
+              <RelationshipTag
+                key={relationship.id}
+                relationship={relationship}
+                contactId={contact.id}
+                editable={false}
+              />
+            ))
+          ) : (
+            <div className="text-circle-primary/50 italic font-inter text-label-medium">No relationships recorded.</div>
+          )}
         </div>
 
         {/* Subjects */}
-        <div className="w-fit h-[70px] flex flex-row flex-wrap items-start content-start gap-[5px]">
-          {subjects.map((subject) => (
-            <SubjectTag
-              key={subject.id}
-              subject={subject}
-              contactId={contact.id}
-              editable={true}
-            />
-          ))}
+        <div className="w-fit h-fit max-h-[70px] flex flex-row flex-wrap items-start content-start gap-[5px]">
+          {subjects.length > 0 ? (
+            subjects.map((subject) => (
+              <SubjectTag
+                key={subject.id}
+                subject={subject}
+                contactId={contact.id}
+                editable={true}
+              />
+            ))
+          ) : (
+            <div className="text-circle-primary/50 italic font-inter text-label-medium">No subjects recorded.</div>
+          )}
         </div>
       </div>
     </div>
@@ -704,6 +781,36 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
             label="Birth date picker"
             onConfirm={handleBirthDateConfirm}
             onCancel={handleBirthDateCancel}
+          />
+        </div>
+      </div>
+    )}
+
+    {/* Delete Confirmation Dialog */}
+    <DeleteConfirmationDialog
+      isOpen={showDeleteDialog}
+      onCancel={() => setShowDeleteDialog(false)}
+      onConfirm={handleDeleteContact}
+      itemType="contact"
+      itemName={currentContact.name}
+    />
+    {/* Note Detail Overlay (fallback local manager) */}
+    {typeof window !== 'undefined' && noteDetail && (
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setNoteDetail(null);
+        }}
+      >
+        <div className="mx-4">
+          <NoteCardDetail
+            note={noteDetail}
+            caller={noteDetailCaller}
+            onMinimize={() => setNoteDetail(null)}
+            onOpenContactDetail={() => {
+              // Optional: could integrate to open a nested contact; for now, close note detail
+              setNoteDetail(null);
+            }}
           />
         </div>
       </div>

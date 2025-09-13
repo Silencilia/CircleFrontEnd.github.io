@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { Contact, Subject, useContacts, Relationship } from '../contexts/ContactContext';
-import { SubjectTag, RelationshipTag, OverflowTag } from './Tag';
-import { MenuIcon } from './icons';
-import { formatYyyyMmDdToLong } from '../data/strings';
+import { Contact, Subject, useContacts, Relationship } from '../../contexts/ContactContext';
+import { SubjectTag, RelationshipTag, OverflowTag } from '../Tag';
+import { MenuIcon } from '../icons';
+import { formatYyyyMmDdToLong } from '../../data/strings';
 
 interface ContactCardProps {
   contact: Contact;

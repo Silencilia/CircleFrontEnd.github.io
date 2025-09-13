@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import CommitmentCard from './CommitmentCard';
+import CommitmentCard from './Cards/CommitmentCard';
 import { Commitment } from '../contexts/ContactContext';
 import DownIcon from './icons/DownIcon';
 
