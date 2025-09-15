@@ -23,7 +23,7 @@ export function useCardNavigation(options: CardNavigationOptions = {}) {
     }
   }, [options]);
 
-  const handleBack = useCallback((currentType: CardType, currentId: number) => {
+  const handleBack = useCallback((currentType: CardType, currentId: string) => {
     const arr = getCardIndexArray();
     if (arr.length === 0) {
       options.closeCurrent?.();

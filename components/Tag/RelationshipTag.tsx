@@ -4,7 +4,7 @@ import { Relationship } from '../../contexts/ContactContext';
 
 interface RelationshipTagProps {
   relationship: Relationship;
-  contactId?: number;
+  contactId?: string;
   fillColor?: string;
   textColor?: string;
   className?: string;

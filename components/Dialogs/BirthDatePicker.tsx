@@ -206,10 +206,10 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
             <div className="font-inter font-normal text-[12px] leading-4 tracking-[0.4px] text-circle-primary">Current value: {formatDate(value)}</div>
             <div className="flex flex-row justify-end items-center p-0 gap-[5px] w-[37px]">
               <button type="button" onClick={() => { setDatePicked(value); onConfirm?.(value); }} aria-label="Confirm" className="cursor-pointer">
-                <ConfirmIcon width={16} height={16} />
+                <ConfirmIcon />
               </button>
               <button type="button" onClick={() => onCancel?.()} aria-label="Cancel" className="cursor-pointer">
-                <CancelIcon width={16} height={16} />
+                <CancelIcon />
               </button>
             </div>
           </div>

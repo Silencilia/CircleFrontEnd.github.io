@@ -6,11 +6,11 @@ import { Contact } from '../contexts/ContactContext';
 export function contactReference(
   text: string,
   contacts: Contact[],
-  onClick?: (contact: Contact | undefined, id: number) => void
+  onClick?: (contact: Contact | undefined, id: string) => void
 ): (string | JSX.Element)[] {
   const parts: (string | JSX.Element)[] = [];
   let lastIndex = 0;
-  const regex = /\{\{\s*contact\s*:(\d+)\s*\}\}/g;
+  const regex = /\{\{\s*contact\s*:([^}]+)\s*\}\}/g;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(text)) !== null) {
@@ -24,7 +24,7 @@ export function contactReference(
       );
     }
 
-    const contactId = parseInt(match[1], 10);
+    const contactId = match[1].trim();
     const contact = contacts.find(c => c.id === contactId);
 
     parts.push(

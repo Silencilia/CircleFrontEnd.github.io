@@ -4,38 +4,43 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import { dataService } from '../data/dataService';
 
 // Data interfaces
+
+export interface PrecisionDate {
+  year: number | null;
+  month: number | null; // 1-12
+  day: number | null;   // 1-31
+}
+export interface TimeValue {
+  hour: number | null; // 0-23 (24-hour format)
+  minute: number | null; // 0-59
+}
 export interface Subject {
-  id: number;
+  id: string;
   label: string;
   category: string;
 }
-
 export interface Organization {
-  id: number;
+  id: string;
   name: string;
 }
 
 export interface Occupation {
-  id: number;
+  id: string;
   title: string;
 }
 
 export interface Relationship {
-  id: number;
+  id: string;
   label: string;
   category: string;
 }
 
 export interface Sentiment {
-  id: number;
+  id: string;
   label: string;
   category: string;
 }
 
-export interface TimeValue {
-  hour: number | null; // 0-23 (24-hour format)
-  minute: number | null; // 0-59
-}
 
 // Helpers for converting to/from TimeValue
 export function parseTimeToTimeValue(input: TimeValue | string | Date | null | undefined): TimeValue {
@@ -77,47 +82,47 @@ export function formatTimeValueToString(value: TimeValue | null | undefined): st
 }
 
 export interface Note {
-  id: number;
+  id: string;
   title: string;
   text: string;
-  // Legacy time string kept for backward compatibility with sample data
-  time?: string;
-  // New structured time format
-  timeValue?: TimeValue;
-  // New precision-aware date matching Contact.birthDate structure
+  // Structured time format
+  time_value?: TimeValue;
+  // New precision-aware date matching Contact.birth_date structure
   date?: PrecisionDate;
-  sentimentIds: number[];
-  contactIds: number[];
-  createdAt?: string;
-  isTrashed?: boolean;
+  sentiment_ids: string[];
+  contact_ids: string[];
+  created_at?: string;
+  is_trashed?: boolean;
 }
 
 // Represents a follow-up item or promise to act
 export interface Commitment {
-  id: number;
+  id: string;
   text: string;
   time: string;
-  contactIds: number[];
-  isTrashed: boolean;
+  contact_ids: string[];
+  is_trashed: boolean;
 }
 
-export interface PrecisionDate {
-  year: number | null;
-  month: number | null; // 1-12
-  day: number | null;   // 1-31
+export interface Draft {
+  date: PrecisionDate;
+  time: TimeValue;
+  text: string;
 }
+
+
 
 export interface Contact {
-  id: number;
+  id: string;
   name: string;
-  occupationId?: number;
-  organizationId?: number;
-  birthDate?: PrecisionDate;
-  lastInteraction: number;
-  subjectIds: number[];
-  relationshipIds: number[];
-  noteIds: number[];
-  isTrashed?: boolean;
+  occupation_id?: string;
+  organization_id?: string;
+  birth_date?: PrecisionDate;
+  last_interaction: number;
+  subject_ids: string[];
+  relationship_ids: string[];
+  note_ids: string[];
+  is_trashed?: boolean;
 }
 
 // State interface
@@ -130,6 +135,7 @@ export interface ContactState {
   sentiments: Sentiment[];
   notes: Note[];
   commitments: Commitment[];
+  drafts: Draft[];
   isLoading: boolean;
   error: string | null;
 }
@@ -141,7 +147,7 @@ type ContactAction =
   | { type: 'SET_DATA'; payload: Omit<ContactState, 'isLoading' | 'error'> }
   | { type: 'ADD_CONTACT'; payload: Contact }
   | { type: 'UPDATE_CONTACT'; payload: Contact }
-  | { type: 'DELETE_CONTACT'; payload: number }
+  | { type: 'DELETE_CONTACT'; payload: string }
   | { type: 'ADD_NOTE'; payload: Note }
   | { type: 'UPDATE_NOTE'; payload: Note }
   | { type: 'ADD_COMMITMENT'; payload: Commitment }
@@ -149,6 +155,7 @@ type ContactAction =
   | { type: 'UPDATE_SUBJECT'; payload: Subject }
   | { type: 'ADD_ORGANIZATION'; payload: Organization }
   | { type: 'ADD_OCCUPATION'; payload: Occupation }
+  | { type: 'UPDATE_SENTIMENT'; payload: Sentiment }
   | { type: 'RESET_TO_SAMPLE' };
 
 // Initial state
@@ -161,6 +168,7 @@ const initialState: ContactState = {
   sentiments: [],
   notes: [],
   commitments: [],
+  drafts: [],
   isLoading: true,
   error: null,
 };
@@ -229,6 +237,14 @@ function contactReducer(state: ContactState, action: ContactAction): ContactStat
 
     case 'ADD_OCCUPATION':
       return { ...state, occupations: [...state.occupations, action.payload] };
+
+    case 'UPDATE_SENTIMENT':
+      return {
+        ...state,
+        sentiments: state.sentiments.map(sentiment =>
+          sentiment.id === action.payload.id ? action.payload : sentiment
+        ),
+      };
     
     case 'RESET_TO_SAMPLE':
       return { ...initialState, isLoading: true };
@@ -241,31 +257,25 @@ function contactReducer(state: ContactState, action: ContactAction): ContactStat
 // Context interface
 interface ContactContextType {
   state: ContactState;
-  // Legacy synchronous methods (for backward compatibility)
-  addContact: (contact: Omit<Contact, 'id'>) => void;
-  updateContact: (id: number, updates: Partial<Contact>) => void;
-  deleteContact: (id: number) => void;
-  addNote: (note: Omit<Note, 'id' | 'createdAt'>) => void;
-  updateNote: (id: number, updates: Partial<Note>) => void;
-  addCommitment: (commitment: Omit<Commitment, 'id'>) => void;
-  updateCommitment: (id: number, updates: Partial<Commitment>) => void;
-  resetToSample: () => void;
-  // Enhanced async methods with optimistic updates
-  updateContactAsync: (id: number, updates: Partial<Contact>) => Promise<void>;
-  addContactAsync: (contact: Omit<Contact, 'id'>) => Promise<void>;
-  deleteContactAsync: (id: number) => Promise<void>;
-  addSubjectAsync: (subject: Omit<Subject, 'id'>) => Promise<void>;
-  updateSubjectAsync: (id: number, updates: Partial<Subject>) => Promise<void>;
-  addOrganizationAsync: (organization: Omit<Organization, 'id'>) => Promise<Organization>;
-  addOccupationAsync: (occupation: Omit<Occupation, 'id'>) => Promise<Occupation>;
-  addRelationshipAsync: (relationship: Omit<Relationship, 'id'>) => Promise<void>;
-  addSentimentAsync: (sentiment: Omit<Sentiment, 'id'>) => Promise<void>;
-  addNoteAsync: (note: Omit<Note, 'id' | 'createdAt'>) => Promise<void>;
-  updateNoteAsync: (id: number, updates: Partial<Note>) => Promise<void>;
-  addCommitmentAsync: (commitment: Omit<Commitment, 'id'>) => Promise<void>;
-  updateCommitmentAsync: (id: number, updates: Partial<Commitment>) => Promise<void>;
+  //  methods with Supabase integration
+  updateContact: (id: string, updates: Partial<Contact>) => Promise<void>;
+  addContact: (contact: Omit<Contact, 'id'>) => Promise<void>;
+  deleteContact: (id: string) => Promise<void>;
+  addNote: (note: Omit<Note, 'id' | 'created_at'>) => Promise<void>;
+  updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
+  addCommitment: (commitment: Omit<Commitment, 'id'>) => Promise<void>;
+  updateCommitment: (id: string, updates: Partial<Commitment>) => Promise<void>;
+  addSubject: (subject: Omit<Subject, 'id'>) => Promise<void>;
+  updateSubject: (id: string, updates: Partial<Subject>) => Promise<void>;
+  addOrganization: (organization: Omit<Organization, 'id'>) => Promise<Organization>;
+  addOccupation: (occupation: Omit<Occupation, 'id'>) => Promise<Occupation>;
+  addRelationship: (relationship: Omit<Relationship, 'id'>) => Promise<void>;
+  addSentiment: (sentiment: Omit<Sentiment, 'id'>) => Promise<void>;
+  updateSentiment: (id: string, updates: Partial<Sentiment>) => Promise<void>;
   // New contact creation
   createNewContact: () => Promise<Contact>;
+  // New note creation
+  createNewNote: () => Promise<Note>;
 }
 
 // Create context
@@ -294,17 +304,10 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addContact = async (contact: Omit<Contact, 'id'>) => {
-    try {
-      const newContact = await dataService.addContact(contact);
-      dispatch({ type: 'ADD_CONTACT', payload: newContact });
-    } catch (error) {
-      console.error('Failed to add contact:', error);
-      throw error;
-    }
-  };
 
-  const updateContact = async (id: number, updates: Partial<Contact>) => {
+
+  //  methods with Supabase integration
+  const updateContact = async (id: string, updates: Partial<Contact>) => {
     try {
       const updatedContact = await dataService.updateContact(id, updates);
       dispatch({ type: 'UPDATE_CONTACT', payload: updatedContact });
@@ -314,115 +317,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const deleteContact = async (id: number) => {
-    try {
-      await dataService.deleteContact(id);
-      dispatch({ type: 'DELETE_CONTACT', payload: id });
-    } catch (error) {
-      console.error('Failed to delete contact:', error);
-      throw error;
-    }
-  };
-
-  const addNote = async (note: Omit<Note, 'id' | 'createdAt'>) => {
-    try {
-      const newNote = await dataService.addNote(note);
-      dispatch({ type: 'ADD_NOTE', payload: newNote });
-    } catch (error) {
-      console.error('Failed to add note:', error);
-      throw error;
-    }
-  };
-
-  const addCommitment = async (commitment: Omit<Commitment, 'id'>) => {
-    try {
-      const newCommitment = await dataService.addCommitment(commitment);
-      dispatch({ type: 'ADD_COMMITMENT', payload: newCommitment });
-    } catch (error) {
-      console.error('Failed to add commitment:', error);
-      throw error;
-    }
-  };
-
-  const updateCommitment = async (id: number, updates: Partial<Commitment>) => {
-    try {
-      const updated = await dataService.updateCommitment(id, updates);
-      dispatch({ type: 'UPDATE_COMMITMENT', payload: updated });
-    } catch (error) {
-      console.error('Failed to update commitment:', error);
-      throw error;
-    }
-  };
-
-  const updateNote = async (id: number, updates: Partial<Note>) => {
-    try {
-      const updatedNote = await dataService.updateNote(id, updates);
-      dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
-    } catch (error) {
-      console.error('Failed to update note:', error);
-      throw error;
-    }
-  };
-
-  const resetToSample = async () => {
-    try {
-      dispatch({ type: 'RESET_TO_SAMPLE' });
-      await loadData();
-    } catch (error) {
-      console.error('Failed to reset to sample data:', error);
-      throw error;
-    }
-  };
-
-  // Legacy synchronous methods
-  const addContactSync = (contact: Omit<Contact, 'id'>) => {
-    const newContact = { ...contact, id: Date.now() };
-    dispatch({ type: 'ADD_CONTACT', payload: newContact });
-  };
-
-  const updateContactSync = (id: number, updates: Partial<Contact>) => {
-    dispatch({ type: 'UPDATE_CONTACT', payload: { id, ...updates } as Contact });
-  };
-
-  const deleteContactSync = (id: number) => {
-    dispatch({ type: 'DELETE_CONTACT', payload: id });
-  };
-
-  const addNoteSync = (note: Omit<Note, 'id' | 'createdAt'>) => {
-    const newNote = { ...note, id: Date.now(), createdAt: new Date().toISOString() };
-    dispatch({ type: 'ADD_NOTE', payload: newNote });
-  };
-
-  const addCommitmentSync = (commitment: Omit<Commitment, 'id'>) => {
-    const newCommitment = { ...commitment, id: Date.now() };
-    dispatch({ type: 'ADD_COMMITMENT', payload: newCommitment });
-  };
-
-  const updateCommitmentSync = (id: number, updates: Partial<Commitment>) => {
-    dispatch({ type: 'UPDATE_COMMITMENT', payload: { id, ...updates } as Commitment });
-  };
-
-  const updateNoteSync = (id: number, updates: Partial<Note>) => {
-    dispatch({ type: 'UPDATE_NOTE', payload: { id, ...updates } as Note });
-  };
-
-  const resetToSampleSync = () => {
-    dispatch({ type: 'RESET_TO_SAMPLE' });
-    loadData();
-  };
-
-  // Enhanced async methods
-  const updateContactAsync = async (id: number, updates: Partial<Contact>) => {
-    try {
-      const updatedContact = await dataService.updateContact(id, updates);
-      dispatch({ type: 'UPDATE_CONTACT', payload: updatedContact });
-    } catch (error) {
-      console.error('Failed to update contact:', error);
-      throw error;
-    }
-  };
-
-  const updateSubjectAsync = async (id: number, updates: Partial<Subject>) => {
+  const updateSubject = async (id: string, updates: Partial<Subject>) => {
     try {
       // For now, we'll update the subject in the local state
       // In a real app, you'd call dataService.updateSubject(id, updates)
@@ -437,7 +332,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addContactAsync = async (contact: Omit<Contact, 'id'>) => {
+  const addContact = async (contact: Omit<Contact, 'id'>) => {
     try {
       const newContact = await dataService.addContact(contact);
       dispatch({ type: 'ADD_CONTACT', payload: newContact });
@@ -447,7 +342,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const deleteContactAsync = async (id: number) => {
+  const deleteContact = async (id: string) => {
     try {
       await dataService.deleteContact(id);
       dispatch({ type: 'DELETE_CONTACT', payload: id });
@@ -457,7 +352,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addSubjectAsync = async (subject: Omit<Subject, 'id'>) => {
+  const addSubject = async (subject: Omit<Subject, 'id'>) => {
     try {
       const newSubject = await dataService.addSubject(subject);
       // Note: We need to add SUBJECT action type to the reducer
@@ -469,7 +364,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addOrganizationAsync = async (organization: Omit<Organization, 'id'>): Promise<Organization> => {
+  const addOrganization = async (organization: Omit<Organization, 'id'>): Promise<Organization> => {
     try {
       const newOrganization = await dataService.addOrganization(organization);
       dispatch({ type: 'ADD_ORGANIZATION', payload: newOrganization });
@@ -480,7 +375,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addOccupationAsync = async (occupation: Omit<Occupation, 'id'>): Promise<Occupation> => {
+  const addOccupation = async (occupation: Omit<Occupation, 'id'>): Promise<Occupation> => {
     try {
       const newOccupation = await dataService.addOccupation(occupation);
       dispatch({ type: 'ADD_OCCUPATION', payload: newOccupation });
@@ -491,7 +386,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addRelationshipAsync = async (relationship: Omit<Relationship, 'id'>) => {
+  const addRelationship = async (relationship: Omit<Relationship, 'id'>) => {
     try {
       const newRelationship = await dataService.addRelationship(relationship);
       // Note: We need to add RELATIONSHIP action type to the reducer
@@ -503,7 +398,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addSentimentAsync = async (sentiment: Omit<Sentiment, 'id'>) => {
+  const addSentiment = async (sentiment: Omit<Sentiment, 'id'>) => {
     try {
       const newSentiment = await dataService.addSentiment(sentiment);
       // Note: We need to add SENTIMENT action type to the reducer
@@ -515,7 +410,17 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addNoteAsync = async (note: Omit<Note, 'id' | 'createdAt'>) => {
+  const updateSentiment = async (id: string, updates: Partial<Sentiment>) => {
+    try {
+      const updatedSentiment = await dataService.updateSentiment(id, updates);
+      dispatch({ type: 'UPDATE_SENTIMENT', payload: updatedSentiment });
+    } catch (error) {
+      console.error('Failed to update sentiment:', error);
+      throw error;
+    }
+  };
+
+  const addNote = async (note: Omit<Note, 'id' | 'created_at'>) => {
     try {
       const newNote = await dataService.addNote(note);
       dispatch({ type: 'ADD_NOTE', payload: newNote });
@@ -525,7 +430,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateNoteAsync = async (id: number, updates: Partial<Note>) => {
+  const updateNote = async (id: string, updates: Partial<Note>) => {
     try {
       const updatedNote = await dataService.updateNote(id, updates);
       dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
@@ -535,7 +440,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addCommitmentAsync = async (commitment: Omit<Commitment, 'id'>) => {
+  const addCommitment = async (commitment: Omit<Commitment, 'id'>) => {
     try {
       const created = await dataService.addCommitment(commitment);
       dispatch({ type: 'ADD_COMMITMENT', payload: created });
@@ -545,7 +450,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateCommitmentAsync = async (id: number, updates: Partial<Commitment>) => {
+  const updateCommitment = async (id: string, updates: Partial<Commitment>) => {
     try {
       const updated = await dataService.updateCommitment(id, updates);
       dispatch({ type: 'UPDATE_COMMITMENT', payload: updated });
@@ -557,13 +462,17 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const createNewContact = async (): Promise<Contact> => {
     try {
-      // Create a new contact with default values
+      // Create a new contact with empty values
       const newContact: Omit<Contact, 'id'> = {
-        name: 'New Contact',
-        lastInteraction: Date.now(),
-        subjectIds: [],
-        relationshipIds: [],
-        noteIds: []
+        name: '',
+        occupation_id: undefined,
+        organization_id: undefined,
+        birth_date: undefined,
+        last_interaction: Date.now(),
+        subject_ids: [],
+        relationship_ids: [],
+        note_ids: [],
+        is_trashed: false
       };
       
       const createdContact = await dataService.addContact(newContact);
@@ -575,30 +484,47 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const createNewNote = async (): Promise<Note> => {
+    try {
+      // Create a new note with empty values
+      const newNote: Omit<Note, 'id' | 'created_at'> = {
+        title: '',
+        text: '',
+        time_value: { hour: null, minute: null },
+        date: { year: null, month: null, day: null },
+        sentiment_ids: [],
+        contact_ids: [],
+        is_trashed: false
+      };
+      
+      const createdNote = await dataService.addNote(newNote);
+      dispatch({ type: 'ADD_NOTE', payload: createdNote });
+      return createdNote;
+    } catch (error) {
+      console.error('Failed to create new note:', error);
+      throw error;
+    }
+  };
+
+
   const value: ContactContextType = {
     state,
-    addContact: addContactSync,
-    updateContact: updateContactSync,
-    deleteContact: deleteContactSync,
-    addNote: addNoteSync,
-    updateNote: updateNoteSync,
-    addCommitment: addCommitmentSync,
-    updateCommitment: updateCommitmentSync,
-    resetToSample: resetToSampleSync,
-    updateContactAsync,
-    addContactAsync,
-    deleteContactAsync,
-    addSubjectAsync,
-    updateSubjectAsync,
-    addOrganizationAsync,
-    addOccupationAsync,
-    addRelationshipAsync,
-    addSentimentAsync,
-    addNoteAsync,
-    updateNoteAsync,
-    addCommitmentAsync,
-    updateCommitmentAsync,
+    addContact,
+    updateContact,
+    deleteContact,
+    addNote,
+    updateNote,
+    addCommitment,
+    updateCommitment,
+    addSubject,
+    updateSubject,
+    addOrganization,
+    addOccupation,
+    addRelationship,
+    addSentiment,
+    updateSentiment,
     createNewContact,
+    createNewNote,
   };
 
   return (

@@ -2,10 +2,10 @@ export type CardType = 'noteCardDetail' | 'contactCardDetail';
 
 export interface CardIndex {
   component: CardType;
-  id: number;
+  id: string;
 }
 
-export function createSourceRecord(component: CardType, id: number): CardIndex {
+export function createSourceRecord(component: CardType, id: string): CardIndex {
   return { component, id };
 }
 

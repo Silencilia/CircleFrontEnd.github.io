@@ -1,0 +1,5 @@
+---
+description:You should never alter the appearance of existing components, including but not limited to paddings, gaps, alignments, dimensions, fill ands stroke colors, stroke weight, etc. unless the user explicitly tells you to.
+globs:
+alwaysApply: true
+---

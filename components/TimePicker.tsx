@@ -467,7 +467,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                     aria-label="Confirm"
                     className="cursor-pointer"
                   >
-                    <ConfirmIcon width={16} height={16} />
+                    <ConfirmIcon />
                   </button>
                 )}
                 {onCancel && (
@@ -477,7 +477,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                     aria-label="Cancel"
                     className="cursor-pointer"
                   >
-                    <CancelIcon width={16} height={16} />
+                    <CancelIcon />
                   </button>
                 )}
               </div>

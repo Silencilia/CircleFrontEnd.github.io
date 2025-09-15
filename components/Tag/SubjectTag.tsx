@@ -6,7 +6,7 @@ import SubjectDeleteDialog from '../Dialogs/SubjectDeleteDialog';
 
 interface SubjectTagProps {
   subject: Subject;
-  contactId: number;
+  contactId: string;
   fillColor?: string;
   textColor?: string;
   className?: string;
@@ -25,7 +25,7 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
   editable = false,
   onEditComplete,
 }) => {
-  const { state, updateSubjectAsync, updateContactAsync } = useContacts();
+  const { state, updateSubject, updateContact } = useContacts();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(subject.label);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -68,7 +68,7 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
         const updatedSubject = { ...subject, label: newLabel.trim() };
         
         // Update the subject in the context state
-        await updateSubjectAsync(subject.id, { label: newLabel.trim() });
+        await updateSubject(subject.id, { label: newLabel.trim() });
         
         if (onEditComplete) {
           onEditComplete();
@@ -117,9 +117,9 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
     if (!currentContact) return;
     
     try {
-      // Remove the subject from the contact's subjectIds array
-      const updatedSubjectIds = currentContact.subjectIds.filter(id => id !== subject.id);
-      await updateContactAsync(currentContact.id, { subjectIds: updatedSubjectIds });
+      // Remove the subject from the contact's subject_ids array
+      const updatedSubjectIds = currentContact.subject_ids.filter(id => id !== subject.id);
+      await updateContact(currentContact.id, { subject_ids: updatedSubjectIds });
       setShowDeleteConfirm(false);
     } catch (error) {
       console.error('Failed to remove subject:', error);

@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import HeaderContacts from '../../components/Headers/HeaderContacts';
-import ContactBook from '../../components/ContactBook';
+import ContactGallery from '../../components/Gallery/ContactGallery';
 import NavigationBar from '../../components/NavigationBar';
 import { useContacts } from '../../contexts/ContactContext';
 
 export default function ContactsPage() {
   const { state } = useContacts();
   const [searchQuery, setSearchQuery] = useState('');
-  const [relationshipFilterIds, setRelationshipFilterIds] = useState<number[]>([]);
+  const [relationshipFilterIds, setRelationshipFilterIds] = useState<string[]>([]);
 
   // Loading state
   if (state.isLoading || !state.contacts) {
@@ -27,7 +27,7 @@ export default function ContactsPage() {
     setSearchQuery(query);
   };
 
-  const handleRelationshipFilterChange = (selectedIds: number[]) => {
+  const handleRelationshipFilterChange = (selectedIds: string[]) => {
     setRelationshipFilterIds(selectedIds);
   };
 
@@ -41,13 +41,13 @@ export default function ContactsPage() {
         />
       </div>
       
-      {/* ContactBook fixed between header (198px) and navbar (80px) with its own scroll area */}
+      {/* ContactGallery fixed between header (198px) and navbar (80px) with its own scroll area */}
       <div
         className="fixed left-0 right-0 z-40"
         style={{ top: 198, bottom: 80, overflowY: 'auto' }}
       >
         <div className="max-w-7xl mx-auto">
-          <ContactBook 
+          <ContactGallery 
             contacts={state.contacts} 
             searchQuery={searchQuery}
             relationshipFilterIds={relationshipFilterIds}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Contact, Subject, useContacts } from '../../contexts/ContactContext';
 import { SubjectTag, OverflowTag } from '../Tag';
 import { formatYyyyMmDdToLong } from '../../data/strings';
-import { MenuIcon } from '../icons';
+import { MenuButton } from '../Button';
 
 interface ContactCardSimpleProps {
 	contact: Contact;
@@ -10,15 +10,15 @@ interface ContactCardSimpleProps {
 }
 
 const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact, onMenuClick }) => {
-	if (contact.isTrashed) {
+  if (contact.is_trashed) {
 		return null;
 	}
 	const { state } = useContacts();
 	const [measuredTagCount, setMeasuredTagCount] = useState(0);
 	
 	// Look up the actual data using IDs
-	const occupation = contact.occupationId ? state.occupations.find(o => o.id === contact.occupationId) : null;
-	const subjects = contact.subjectIds ? contact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
+	const occupation = contact.occupation_id ? state.occupations.find(o => o.id === contact.occupation_id) : null;
+	const subjects = contact.subject_ids ? contact.subject_ids.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
 
 	// Ensure subjects is always an array
 	const safeSubjects = Array.isArray(subjects) ? subjects : [];
@@ -39,7 +39,7 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact, onMenuCl
 	const hiddenCount = safeSubjects.length - maxVisibleSubjects;
 
 	// Format birth date without timezone conversion
-	const formatBirthDateFromFields = (birth?: Contact['birthDate']): string => {
+  const formatBirthDateFromFields = (birth?: Contact['birth_date']): string => {
 		if (!birth || (!birth.year && !birth.month && !birth.day)) return 'no birth date';
 		if (birth.year && !birth.month && !birth.day) return `${birth.year}`;
 		if (birth.year && birth.month && !birth.day) {
@@ -77,24 +77,19 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact, onMenuCl
 						{occupation?.title || 'no occupation'}
 					</div>
 					<div className={`font-inter text-sm leading-5 text-circle-primary truncate h-[20px] ${
-						contact.birthDate && contact.birthDate.year 
+						contact.birth_date && contact.birth_date.year 
 							? 'font-normal' 
 							: 'font-normal italic opacity-50'
 					}`}
 					>
-						{formatBirthDateFromFields(contact.birthDate)}
+						{formatBirthDateFromFields(contact.birth_date)}
 					</div>
 				</div>
 				{/* Menu Button */}
-				<div className="w-4 h-4 flex items-center justify-center">
-					<button
-						onClick={onMenuClick}
-						className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
-						aria-label="Open contact details"
-					>
-						<MenuIcon />
-					</button>
-				</div>
+				<MenuButton
+					onClick={onMenuClick}
+					ariaLabel="Open contact details"
+				/>
 			</div>
 			
 			{/* Subjects */}

@@ -5,14 +5,12 @@ import { NewNoteButton } from '../Button';
 
 interface HeaderMemoProps {
   onSearchChange: (query: string) => void;
-  onRelationshipFilterChange: (selectedIds: number[]) => void;
-  onNewNoteClick?: () => void;
+  onNewNote?: () => void;
 }
 
 const HeaderMemo: React.FC<HeaderMemoProps> = ({
   onSearchChange,
-  onRelationshipFilterChange,
-  onNewNoteClick,
+  onNewNote,
 }) => {
   return (
     <div className="w-full bg-circle-neutral flex flex-col gap-0">
@@ -25,14 +23,11 @@ const HeaderMemo: React.FC<HeaderMemoProps> = ({
           <div className="flex flex-row items-center gap-5">
             <FilterMemo 
               onSearchChange={onSearchChange}
-              onRelationshipFilterChange={onRelationshipFilterChange}
             />
             
             {/* New Note Button - 20px gap from FilterMemo */}
             <div className="flex items-center">
-              <NewNoteButton 
-                onClick={onNewNoteClick || (() => {})} 
-              />
+              <NewNoteButton onClick={onNewNote} />
             </div>
           </div>
         </div>
