@@ -1,17 +1,17 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import NoteCard from './Cards/NoteCard';
-import ContactCardDetail from './Cards/ContactCardDetail';
-import NoteCardDetail from './Cards/NoteCardDetail';
-import { Contact, Note } from '../contexts/ContactContext';
+import NoteCard from '../Cards/NoteCard';
+import ContactCardDetail from '../Cards/ContactCardDetail';
+import NoteCardDetail from '../Cards/NoteCardDetail';
+import { Contact, Note } from '../../contexts/ContactContext';
 
-interface NoteBookProps {
+interface NoteGalleryProps {
   notes: Note[];
 }
 
-// Notebook section positioned similarly to provided spec; renders a wrapped grid of NoteCards
-const NoteBook: React.FC<NoteBookProps> = ({ notes }) => {
-  const items = useMemo(() => (notes || []).filter(n => !n.isTrashed), [notes]);
+// NoteGallery section positioned similarly to provided spec; renders a wrapped grid of NoteCards
+const NoteGallery: React.FC<NoteGalleryProps> = ({ notes }) => {
+  const items = useMemo(() => (notes || []).filter(n => !n.is_trashed), [notes]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -41,7 +41,7 @@ const NoteBook: React.FC<NoteBookProps> = ({ notes }) => {
         )}
       </div>
     </div>
-    {/* Overlays managed at the NoteBook level */}
+    {/* Overlays managed at the NoteGallery level */}
     {isMounted && selectedNote
       ? createPortal(
           (
@@ -81,6 +81,6 @@ const NoteBook: React.FC<NoteBookProps> = ({ notes }) => {
   );
 };
 
-export default NoteBook;
+export default NoteGallery;
 
 

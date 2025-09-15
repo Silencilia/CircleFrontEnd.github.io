@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import PlusIcon from '../icons/PlusIcon';
-import ContactCardDetail from '../Cards/ContactCardDetail';
-import { useContacts } from '../../contexts/ContactContext';
+import ContactCardNew from '../Cards/ContactCardNew';
+import { Contact, useContacts } from '../../contexts/ContactContext';
 
 interface NewContactButtonProps {
   className?: string;
@@ -10,26 +10,19 @@ interface NewContactButtonProps {
 
 const NewContactButton: React.FC<NewContactButtonProps> = ({ className = '' }) => {
   const { createNewContact } = useContacts();
-  const [selectedContact, setSelectedContact] = useState<any>(null);
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Mount flag to safely use portal on client only
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const [newContact, setNewContact] = useState<Contact | null>(null);
 
   const handleClick = async () => {
     try {
-      // Create a new contact with default values
-      const newContact = await createNewContact();
-      setSelectedContact(newContact);
+      const contact = await createNewContact();
+      setNewContact(contact);
     } catch (error) {
       console.error('Failed to create new contact:', error);
     }
   };
 
   const handleCloseDetail = () => {
-    setSelectedContact(null);
+    setNewContact(null);
   };
 
   return (
@@ -50,13 +43,13 @@ const NewContactButton: React.FC<NewContactButtonProps> = ({ className = '' }) =
       >
         {/* Plus Icon */}
         <div className="flex-none order-0 flex-grow-0">
-          <PlusIcon 
-            width={20} 
-            height={20} 
-            className="text-circle-primary group-hover:text-circle-neutral transition-colors duration-200" 
+          <PlusIcon
+            width={20}
+            height={20}
+            className="text-circle-primary group-hover:text-circle-neutral transition-colors duration-200"
           />
         </div>
-        
+
         {/* Text Frame */}
         <div className="flex flex-row justify-center items-center gap-[10px] h-[16px] flex-none order-1 flex-grow-0">
           <span className="h-[16px] font-inter font-medium text-[11px] leading-[16px] flex items-center tracking-[0.5px] text-circle-primary group-hover:text-circle-neutral transition-colors duration-200 flex-none order-0 flex-grow-0 pr-[5px]">
@@ -65,20 +58,20 @@ const NewContactButton: React.FC<NewContactButtonProps> = ({ className = '' }) =
         </div>
       </button>
 
-      {/* Overlay for ContactCardDetail via portal to escape parent stacking contexts */}
-      {isMounted && selectedContact
+      {/* Overlay for ContactCardNew via portal to escape parent stacking contexts */}
+      {newContact
         ? createPortal(
-            (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-                <ContactCardDetail 
-                  contact={selectedContact} 
-                  onMinimize={handleCloseDetail}
-                />
-              </div>
-            ),
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <ContactCardNew
+                contact={newContact}
+                onMinimize={handleCloseDetail}
+                caller={{ component: 'contactCardDetail', id: newContact.id }}
+              />
+            </div>,
             document.body
           )
-        : null}
+        : null
+      }
     </>
   );
 };

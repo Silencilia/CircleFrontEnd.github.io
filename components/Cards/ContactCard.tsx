@@ -1,17 +1,17 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Contact, Subject, useContacts, Relationship } from '../../contexts/ContactContext';
 import { SubjectTag, RelationshipTag, OverflowTag } from '../Tag';
-import { MenuIcon } from '../icons';
+import { MenuButton } from '../Button';
 import { formatYyyyMmDdToLong } from '../../data/strings';
 
 interface ContactCardProps {
   contact: Contact;
   onMenuClick: () => void;
-  relationshipFilterIds?: number[];
+  relationshipFilterIds?: string[];
 }
 
 const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relationshipFilterIds = [] }) => {
-  if (contact.isTrashed) {
+  if (contact.is_trashed) {
     return null;
   }
   const { state } = useContacts();
@@ -22,27 +22,27 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
 
   // Use useMemo to prevent recreating these arrays on every render
   const occupation = useMemo(() => 
-    contact.occupationId ? state.occupations.find(o => o.id === contact.occupationId) : null, 
-    [contact.occupationId, state.occupations]
+    contact.occupation_id ? state.occupations.find(o => o.id === contact.occupation_id) : null, 
+    [contact.occupation_id, state.occupations]
   );
   
   const organization = useMemo(() => 
-    contact.organizationId ? state.organizations.find(org => org.id === contact.organizationId) : null, 
-    [contact.organizationId, state.organizations]
+    contact.organization_id ? state.organizations.find(org => org.id === contact.organization_id) : null, 
+    [contact.organization_id, state.organizations]
   );
   
   const subjects = useMemo(() => 
-    contact.subjectIds ? contact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [], 
-    [contact.subjectIds, state.subjects]
+    contact.subject_ids ? contact.subject_ids.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [], 
+    [contact.subject_ids, state.subjects]
   );
   
   const relationships = useMemo(() => 
-    contact.relationshipIds ? contact.relationshipIds.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) : [], 
-    [contact.relationshipIds, state.relationships]
+    contact.relationship_ids ? contact.relationship_ids.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) : [], 
+    [contact.relationship_ids, state.relationships]
   );
 
   // Format birth date without timezone conversion
-  const formatBirthDateFromFields = (birth?: Contact['birthDate']): string => {
+  const formatBirthDateFromFields = (birth?: Contact['birth_date']): string => {
     if (!birth || (!birth.year && !birth.month && !birth.day)) return 'no birth date';
     if (birth.year && !birth.month && !birth.day) return `${birth.year}`;
     if (birth.year && birth.month && !birth.day) {
@@ -173,25 +173,21 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
           </div>
           
           {/* Menu Button */}
-          <div className="w-4 h-4 flex items-center justify-center">
-            <button
-              onClick={onMenuClick}
-              className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
-              aria-label="Open contact details"
-            >
-              <MenuIcon />
-            </button>
-          </div>
+          <MenuButton
+            onClick={onMenuClick}
+            ariaLabel="Open contact details"
+            className="hover:!bg-circle-neutral"
+          />
         </div>
         
         {/* Birthdate and Notes Column */}
         <div className="flex flex-col gap-0 h-fit">
           <div className={`font-inter text-sm leading-5 h-[20px] ${
-            contact.birthDate && contact.birthDate.year 
+            contact.birth_date && contact.birth_date.year 
               ? 'font-normal text-circle-primary' 
               : 'font-normal text-circle-primary italic opacity-50'
           }`}>
-            {formatBirthDateFromFields(contact.birthDate)}
+            {formatBirthDateFromFields(contact.birth_date)}
           </div>
           <div className="flex flex-row items-center gap-2 flex-shrink-0">
             {/* Edit Icon */}
@@ -202,7 +198,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
             </div>
             {/* Notes Count */}
             <span className="font-inter font-normal text-sm leading-5 text-circle-primary">
-              {contact.noteIds?.length || 0} notes
+              {contact.note_ids?.length || 0} notes
             </span>
           </div>
         </div>

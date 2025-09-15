@@ -2,11 +2,11 @@ import React from 'react';
 import PlusIcon from '../icons/PlusIcon';
 
 interface NewNoteButtonProps {
-  onClick: () => void;
   className?: string;
+  onClick?: () => void;
 }
 
-const NewNoteButton: React.FC<NewNoteButtonProps> = ({ onClick, className = '' }) => {
+const NewNoteButton: React.FC<NewNoteButtonProps> = ({ className = '', onClick }) => {
   return (
     <button
       onClick={onClick}

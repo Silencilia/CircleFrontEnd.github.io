@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import ContactCard from './Cards/ContactCard';
-import ContactCardDetail from './Cards/ContactCardDetail';
-import NoteCardDetail from './Cards/NoteCardDetail';
-import { Contact, Note, useContacts } from '../contexts/ContactContext';
+import ContactCard from '../Cards/ContactCard';
+import ContactCardDetail from '../Cards/ContactCardDetail';
+import NoteCardDetail from '../Cards/NoteCardDetail';
+import { Contact, Note, useContacts } from '../../contexts/ContactContext';
 
 interface ContactBookProps {
   contacts: Contact[];
   searchQuery?: string;
-  relationshipFilterIds?: number[];
+  relationshipFilterIds?: string[];
   className?: string;
 }
 
@@ -24,7 +24,7 @@ const ContactBook: React.FC<ContactBookProps> = ({
 
   // Filter contacts based on search query and relationship filter
   const filteredContacts = useMemo(() => {
-    let filtered = contacts.filter(c => !c.isTrashed);
+    let filtered = contacts.filter(c => !c.is_trashed);
 
     // Apply search filter
     if (searchQuery.trim()) {
@@ -32,13 +32,13 @@ const ContactBook: React.FC<ContactBookProps> = ({
       filtered = filtered.filter(contact => 
         contact.name.toLowerCase().includes(query) ||
         // Search in occupation
-        (contact.occupationId && 
-         state.occupations.find(o => o.id === contact.occupationId)?.title.toLowerCase().includes(query)) ||
+        (contact.occupation_id && 
+         state.occupations.find(o => o.id === contact.occupation_id)?.title.toLowerCase().includes(query)) ||
         // Search in organization
-        (contact.organizationId && 
-         state.organizations.find(org => org.id === contact.organizationId)?.name.toLowerCase().includes(query)) ||
+        (contact.organization_id && 
+         state.organizations.find(org => org.id === contact.organization_id)?.name.toLowerCase().includes(query)) ||
         // Search in subjects
-        contact.subjectIds.some(subjectId => 
+        contact.subject_ids.some(subjectId => 
           state.subjects.find(s => s.id === subjectId)?.label.toLowerCase().includes(query)
         )
       );
@@ -47,7 +47,7 @@ const ContactBook: React.FC<ContactBookProps> = ({
     // Apply relationship filter
     if (relationshipFilterIds.length > 0) {
       filtered = filtered.filter(contact => 
-        contact.relationshipIds.some(relationshipId => 
+        contact.relationship_ids.some(relationshipId => 
           relationshipFilterIds.includes(relationshipId)
         )
       );

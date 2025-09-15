@@ -3,8 +3,8 @@ import { Relationship } from '../../contexts/ContactContext';
 
 interface RelationshipFilterDropdownProps {
   relationships: Relationship[];
-  selectedRelationshipIds: number[];
-  onSelectionChange: (selectedIds: number[]) => void;
+  selectedRelationshipIds: string[];
+  onSelectionChange: (selectedIds: string[]) => void;
 }
 
 const RelationshipFilterDropdown: React.FC<RelationshipFilterDropdownProps> = ({
@@ -63,7 +63,7 @@ const RelationshipFilterDropdown: React.FC<RelationshipFilterDropdownProps> = ({
     setIsOpen(!isOpen);
   };
 
-  const handleRelationshipToggle = (relationshipId: number) => {
+  const handleRelationshipToggle = (relationshipId: string) => {
     const newSelection = selectedRelationshipIds.includes(relationshipId)
       ? selectedRelationshipIds.filter(id => id !== relationshipId)
       : [...selectedRelationshipIds, relationshipId];

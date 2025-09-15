@@ -40,6 +40,7 @@ module.exports = {
         // Body styles - Inter
         'body-large': ['16px', '24px'],
         'body-medium': ['14px', '20px'],
+        'body-medium-draft': ['14px', '20px'],
         'body-small': ['12px', '16px'],
         
         // Label styles - Inter

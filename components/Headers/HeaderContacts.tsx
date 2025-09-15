@@ -5,7 +5,7 @@ import { NewContactButton } from '../Button';
 
 interface HeaderContactsProps {
   onSearchChange: (query: string) => void;
-  onRelationshipFilterChange: (selectedIds: number[]) => void;
+  onRelationshipFilterChange: (selectedIds: string[]) => void;
 }
 
 const HeaderContacts: React.FC<HeaderContactsProps> = ({

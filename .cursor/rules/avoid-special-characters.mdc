@@ -1,0 +1,5 @@
+---
+description: Never use emojis and special characters in your codes, especially not in console logs.
+globs:
+alwaysApply: true
+---

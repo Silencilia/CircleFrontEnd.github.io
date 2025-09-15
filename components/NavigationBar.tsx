@@ -10,21 +10,21 @@ interface NavigationBarProps {
  * NavigationBar component with responsive height
  * 
  * The NavigationBarHeight CSS variable is automatically calculated and updated:
- * - Mobile (< 640px): calc(3.5rem + 1.5rem) = 80px total
- * - Desktop (≥ 640px): calc(3.75rem + 1.5rem) = 84px total
+ * - Mobile (< 640px): 56px (button) + 24px (padding) = 80px total
+ * - Desktop (≥ 640px): 60px (button) + 24px (padding) = 84px total
  * 
  * This variable can be accessed via CSS: var(--NavigationBarHeight)
  * or used in JavaScript: getComputedStyle(element).getPropertyValue('--NavigationBarHeight')
  */
 const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) => {
-  const [navigationBarHeight, setNavigationBarHeight] = useState<string>('calc(3.5rem + 1.5rem)'); // Default mobile height
+  const [navigationBarHeight, setNavigationBarHeight] = useState<string>('80px'); // Default mobile height
 
   useEffect(() => {
     const updateHeight = () => {
       const isSmallScreen = window.innerWidth < 640; // Tailwind sm breakpoint
-      const buttonHeight = isSmallScreen ? '3.5rem' : '3.75rem'; // h-14 vs h-15
-      const padding = '1.5rem'; // py-3
-      const newHeight = `calc(${buttonHeight} + ${padding})`;
+      const buttonHeight = isSmallScreen ? 56 : 60; // h-14 (56px) vs h-15 (60px)
+      const padding = 24; // py-3 (24px)
+      const newHeight = `${buttonHeight + padding}px`;
       setNavigationBarHeight(newHeight);
       console.log('NavigationBarHeight:', newHeight); // Add this line
       // Expose height globally so pages can offset content and avoid overlap

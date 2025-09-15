@@ -4,7 +4,7 @@ import RelationshipFilterDropdown from './RelationshipFilterDropdown';
 
 interface FilterContactsProps {
   onSearchChange: (query: string) => void;
-  onRelationshipFilterChange: (selectedIds: number[]) => void;
+  onRelationshipFilterChange: (selectedIds: string[]) => void;
 }
 
 const FilterContacts: React.FC<FilterContactsProps> = ({
@@ -13,7 +13,7 @@ const FilterContacts: React.FC<FilterContactsProps> = ({
 }) => {
   const { state } = useContacts();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRelationshipIds, setSelectedRelationshipIds] = useState<number[]>([]);
+  const [selectedRelationshipIds, setSelectedRelationshipIds] = useState<string[]>([]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -21,7 +21,7 @@ const FilterContacts: React.FC<FilterContactsProps> = ({
     onSearchChange(query);
   };
 
-  const handleRelationshipChange = (selectedIds: number[]) => {
+  const handleRelationshipChange = (selectedIds: string[]) => {
     setSelectedRelationshipIds(selectedIds);
     onRelationshipFilterChange(selectedIds);
   };

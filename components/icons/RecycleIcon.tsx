@@ -1,13 +1,13 @@
 import React from 'react';
 
-interface DeleteIconProps {
+interface RecycleIconProps {
   width?: number;
   height?: number;
   strokeColor?: string;
   className?: string;
 }
 
-const DeleteIcon: React.FC<DeleteIconProps> = ({
+const RecycleIcon: React.FC<RecycleIconProps> = ({
   width = 16,
   height = 16,
   strokeColor = '#1E1E1E',
@@ -33,4 +33,4 @@ const DeleteIcon: React.FC<DeleteIconProps> = ({
   );
 };
 
-export default DeleteIcon;
+export default RecycleIcon;

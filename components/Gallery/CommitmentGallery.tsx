@@ -1,20 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import CommitmentCard from './Cards/CommitmentCard';
-import { Commitment } from '../contexts/ContactContext';
-import DownIcon from './icons/DownIcon';
+import CommitmentCard from '../Cards/CommitmentCard';
+import { Commitment } from '../../contexts/ContactContext';
+import DownIcon from '../icons/DownIcon';
 
-interface CommitmentBookProps {
+interface CommitmentGalleryProps {
   commitments: Commitment[];
   title?: string;
   onHeightChange?: (h: number) => void;
 }
 
-// Visual metrics used to size the space reserved for CommitmentBook on pages
+// Visual metrics used to size the space reserved for CommitmentGallery on pages
 // Top padding (20) + title line-height (32) + gap under title (30) + card row height (155) + bottom padding (10)
-export let COMMITMENT_BOOK_TARGET_HEIGHT = 20 + 32 + 30 + 155 + 10; // 247px (mutable for live updates)
+export let COMMITMENT_GALLERY_TARGET_HEIGHT = 20 + 32 + 30 + 155 + 10; // 247px (mutable for live updates)
 
 // Horizontally scrollable row of CommitmentCard items with drag-to-scroll behavior
-const CommitmentBook: React.FC<CommitmentBookProps> = ({ commitments, title = 'Upcoming commitments', onHeightChange }) => {
+const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, title = 'Upcoming commitments', onHeightChange }) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -23,7 +23,7 @@ const CommitmentBook: React.FC<CommitmentBookProps> = ({ commitments, title = 'U
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Keep last measured expanded heights to compute collapsed target height accurately
-  const lastExpandedRootHeightRef = useRef<number>(COMMITMENT_BOOK_TARGET_HEIGHT);
+  const lastExpandedRootHeightRef = useRef<number>(COMMITMENT_GALLERY_TARGET_HEIGHT);
   const lastCardsHeightRef = useRef<number>(155); // default to card row height
 
   const updateTargetHeight = useCallback(() => {
@@ -32,15 +32,15 @@ const CommitmentBook: React.FC<CommitmentBookProps> = ({ commitments, title = 'U
       const cardsHeight = cardsContainerRef.current?.clientHeight ?? lastCardsHeightRef.current;
       lastExpandedRootHeightRef.current = rootHeight;
       lastCardsHeightRef.current = cardsHeight;
-      COMMITMENT_BOOK_TARGET_HEIGHT = rootHeight;
-      if (onHeightChange) onHeightChange(COMMITMENT_BOOK_TARGET_HEIGHT);
+      COMMITMENT_GALLERY_TARGET_HEIGHT = rootHeight;
+      if (onHeightChange) onHeightChange(COMMITMENT_GALLERY_TARGET_HEIGHT);
       return;
     }
 
     // Collapsed: subtract the last measured cards container height from the last expanded total
     const collapsedHeight = Math.max(0, (lastExpandedRootHeightRef.current ?? 0) - (lastCardsHeightRef.current ?? 0));
-    COMMITMENT_BOOK_TARGET_HEIGHT = collapsedHeight;
-    if (onHeightChange) onHeightChange(COMMITMENT_BOOK_TARGET_HEIGHT);
+    COMMITMENT_GALLERY_TARGET_HEIGHT = collapsedHeight;
+    if (onHeightChange) onHeightChange(COMMITMENT_GALLERY_TARGET_HEIGHT);
   }, [isCollapsed, onHeightChange]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -120,7 +120,7 @@ const CommitmentBook: React.FC<CommitmentBookProps> = ({ commitments, title = 'U
     };
   }, [updateTargetHeight, isCollapsed]);
 
-  const items = useMemo(() => (commitments || []).filter(c => !c.isTrashed), [commitments]);
+  const items = useMemo(() => (commitments || []).filter(c => !c.is_trashed), [commitments]);
 
   return (
     <div ref={rootRef} className="w-full px-[30px] pt-[20px] pb-[10px]">
@@ -163,6 +163,6 @@ const CommitmentBook: React.FC<CommitmentBookProps> = ({ commitments, title = 'U
   );
 };
 
-export default CommitmentBook;
+export default CommitmentGallery;
 
 

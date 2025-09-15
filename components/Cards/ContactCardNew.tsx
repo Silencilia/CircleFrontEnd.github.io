@@ -1,0 +1,786 @@
+import React, { useRef, useState, useEffect } from 'react';
+import ContentEditable from 'react-contenteditable';
+import { Contact, Subject, Relationship, Note, useContacts } from '../../contexts/ContactContext';
+import { CardIndex, createSourceRecord, CardType, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
+import { SubjectTag, RelationshipTag } from '../Tag';
+import { destroyAllUnusedEntities } from '../../utils/entityCleanup';
+
+const Type: CardType = 'contactCardDetail';
+import NoteCard from './NoteCard';
+import NoteCardDetail from './NoteCardDetail';
+import { CalendarIcon, NoteIcon, ConfirmIcon, CancelIcon } from '../icons';
+import { MinimizeButton } from '../Button';
+import { EDITING_MODE_PADDING } from '../../data/variables';
+import { ConfirmButton, CancelButton } from '../Button';
+import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
+import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/BirthDatePicker';
+import { formatYyyyMmDdToLong } from '../../data/strings';
+import useCardNavigation from '../../hooks/useCardNavigation';
+
+// (Removed global open-contact tracking)
+
+// Helper to format to YYYY-MM-DD (Contact.birthDate format)
+function formatToIsoDate(value: DynamicPrecisionDateValue): string | undefined {
+  if (!value || value.precision === 'none' || !value.year) return undefined;
+  const year = value.year.toString().padStart(4, '0');
+  if (value.precision === 'year') {
+    return `${year}-01-01`;
+  }
+  if (!value.month) return undefined;
+  const month = String(value.month).padStart(2, '0');
+  if (value.precision === 'month') {
+    return `${year}-${month}-01`;
+  }
+  if (!value.day) return undefined;
+  const day = String(value.day).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+interface ContactCardDetailProps {
+  contact: Contact;
+  onMinimize?: () => void;
+  caller?: CardIndex | null;
+  onOpenNote?: (note: Note, caller: CardIndex) => void;
+  onOpenContactDetail?: (contact: Contact, caller: CardIndex) => void;
+}
+
+const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimize, caller, onOpenNote, onOpenContactDetail }) => {
+  const { state, updateContact, addOccupation, addOrganization, deleteContact } = useContacts();
+  if (contact.is_trashed) {
+    return null;
+  }
+  // (Removed registration of open contact detail)
+  const notesContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [isAnyNoteEditing, setIsAnyNoteEditing] = useState(false);
+  
+  // Get the latest contact data from context state
+  const currentContact = state.contacts.find(c => c.id === contact.id) || contact;
+  
+  // Name editing state
+  const [isNameEditing, setIsNameEditing] = useState(false);
+  const [editName, setEditName] = useState(currentContact.name);
+  const [originalName, setOriginalName] = useState(currentContact.name); // Store original for rollback
+  const [isNameSaving, setIsNameSaving] = useState(false); // Add loading state
+  const nameContentEditableRef = useRef<HTMLElement>(null);
+  const [noteDetail, setNoteDetail] = useState<Note | null>(null);
+  const [noteDetailCaller, setNoteDetailCaller] = useState<CardIndex | null>(null);
+
+  // Get related data
+  const occupation = currentContact.occupation_id ? state.occupations.find(o => o.id === currentContact.occupation_id) : null;
+  const organization = currentContact.organization_id ? state.organizations.find(org => org.id === currentContact.organization_id) : null;
+  const subjects = currentContact.subject_ids ? currentContact.subject_ids.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
+  const relationships = currentContact.relationship_ids ? currentContact.relationship_ids.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) as Relationship[] : [];
+  const notes = currentContact.note_ids ? (currentContact.note_ids
+    .map(id => state.notes.find(n => n.id === id))
+    .filter((n): n is Note => Boolean(n && !n.is_trashed))) : [];
+
+  // Birth date picker overlay state
+  const [isBirthDatePickerOpen, setIsBirthDatePickerOpen] = useState(false);
+  const [birthDateValue, setBirthDateValue] = useState<DynamicPrecisionDateValue>({ precision: 'none', year: null, month: null, day: null });
+  
+  // Delete dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Sync initial birth date to picker state when opening (parse YYYY-MM-DD as local)
+  const openBirthDatePicker = () => {
+    if (currentContact.birth_date) {
+      const b = currentContact.birth_date;
+      if (b.year && b.month && b.day) setBirthDateValue({ precision: 'day', year: b.year, month: b.month, day: b.day });
+      else if (b.year && b.month) setBirthDateValue({ precision: 'month', year: b.year, month: b.month, day: null });
+      else if (b.year) setBirthDateValue({ precision: 'year', year: b.year, month: null, day: null });
+      else setBirthDateValue({ precision: 'none', year: null, month: null, day: null });
+    } else {
+      setBirthDateValue({ precision: 'none', year: null, month: null, day: null });
+    }
+    setIsBirthDatePickerOpen(true);
+  };
+
+  const handleBirthDateConfirm = async (value: DynamicPrecisionDateValue) => {
+    try {
+      const birth = {
+        year: value.year ?? null,
+        month: value.precision === 'year' ? null : (value.month ?? null),
+        day: value.precision === 'day' ? (value.day ?? null) : null,
+      };
+      await updateContact(currentContact.id, { birth_date: birth });
+      setIsBirthDatePickerOpen(false);
+    } catch (error) {
+      console.error('Failed to update birth date:', error);
+      setIsBirthDatePickerOpen(false);
+    }
+  };
+
+  const handleBirthDateCancel = () => {
+    setIsBirthDatePickerOpen(false);
+  };
+
+  // Occupation editing state - moved after occupation is declared
+  const [isOccupationEditing, setIsOccupationEditing] = useState(false);
+  const [editOccupation, setEditOccupation] = useState(occupation?.title || '');
+  const occupationContentEditableRef = useRef<HTMLElement>(null);
+
+  // Organization editing state
+  const [isOrganizationEditing, setIsOrganizationEditing] = useState(false);
+  const [editOrganization, setEditOrganization] = useState(organization?.name || '');
+  const organizationContentEditableRef = useRef<HTMLElement>(null);
+
+  // Format birth date without timezone conversion
+  const formatBirthDate = (birth?: Contact['birth_date']): string => {
+    if (!birth || (!birth.year && !birth.month && !birth.day)) return 'No birth date';
+    if (birth.year && !birth.month && !birth.day) return `${birth.year}`;
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    if (birth.year && birth.month && !birth.day) return `${months[birth.month - 1]}, ${birth.year}`;
+    if (birth.year && birth.month && birth.day) return `${months[birth.month - 1]} ${birth.day}, ${birth.year}`;
+    return 'No birth date';
+  };
+
+  // Mouse drag scrolling handlers - simpler approach
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Check if the target is or contains a contenteditable element
+    const target = e.target as HTMLElement;
+    const isOverEditable = target.closest('[contenteditable="true"]');
+    // Do not start drag when clicking a contact reference or other interactive controls
+    const isOverContactRef = target.closest('[data-contact-ref="true"]');
+    const isOverButtonOrLink = target.closest('button, a, [role="button"], [role="link"]');
+    
+    if (isOverEditable || isOverContactRef || isOverButtonOrLink || !notesContainerRef.current) return;
+    
+    setIsDragging(true);
+    setStartY(e.clientY - notesContainerRef.current.offsetTop);
+    setScrollTop(notesContainerRef.current.scrollTop);
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    // Check if the target is or contains a contenteditable element
+    const target = e.target as HTMLElement;
+    const isOverEditable = target.closest('[contenteditable="true"]');
+    
+    if (isOverEditable || !isDragging || !notesContainerRef.current) return;
+    
+    const y = e.clientY - notesContainerRef.current.offsetTop;
+    const walk = (y - startY) * 2;
+    notesContainerRef.current.scrollTop = scrollTop - walk;
+  };
+
+  const handleMouseUp = () => {
+    if (!isAnyNoteEditing) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isAnyNoteEditing) {
+      setIsDragging(false);
+    }
+  };
+
+  // Track editing state for mouse drag functionality
+  useEffect(() => {
+    // Disable mouse drag when name, occupation, or organization is being edited
+    if (isNameEditing || isOccupationEditing || isOrganizationEditing) {
+      setIsAnyNoteEditing(true);
+    } else {
+      setIsAnyNoteEditing(false);
+    }
+  }, [isNameEditing, isOccupationEditing, isOrganizationEditing]);
+
+  // Update editName when contact name changes
+  useEffect(() => {
+    setEditName(currentContact.name);
+  }, [currentContact.name]);
+
+  // Update editOccupation when occupation changes
+  useEffect(() => {
+    // Only update if not currently editing to prevent flashing during user input
+    if (!isOccupationEditing) {
+      setEditOccupation(occupation?.title || '');
+    }
+  }, [occupation?.title, isOccupationEditing]);
+
+  // Update editOrganization when organization changes
+  useEffect(() => {
+    // Only update if not currently editing to prevent flashing during user input
+    if (!isOrganizationEditing) {
+      setEditOrganization(organization?.name || '');
+    }
+  }, [organization?.name, isOrganizationEditing]);
+
+  // Name editing handlers
+  const handleNameEditClick = () => {
+    setIsNameEditing(true);
+    setEditName(currentContact.name);
+    setOriginalName(currentContact.name); // Store original name
+    // Focus the contenteditable element after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      if (nameContentEditableRef.current) {
+        nameContentEditableRef.current.focus();
+        // Place cursor at the end of the text
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(nameContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleNameSave = async () => {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = nameContentEditableRef.current?.innerHTML ?? editName;
+    // Clean the input value to remove any HTML tags and trim whitespace
+    const cleanName = currentHtml.replace(/<[^>]*>/g, '').trim();
+    console.log('Saving name:', cleanName, 'Current name:', currentContact.name);
+    if (cleanName !== currentContact.name) {
+      console.log('Updating contact with ID:', currentContact.id);
+
+      // Update contact in database
+      try {
+        setIsNameSaving(true);
+        await updateContact(currentContact.id, { name: cleanName });
+        console.log('Name updated successfully');
+      } catch (error) {
+        console.error('Failed to update name:', error);
+        // Revert to original value on error
+        setEditName(originalName);
+      } finally {
+        setIsNameSaving(false);
+      }
+    } else {
+      console.log('No changes to save');
+    }
+    setIsNameEditing(false);
+  };
+
+  const handleNameCancel = () => {
+    setEditName(currentContact.name);
+    setIsNameEditing(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleNameSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleNameCancel();
+    }
+  };
+
+  const handleNameKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleNameBlur = (e: React.FocusEvent) => {
+    // Prevent auto-save if user is clicking on confirm or cancel buttons
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (relatedTarget && (
+      relatedTarget.closest('[aria-label="Save name"]') ||
+      relatedTarget.closest('[aria-label="Cancel name edit"]')
+    )) {
+      return;
+    }
+
+    // Use setTimeout to allow click events to fire first
+    setTimeout(() => {
+      if (isNameEditing) {
+        handleNameSave();
+      }
+    }, 100);
+  };
+
+  // Occupation editing handlers
+  const handleOccupationEditClick = () => {
+    setIsOccupationEditing(true);
+    setEditOccupation(occupation?.title || '');
+    // Focus the contenteditable element after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      if (occupationContentEditableRef.current) {
+        occupationContentEditableRef.current.focus();
+        // Place cursor at the end of the text
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(occupationContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleOccupationSave = async () => {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = occupationContentEditableRef.current?.innerHTML ?? editOccupation;
+    // Clean the input value to remove any HTML tags
+    const cleanOccupation = currentHtml.replace(/<[^>]*>/g, '').trim();
+    console.log('Saving occupation:', cleanOccupation, 'Current occupation:', occupation?.title);
+    
+    if (cleanOccupation !== (occupation?.title || '')) {
+      console.log('Updating contact occupation with ID:', currentContact.id);
+      
+      try {
+        if (cleanOccupation === '') {
+          // Clear the occupation - use undefined instead of null
+          await updateContact(currentContact.id, { occupation_id: undefined });
+        } else {
+          // Check if occupation already exists, if not create new one
+          let existingOccupation = state.occupations.find(o => o.title === cleanOccupation);
+          
+          if (!existingOccupation) {
+            const newOcc = await addOccupation({ title: cleanOccupation });
+            existingOccupation = newOcc;
+          }
+          
+          if (existingOccupation) {
+            await updateContact(currentContact.id, { occupation_id: existingOccupation.id });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save occupation:', error);
+        // Revert to original value
+        setEditOccupation(occupation?.title || '');
+        return; // Don't exit editing mode on error
+      }
+    } else {
+      console.log('No changes to save');
+    }
+    setIsOccupationEditing(false);
+  };
+
+  const handleOccupationCancel = () => {
+    setEditOccupation(occupation?.title || '');
+    setIsOccupationEditing(false);
+  };
+
+  const handleOccupationKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOccupationSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOccupationCancel();
+    }
+  };
+
+  const handleOccupationKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleOccupationBlur = () => {
+    // Use setTimeout to allow click events to fire first
+    setTimeout(() => {
+      if (isOccupationEditing) {
+        handleOccupationSave();
+      }
+    }, 100);
+  };
+
+  // Organization editing handlers
+  const handleOrganizationEditClick = () => {
+    setIsOrganizationEditing(true);
+    setEditOrganization(organization?.name || '');
+    // Focus the contenteditable element after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      if (organizationContentEditableRef.current) {
+        organizationContentEditableRef.current.focus();
+        // Place cursor at the end of the text
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(organizationContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleOrganizationSave = async () => {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = organizationContentEditableRef.current?.innerHTML ?? editOrganization;
+    // Clean the input value to remove any HTML tags
+    const cleanOrganization = currentHtml.replace(/<[^>]*>/g, '').trim();
+    console.log('Saving organization:', cleanOrganization, 'Current organization:', organization?.name);
+    
+    if (cleanOrganization !== (organization?.name || '')) {
+      console.log('Updating contact organization with ID:', currentContact.id);
+      
+      try {
+        if (cleanOrganization === '') {
+          // Clear the organization - use undefined instead of null
+          await updateContact(currentContact.id, { organization_id: undefined });
+        } else {
+          // Check if organization already exists, if not create new one
+          let existingOrganization = state.organizations.find(org => org.name === cleanOrganization);
+          
+          if (!existingOrganization) {
+            const newOrg = await addOrganization({ name: cleanOrganization });
+            existingOrganization = newOrg;
+          }
+          
+          if (existingOrganization) {
+            await updateContact(currentContact.id, { organization_id: existingOrganization.id });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save organization:', error);
+        // Revert to original value
+        setEditOrganization(organization?.name || '');
+        return; // Don't exit editing mode on error
+      }
+    } else {
+      console.log('No changes to save');
+    }
+    setIsOrganizationEditing(false);
+  };
+
+  const handleOrganizationCancel = () => {
+    setEditOrganization(organization?.name || '');
+    setIsOrganizationEditing(false);
+  };
+
+  const handleOrganizationKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOrganizationSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOrganizationCancel();
+    }
+  };
+
+  const handleOrganizationKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleOrganizationBlur = () => {
+    // Use setTimeout to allow click events to fire first
+    setTimeout(() => {
+      if (isOrganizationEditing) {
+        handleOrganizationSave();
+      }
+    }, 100);
+  };
+
+  // Delete contact handler
+  const handleDeleteContact = async () => {
+    try {
+      await updateContact(currentContact.id, { is_trashed: true });
+      setShowDeleteDialog(false);
+      if (onMinimize) {
+        onMinimize();
+      }
+    } catch (error) {
+      console.error('Failed to delete contact:', error);
+    }
+  };
+
+  // Confirm button handler - cleanup unused entities and close card
+  const handleConfirm = async () => {
+    try {
+      console.log('Confirming contact and cleaning up unused entities...');
+      await destroyAllUnusedEntities();
+      console.log('Entity cleanup completed');
+      clearCardIndexArray();
+      onMinimize?.();
+    } catch (error) {
+      console.error('Failed to cleanup entities:', error);
+      // Still close the card even if cleanup fails
+      clearCardIndexArray();
+      onMinimize?.();
+    }
+  };
+
+  // Cancel button handler - cleanup unused entities, delete current contact, and close card
+  const handleCancel = async () => {
+    try {
+      console.log('Canceling contact, cleaning up unused entities, and deleting current contact...');
+      await destroyAllUnusedEntities();
+      await deleteContact(currentContact.id);
+      console.log('Contact deleted and entity cleanup completed');
+      clearCardIndexArray();
+      onMinimize?.();
+    } catch (error) {
+      console.error('Failed to cleanup entities or delete contact:', error);
+      // Still close the card even if cleanup fails
+      clearCardIndexArray();
+      onMinimize?.();
+    }
+  };
+
+  const { openNoteDetail: navOpenNoteDetail, handleBack } = useCardNavigation({
+    openNote: onOpenNote,
+    openContact: onOpenContactDetail,
+    closeCurrent: onMinimize,
+  });
+
+  return (
+    <>
+    <div className="w-[630px] h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-[15px] flex flex-col gap-[40px]">
+      {/* Contact Info Section */}
+      <div className="w-full h-fit flex flex-col gap-[10px]">
+        <div className="w-full h-fit flex flex-col gap-[10px]">
+          {/* Name and Buttons Row */}
+          <div className="w-full h-fit flex flex-row justify-between items-center">
+            {/* Name */}
+            <div className="w-fit h-[24px] flex items-center gap-2">
+              {isNameEditing ? (
+                <ContentEditable
+                  innerRef={nameContentEditableRef}
+                  html={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={handleNameKeyDown}
+                  onKeyDownCapture={handleNameKeyDown}
+                  onKeyUp={handleNameKeyUp}
+                  onBlur={handleNameBlur}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter font-medium text-base leading-6 text-circle-primary`}
+                  style={{
+                    minHeight: '20px',
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                />
+              ) : (
+                <div
+                  onClick={handleNameEditClick}
+                  className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200"
+                  title="Click to edit"
+                >
+                  {currentContact.name ? (
+                    <span className="font-inter font-medium text-base leading-6 text-circle-primary">
+                      {currentContact.name}
+                    </span>
+                  ) : (
+                    <span className="font-inter font-medium text-body-medium text-circle-primary italic opacity-50">
+                      New Contact
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {/* Name edit controls - show when editing, positioned to the right */}
+              {isNameEditing && (
+                <div className="flex gap-[2px]">
+                  <ConfirmButton 
+                    onClick={handleNameSave} 
+                    ariaLabel={isNameSaving ? 'Saving...' : 'Save name'}
+                  />
+                  <CancelButton 
+                    onClick={handleNameCancel} 
+                    ariaLabel="Cancel name edit"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right side - Confirm and Cancel buttons */}
+            <div className="w-fit h-fit flex flex-row justify-end items-center gap-[2px]">
+              {/* Confirm button */}
+              <button
+                onClick={handleConfirm}
+                className="p-1 flex items-center justify-center hover:bg-circle-neutral-variant rounded transition-colors group"
+                aria-label="Confirm contact"
+              >
+                <ConfirmIcon className="text-circle-primary" />
+              </button>
+              
+              {/* Cancel button */}
+              <button
+                onClick={handleCancel}
+                className="p-1 flex items-center justify-center hover:bg-circle-neutral-variant rounded transition-colors group"
+                aria-label="Cancel contact"
+              >
+                <CancelIcon className="text-circle-primary" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Occupation and Organization */}
+          <div className="w-fit h-fit flex flex-col gap-0">
+            <div className="w-fit h-[20px] flex items-center gap-2">
+              {isOccupationEditing ? (
+                <ContentEditable
+                  innerRef={occupationContentEditableRef}
+                  html={editOccupation}
+                  onChange={(e) => setEditOccupation(e.target.value)}
+                  onKeyDown={handleOccupationKeyDown}
+                  onKeyDownCapture={handleOccupationKeyDown}
+                  onKeyUp={handleOccupationKeyUp}
+                  onBlur={handleOccupationBlur}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
+                  style={{
+                    minHeight: '20px',
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                />
+              ) : (
+                <div 
+                  onClick={handleOccupationEditClick}
+                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter text-sm leading-5 ${
+                    occupation?.title && occupation.title.trim() !== '' 
+                      ? 'text-circle-primary' 
+                      : 'text-circle-primary opacity-50 italic'
+                  }`}
+                  title="Click to edit"
+                >
+                  {occupation?.title && occupation.title.trim() !== '' ? occupation.title : 'no occupation'}
+                </div>
+              )}
+              
+              {/* Occupation edit controls - show when editing, positioned to the right */}
+              {isOccupationEditing && (
+                <div className="flex gap-[2px]">
+                  <ConfirmButton 
+                    onClick={handleOccupationSave} 
+                    ariaLabel="Save occupation"
+                  />
+                  <CancelButton 
+                    onClick={handleOccupationCancel}
+                    ariaLabel="Cancel occupation edit"
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Add conditional gap when occupation is editing */}
+            {isOccupationEditing && <div className="h-[10px]"></div>}
+            
+            <div className="w-fit h-[20px] flex items-center gap-2">
+              {isOrganizationEditing ? (
+                <ContentEditable
+                  innerRef={organizationContentEditableRef}
+                  html={editOrganization}
+                  onChange={(e) => setEditOrganization(e.target.value)}
+                  onKeyDown={handleOrganizationKeyDown}
+                  onKeyDownCapture={handleOrganizationKeyDown}
+                  onKeyUp={handleOrganizationKeyUp}
+                  onBlur={handleOrganizationBlur}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
+                  style={{
+                    minHeight: '20px',
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                />
+              ) : (
+                <div 
+                  onClick={handleOrganizationEditClick}
+                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter text-sm leading-5 ${
+                    organization?.name 
+                      ? 'text-circle-primary' 
+                      : 'text-circle-primary opacity-50 italic'
+                  }`}
+                  title="Click to edit"
+                >
+                  {organization?.name || 'organization'}
+                </div>
+              )}
+              
+              {/* Organization edit controls - show when editing, positioned to the right */}
+              {isOrganizationEditing && (
+                <div className="flex gap-[2px]">
+                  <ConfirmButton 
+                    onClick={handleOrganizationSave} 
+                    ariaLabel="Save organization"
+                  />
+                  <CancelButton 
+                    onClick={handleOrganizationCancel}
+                    ariaLabel="Cancel organization edit"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Birth Date */}
+        <div className="w-fit h-[20px] flex flex-col gap-0">
+          <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
+            <CalendarIcon width={16} height={16} className="text-circle-primary" />
+            <button
+              type="button"
+              onClick={openBirthDatePicker}
+              className="font-inter font-normal text-sm leading-5 text-circle-primary tracking-[0.25px] underline decoration-transparent hover:decoration-circle-primary/30 focus:decoration-circle-primary/50 rounded px-1 -mx-1"
+              title="Click to set birth date"
+            >
+              {formatBirthDate(currentContact.birth_date)}
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+    {/* Birth Date Picker Overlay */}
+    {isBirthDatePickerOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-circle-primary/50"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) handleBirthDateCancel();
+        }}
+      >
+        <div className="mx-4">
+          <DynamicPrecisionDatePicker
+            value={birthDateValue}
+            onChange={setBirthDateValue}
+            label="Birth date picker"
+            onConfirm={handleBirthDateConfirm}
+            onCancel={handleBirthDateCancel}
+          />
+        </div>
+      </div>
+    )}
+
+    {/* Delete Confirmation Dialog */}
+    <DeleteConfirmationDialog
+      isOpen={showDeleteDialog}
+      onCancel={() => setShowDeleteDialog(false)}
+      onConfirm={handleDeleteContact}
+      itemType="contact"
+      itemName={currentContact.name}
+    />
+    {/* Note Detail Overlay (fallback local manager) */}
+    {typeof window !== 'undefined' && noteDetail && (
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setNoteDetail(null);
+        }}
+      >
+        <div className="mx-4">
+          <NoteCardDetail
+            note={noteDetail}
+            caller={noteDetailCaller}
+            onMinimize={() => setNoteDetail(null)}
+            onOpenContactDetail={() => {
+              // Optional: could integrate to open a nested contact; for now, close note detail
+              setNoteDetail(null);
+            }}
+          />
+        </div>
+      </div>
+    )}
+    </>
+  );
+};
+
+export default ContactCardDetail;

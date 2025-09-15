@@ -64,6 +64,14 @@ export const STRINGS = {
     HOBBY: 'hobby',
     ORGANIZATION: 'organization',
   },
+  
+  // Sentiment categories
+  SENTIMENTS: {
+    POSITIVE: 'positive',
+    NEGATIVE: 'negative',
+    NEUTRAL: 'neutral',
+    MIXED: 'mixed',
+  },
 } as const;
 
 // Greeting messages for the Circle app
@@ -106,9 +114,9 @@ export function formatYyyyMmDdToLong(dateStr: string): string {
 import { Contact } from '../contexts/ContactContext';
 export function resolveContactTokens(text: string, contacts: Contact[]): string {
   if (!text) return text;
-  const re = /\{\{\s*contact\s*:\s*(\d+)\s*\}\}/g;
+  const re = /\{\{\s*contact\s*:\s*([^}]+)\s*\}\}/g;
   return text.replace(re, (_match, idStr) => {
-    const id = Number(idStr);
+    const id = idStr.trim();
     const contact = contacts?.find(c => c.id === id);
     return contact?.name ?? _match;
   });

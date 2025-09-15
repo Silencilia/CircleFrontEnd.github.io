@@ -1,21 +1,22 @@
-import { Contact, Subject, Organization, Occupation, Relationship, Sentiment, Note, Commitment } from '../contexts/ContactContext';
-import { getSampleData } from './sampleData';
+import { Contact, Subject, Organization, Occupation, Relationship, Sentiment, Note, Commitment, Draft } from '../contexts/ContactContext';
 import { resolveContactTokens } from './strings';
+import { SupabaseDataService } from './supabaseDataService';
 
 export interface DataService {
-  updateContact(id: number, updates: Partial<Contact>): Promise<Contact>;
+  updateContact(id: string, updates: Partial<Contact>): Promise<Contact>;
   addContact(contact: Omit<Contact, 'id'>): Promise<Contact>;
-  deleteContact(id: number): Promise<void>;
+  deleteContact(id: string): Promise<void>;
   addSubject(subject: Omit<Subject, 'id'>): Promise<Subject>;
   addOrganization(organization: Omit<Organization, 'id'>): Promise<Organization>;
   addOccupation(occupation: Omit<Occupation, 'id'>): Promise<Occupation>;
   addRelationship(relationship: Omit<Relationship, 'id'>): Promise<Relationship>;
   addSentiment(sentiment: Omit<Sentiment, 'id'>): Promise<Sentiment>;
+  updateSentiment(id: string, updates: Partial<Sentiment>): Promise<Sentiment>;
   addNote(note: Omit<Note, 'id' | 'createdAt'>): Promise<Note>;
-  updateNote(id: number, updates: Partial<Note>): Promise<Note>;
+  updateNote(id: string, updates: Partial<Note>): Promise<Note>;
   // Commitments
   addCommitment(commitment: Omit<Commitment, 'id'>): Promise<Commitment>;
-  updateCommitment(id: number, updates: Partial<Commitment>): Promise<Commitment>;
+  updateCommitment(id: string, updates: Partial<Commitment>): Promise<Commitment>;
   getAllData(): Promise<{
     contacts: Contact[];
     subjects: Subject[];
@@ -25,6 +26,7 @@ export interface DataService {
     sentiments: Sentiment[];
     notes: Note[];
     commitments: Commitment[];
+    drafts: Draft[];
   }>;
 }
 
@@ -59,11 +61,22 @@ export class MockDataService implements DataService {
     sentiments: Sentiment[];
     notes: Note[];
     commitments: Commitment[];
+    drafts: Draft[];
   };
 
   constructor() {
-    // Initialize with sample data first, then try to load from localStorage
-    this.data = getSampleData();
+    // Initialize with empty data structure
+    this.data = {
+      contacts: [],
+      subjects: [],
+      organizations: [],
+      occupations: [],
+      relationships: [],
+      sentiments: [],
+      notes: [],
+      commitments: [],
+      drafts: []
+    };
     // Load from localStorage only on the client side
     if (typeof window !== 'undefined') {
       this.loadData();
@@ -89,11 +102,11 @@ export class MockDataService implements DataService {
             this.saveData();
           }
         } else {
-          console.warn('MockDataService: Invalid data format, using sample data');
+          console.warn('MockDataService: Invalid data format, using empty data');
           removeLocalStorage('circle-data');
         }
       } catch (error) {
-        console.error('MockDataService: Failed to parse saved data, using sample data');
+        console.error('MockDataService: Failed to parse saved data, using empty data');
         removeLocalStorage('circle-data');
       }
     }
@@ -136,7 +149,8 @@ export class MockDataService implements DataService {
            data.organizations && Array.isArray(data.organizations) &&
            data.occupations && Array.isArray(data.occupations) &&
            data.sentiments && Array.isArray(data.sentiments) &&
-           data.notes && Array.isArray(data.notes);
+           data.notes && Array.isArray(data.notes) &&
+           data.drafts && Array.isArray(data.drafts);
   }
 
   private saveData(): void {
@@ -149,7 +163,7 @@ export class MockDataService implements DataService {
     return new Promise(resolve => setTimeout(resolve, delay));
   }
 
-  async updateContact(id: number, updates: Partial<Contact>): Promise<Contact> {
+  async updateContact(id: string, updates: Partial<Contact>): Promise<Contact> {
     await this.simulateDelay();
     
     const contactIndex = this.data.contacts.findIndex(c => c.id === id);
@@ -172,7 +186,7 @@ export class MockDataService implements DataService {
     
     const newContact = { 
       ...contact, 
-      id: Date.now(), // Simple ID generation for mock
+      id: Date.now().toString(), // Simple ID generation for mock
       isTrashed: false
     };
     
@@ -181,7 +195,7 @@ export class MockDataService implements DataService {
     return newContact;
   }
 
-  async deleteContact(id: number): Promise<void> {
+  async deleteContact(id: string): Promise<void> {
     await this.simulateDelay();
     
     this.loadData(); // Ensure data is loaded
@@ -200,7 +214,7 @@ export class MockDataService implements DataService {
     
     const newSubject = { 
       ...subject, 
-      id: Date.now() 
+      id: Date.now().toString() 
     };
     
     this.data.subjects.push(newSubject);
@@ -213,7 +227,7 @@ export class MockDataService implements DataService {
     
     const newOrganization = { 
       ...organization, 
-      id: Date.now() 
+      id: Date.now().toString() 
     };
     
     this.data.organizations.push(newOrganization);
@@ -226,7 +240,7 @@ export class MockDataService implements DataService {
     
     const newOccupation = { 
       ...occupation, 
-      id: Date.now() 
+      id: Date.now().toString() 
     };
     
     this.data.occupations.push(newOccupation);
@@ -239,7 +253,7 @@ export class MockDataService implements DataService {
     
     const newRelationship = { 
       ...relationship, 
-      id: Date.now() 
+      id: Date.now().toString() 
     };
     
     this.data.relationships.push(newRelationship);
@@ -252,12 +266,30 @@ export class MockDataService implements DataService {
     
     const newSentiment = { 
       ...sentiment, 
-      id: Date.now() 
+      id: Date.now().toString() 
     };
     
     this.data.sentiments.push(newSentiment);
     this.saveData();
     return newSentiment;
+  }
+
+  async updateSentiment(id: string, updates: Partial<Sentiment>): Promise<Sentiment> {
+    await this.simulateDelay();
+    
+    const sentimentIndex = this.data.sentiments.findIndex(s => s.id === id);
+    if (sentimentIndex === -1) {
+      throw new Error(`Sentiment with id ${id} not found`);
+    }
+    
+    const updatedSentiment = { 
+      ...this.data.sentiments[sentimentIndex], 
+      ...updates 
+    };
+    
+    this.data.sentiments[sentimentIndex] = updatedSentiment;
+    this.saveData();
+    return updatedSentiment;
   }
 
   async addNote(note: Omit<Note, 'id' | 'createdAt'>): Promise<Note> {
@@ -273,7 +305,7 @@ export class MockDataService implements DataService {
       ...note,
       title: ensuredTitle,
       text: resolvedText,
-      id: Date.now(),
+      id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       isTrashed: false
     };
@@ -283,7 +315,7 @@ export class MockDataService implements DataService {
     return newNote;
   }
 
-  async updateNote(id: number, updates: Partial<Note>): Promise<Note> {
+  async updateNote(id: string, updates: Partial<Note>): Promise<Note> {
     await this.simulateDelay();
     
     const noteIndex = this.data.notes.findIndex(n => n.id === id);
@@ -303,13 +335,13 @@ export class MockDataService implements DataService {
 
   async addCommitment(commitment: Omit<Commitment, 'id'>): Promise<Commitment> {
     await this.simulateDelay();
-    const newCommitment: Commitment = { ...commitment, id: Date.now() };
+    const newCommitment: Commitment = { ...commitment, id: Date.now().toString() };
     this.data.commitments.push(newCommitment);
     this.saveData();
     return newCommitment;
   }
 
-  async updateCommitment(id: number, updates: Partial<Commitment>): Promise<Commitment> {
+  async updateCommitment(id: string, updates: Partial<Commitment>): Promise<Commitment> {
     await this.simulateDelay();
     const idx = this.data.commitments.findIndex(c => c.id === id);
     if (idx === -1) throw new Error(`Commitment with id ${id} not found`);
@@ -327,10 +359,10 @@ export class MockDataService implements DataService {
     sentiments: Sentiment[];
     notes: Note[];
     commitments: Commitment[];
+    drafts: Draft[];
   }> {
     console.log('📡 MockDataService: getAllData called');
     console.log('🔍 MockDataService: Current internal data source:', {
-      isFromLocalStorage: this.data !== getSampleData(),
       contactsCount: this.data.contacts.length,
       sampleContactName: this.data.contacts[0]?.name || 'none'
     });
@@ -345,7 +377,7 @@ export class MockDataService implements DataService {
       contactsCount: this.data.contacts.length,
       notesCount: this.data.notes.length,
       sampleContactName: this.data.contacts[0]?.name || 'none',
-      dataSource: this.data !== getSampleData() ? 'localStorage' : 'sampleData'
+      dataSource: 'localStorage'
     });
     
     // Return a copy to prevent direct mutations
@@ -357,10 +389,15 @@ export class MockDataService implements DataService {
       relationships: [...this.data.relationships],
       sentiments: [...this.data.sentiments],
       notes: [...this.data.notes],
-      commitments: [...this.data.commitments]
+      commitments: [...this.data.commitments],
+      drafts: [...this.data.drafts]
     };
   }
 }
 
-// Export singleton instance
-export const dataService = new MockDataService();
+// Choose data service based on environment
+const useSupabase = process.env.NEXT_PUBLIC_USE_SUPABASE === 'true';
+
+export const dataService: DataService = useSupabase 
+  ? new SupabaseDataService() 
+  : new MockDataService();

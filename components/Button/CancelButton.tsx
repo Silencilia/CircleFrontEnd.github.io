@@ -1,26 +1,26 @@
 import React from 'react';
+import { CancelIcon } from '../icons';
 
 interface CancelButtonProps {
   onClick?: () => void;
-  children?: React.ReactNode;
   className?: string;
-  disabled?: boolean;
+  ariaLabel?: string;
 }
 
 const CancelButton: React.FC<CancelButtonProps> = ({ 
   onClick, 
-  children = 'Cancel', 
-  className = '',
-  disabled = false 
+  className = '', 
+  ariaLabel = 'Cancel' 
 }) => {
   return (
     <button
-      type="button"
       onClick={onClick}
-      disabled={disabled}
-      className={`px-3 py-1 bg-circle-neutral text-circle-primary text-xs rounded hover:bg-opacity-60 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`p-1 flex items-center justify-center hover:bg-circle-neutral-variant rounded transition-colors group ${className}`}
+      aria-label={ariaLabel}
     >
-      {children}
+        <CancelIcon
+          className="text-circle-primary"
+        />
     </button>
   );
 };

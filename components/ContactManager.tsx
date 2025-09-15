@@ -3,20 +3,20 @@
 import React, { useState } from 'react';
 import { useContacts, Contact } from '../contexts/ContactContext';
 import { MONTH_NAMES } from '../data/strings';
-import { PrimaryButton, DeleteButton } from './Button';
+import { PrimaryButton, RecycleButton } from './Button';
 
 const ContactManager: React.FC = () => {
-  const { state, addContact, deleteContact, resetToSample } = useContacts();
+  const { state, addContact, deleteContact } = useContacts();
   
   const [newContact, setNewContact] = useState({
     name: '',
-    occupationId: '',
-    organizationId: '',
-    birthDate: '',
-    lastInteraction: '',
-    subjectIds: [] as number[],
-    relationshipIds: [] as number[],
-    noteIds: [] as number[]
+    occupation_id: '',
+    organization_id: '',
+    birth_date: '',
+    last_interaction: '',
+    subject_ids: [] as string[],
+    relationship_ids: [] as string[],
+    note_ids: [] as string[]
   });
 
   const formatTimestamp = (timestamp: number | undefined) => {
@@ -24,11 +24,11 @@ const ContactManager: React.FC = () => {
     return new Date(timestamp).toLocaleDateString();
   };
 
-  const handleAddContact = () => {
-    if (newContact.name && newContact.occupationId) {
-      let birth: Contact['birthDate'] | undefined = undefined;
-      if (newContact.birthDate) {
-        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(newContact.birthDate);
+  const handleAddContact = async () => {
+    if (newContact.name && newContact.occupation_id) {
+      let birth: Contact['birth_date'] | undefined = undefined;
+      if (newContact.birth_date) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(newContact.birth_date);
         if (m) {
           const year = parseInt(m[1], 10);
           const month = parseInt(m[2], 10);
@@ -37,23 +37,31 @@ const ContactManager: React.FC = () => {
         }
       }
 
-      addContact({
-        name: newContact.name,
-        occupationId: parseInt(newContact.occupationId),
-        organizationId: newContact.organizationId ? parseInt(newContact.organizationId) : undefined,
-        birthDate: birth,
-        lastInteraction: newContact.lastInteraction ? new Date(newContact.lastInteraction).getTime() : Date.now(),
-        subjectIds: newContact.subjectIds,
-        relationshipIds: newContact.relationshipIds,
-        noteIds: newContact.noteIds
-      });
-      setNewContact({ name: '', occupationId: '', organizationId: '', birthDate: '', lastInteraction: '', subjectIds: [], relationshipIds: [], noteIds: [] });
+      try {
+        await addContact({
+          name: newContact.name,
+          occupation_id: newContact.occupation_id,
+          organization_id: newContact.organization_id || undefined,
+          birth_date: birth,
+          last_interaction: newContact.last_interaction ? new Date(newContact.last_interaction).getTime() : Date.now(),
+          subject_ids: newContact.subject_ids,
+          relationship_ids: newContact.relationship_ids,
+          note_ids: newContact.note_ids
+        });
+        setNewContact({ name: '', occupation_id: '', organization_id: '', birth_date: '', last_interaction: '', subject_ids: [], relationship_ids: [], note_ids: [] });
+      } catch (error) {
+        console.error('Failed to add contact:', error);
+      }
     }
   };
 
-  const handleDeleteContact = (id: number) => {
+  const handleDeleteContact = async (id: string) => {
     if (confirm('Are you sure you want to delete this contact?')) {
-      deleteContact(id);
+      try {
+        await deleteContact(id);
+      } catch (error) {
+        console.error('Failed to delete contact:', error);
+      }
     }
   };
 
@@ -73,8 +81,8 @@ const ContactManager: React.FC = () => {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <select
-            value={newContact.occupationId}
-            onChange={(e) => setNewContact({ ...newContact, occupationId: e.target.value })}
+            value={newContact.occupation_id}
+            onChange={(e) => setNewContact({ ...newContact, occupation_id: e.target.value })}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select Occupation</option>
@@ -85,8 +93,8 @@ const ContactManager: React.FC = () => {
             ))}
           </select>
           <select
-            value={newContact.organizationId}
-            onChange={(e) => setNewContact({ ...newContact, organizationId: e.target.value })}
+            value={newContact.organization_id}
+            onChange={(e) => setNewContact({ ...newContact, organization_id: e.target.value })}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select Organization</option>
@@ -99,8 +107,8 @@ const ContactManager: React.FC = () => {
           <input
             type="date"
             placeholder="Birth Date"
-            value={newContact.birthDate}
-            onChange={(e) => setNewContact({ ...newContact, birthDate: e.target.value })}
+            value={newContact.birth_date}
+            onChange={(e) => setNewContact({ ...newContact, birth_date: e.target.value })}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -108,8 +116,8 @@ const ContactManager: React.FC = () => {
           <input
             type="date"
             placeholder="Last Interaction (optional)"
-            value={newContact.lastInteraction}
-            onChange={(e) => setNewContact({ ...newContact, lastInteraction: e.target.value })}
+            value={newContact.last_interaction}
+            onChange={(e) => setNewContact({ ...newContact, last_interaction: e.target.value })}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -154,6 +162,9 @@ const ContactManager: React.FC = () => {
           <div className="space-x-2">
             <PrimaryButton
               onClick={() => {
+                // TODO: REMOVE - This localStorage usage is unnecessary since we're using Supabase
+                // This was used when the app used MockDataService (localStorage)
+                // Now that we're using SupabaseDataService, this should be replaced with a proper reset function
                 localStorage.removeItem('circle-data');
                 window.location.reload();
               }}
@@ -161,11 +172,14 @@ const ContactManager: React.FC = () => {
             >
               Clear Storage & Reload
             </PrimaryButton>
+            {/* TODO: Remove resetToSample button - function no longer exists */}
             <PrimaryButton
-              onClick={resetToSample}
+              onClick={() => {
+                alert('Reset to sample data functionality has been removed');
+              }}
               variant="secondary"
             >
-              Reset to Sample Data
+              Reset to Sample Data (Disabled)
             </PrimaryButton>
           </div>
         </div>
@@ -173,19 +187,22 @@ const ContactManager: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {state.contacts.map((contact) => {
             // Look up the actual data using IDs
-            const occupation = contact.occupationId ? state.occupations.find(o => o.id === contact.occupationId) : null;
-            const organization = contact.organizationId ? state.organizations.find(org => org.id === contact.organizationId) : null;
-            const subjects = contact.subjectIds ? contact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter((s): s is NonNullable<typeof s> => s !== undefined) : [];
-            const relationships = contact.relationshipIds ? contact.relationshipIds.map(id => state.relationships.find(r => r.id === id)).filter((r): r is NonNullable<typeof r> => r !== undefined) : [];
+            const occupation = contact.occupation_id ? state.occupations.find(o => o.id === contact.occupation_id) : null;
+            const organization = contact.organization_id ? state.organizations.find(org => org.id === contact.organization_id) : null;
+            const subjects = contact.subject_ids ? contact.subject_ids.map(id => state.subjects.find(s => s.id === id)).filter((s): s is NonNullable<typeof s> => s !== undefined) : [];
+            const relationships = contact.relationship_ids ? contact.relationship_ids.map(id => state.relationships.find(r => r.id === id)).filter((r): r is NonNullable<typeof r> => r !== undefined) : [];
             
             return (
               <div key={contact.id} className="p-4 border border-gray-200 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold text-gray-800">{contact.name}</h4>
-                  <DeleteButton
-                    onDelete={() => deleteContact(contact.id)}
-                    confirmMessage={`Are you sure you want to delete ${contact.name}?`}
-                    size="sm"
+                  <RecycleButton
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete ${contact.name}?`)) {
+                        deleteContact(contact.id);
+                      }
+                    }}
+                    ariaLabel={`Delete ${contact.name}`}
                   />
                 </div>
                 <p className="text-gray-600 text-sm mb-1">{occupation?.title || 'No occupation'}</p>
@@ -193,7 +210,7 @@ const ContactManager: React.FC = () => {
                   <p className="text-gray-600 text-sm mb-1">{organization.name}</p>
                 )}
                 {(() => {
-                  const b = contact.birthDate;
+                  const b = contact.birth_date;
                   let label = '';
                   if (b && (b.year || b.month || b.day)) {
                     if (b.year && !b.month && !b.day) label = `${b.year}`;
@@ -204,8 +221,8 @@ const ContactManager: React.FC = () => {
                     <p className="text-gray-500 text-xs mb-1">Birth: {label}</p>
                   ) : null;
                 })()}
-                {contact.lastInteraction && (
-                  <p className="text-gray-500 text-xs mb-2">Last: {formatTimestamp(contact.lastInteraction)}</p>
+                {contact.last_interaction && (
+                  <p className="text-gray-500 text-xs mb-2">Last: {formatTimestamp(contact.last_interaction)}</p>
                 )}
                 
                 {/* Subjects */}
@@ -250,7 +267,7 @@ const ContactManager: React.FC = () => {
 
                 {/* Notes count */}
                 <div className="text-xs text-gray-500">
-                  Notes: {contact.noteIds?.length || 0}
+                  Notes: {contact.note_ids?.length || 0}
                 </div>
               </div>
             );
@@ -260,7 +277,7 @@ const ContactManager: React.FC = () => {
 
       {/* Debug Info */}
       <div className="text-xs text-gray-500">
-        <p>Data is automatically saved to localStorage. Refresh the page to see persistence.</p>
+        <p>Data is automatically saved to Supabase database. Changes persist across sessions.</p>
         <p>Data structure updated: Using ID-based references for better data consistency</p>
       </div>
     </div>

@@ -7,9 +7,10 @@ import { SubjectTag, RelationshipTag } from '../Tag';
 const Type: CardType = 'contactCardDetail';
 import NoteCard from './NoteCard';
 import NoteCardDetail from './NoteCardDetail';
-import { CalendarIcon, MinimizeIcon, NoteIcon, BackIcon, DeleteIcon } from '../icons';
+import { CalendarIcon, NoteIcon } from '../icons';
+import { MinimizeButton } from '../Button';
 import { EDITING_MODE_PADDING } from '../../data/variables';
-import { SaveButton, CancelButton, BackButton, DeleteButton } from '../Button';
+import { BackButton, RecycleButton, ConfirmButton, CancelButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/BirthDatePicker';
 import { formatYyyyMmDdToLong } from '../../data/strings';
@@ -43,8 +44,8 @@ interface ContactCardDetailProps {
 }
 
 const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimize, caller, onOpenNote, onOpenContactDetail }) => {
-  const { state, updateContactAsync, addOccupationAsync, addOrganizationAsync } = useContacts();
-  if (contact.isTrashed) {
+  const { state, updateContact, addOccupation, addOrganization } = useContacts();
+  if (contact.is_trashed) {
     return null;
   }
   // (Removed registration of open contact detail)
@@ -67,13 +68,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const [noteDetailCaller, setNoteDetailCaller] = useState<CardIndex | null>(null);
 
   // Get related data
-  const occupation = currentContact.occupationId ? state.occupations.find(o => o.id === currentContact.occupationId) : null;
-  const organization = currentContact.organizationId ? state.organizations.find(org => org.id === currentContact.organizationId) : null;
-  const subjects = currentContact.subjectIds ? currentContact.subjectIds.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
-  const relationships = currentContact.relationshipIds ? currentContact.relationshipIds.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) as Relationship[] : [];
-  const notes = currentContact.noteIds ? (currentContact.noteIds
+  const occupation = currentContact.occupation_id ? state.occupations.find(o => o.id === currentContact.occupation_id) : null;
+  const organization = currentContact.organization_id ? state.organizations.find(org => org.id === currentContact.organization_id) : null;
+  const subjects = currentContact.subject_ids ? currentContact.subject_ids.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
+  const relationships = currentContact.relationship_ids ? currentContact.relationship_ids.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) as Relationship[] : [];
+  const notes = currentContact.note_ids ? (currentContact.note_ids
     .map(id => state.notes.find(n => n.id === id))
-    .filter((n): n is Note => Boolean(n && !n.isTrashed))) : [];
+    .filter((n): n is Note => Boolean(n && !n.is_trashed))) : [];
 
   // Birth date picker overlay state
   const [isBirthDatePickerOpen, setIsBirthDatePickerOpen] = useState(false);
@@ -84,8 +85,8 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
 
   // Sync initial birth date to picker state when opening (parse YYYY-MM-DD as local)
   const openBirthDatePicker = () => {
-    if (currentContact.birthDate) {
-      const b = currentContact.birthDate;
+    if (currentContact.birth_date) {
+      const b = currentContact.birth_date;
       if (b.year && b.month && b.day) setBirthDateValue({ precision: 'day', year: b.year, month: b.month, day: b.day });
       else if (b.year && b.month) setBirthDateValue({ precision: 'month', year: b.year, month: b.month, day: null });
       else if (b.year) setBirthDateValue({ precision: 'year', year: b.year, month: null, day: null });
@@ -103,7 +104,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         month: value.precision === 'year' ? null : (value.month ?? null),
         day: value.precision === 'day' ? (value.day ?? null) : null,
       };
-      await updateContactAsync(currentContact.id, { birthDate: birth });
+      await updateContact(currentContact.id, { birth_date: birth });
       setIsBirthDatePickerOpen(false);
     } catch (error) {
       console.error('Failed to update birth date:', error);
@@ -126,7 +127,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const organizationContentEditableRef = useRef<HTMLElement>(null);
 
   // Format birth date without timezone conversion
-  const formatBirthDate = (birth?: Contact['birthDate']): string => {
+  const formatBirthDate = (birth?: Contact['birth_date']): string => {
     if (!birth || (!birth.year && !birth.month && !birth.day)) return 'No birth date';
     if (birth.year && !birth.month && !birth.day) return `${birth.year}`;
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -237,7 +238,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
       console.log('Updating contact with ID:', currentContact.id);
       try {
         setIsNameSaving(true);
-        await updateContactAsync(currentContact.id, { name: cleanName });
+        await updateContact(currentContact.id, { name: cleanName });
         console.log('Name updated successfully');
       } catch (error) {
         console.error('Failed to update name:', error);
@@ -317,18 +318,18 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
       try {
         if (cleanOccupation === '') {
           // Clear the occupation - use undefined instead of null
-          await updateContactAsync(currentContact.id, { occupationId: undefined });
+          await updateContact(currentContact.id, { occupation_id: undefined });
         } else {
           // Check if occupation already exists, if not create new one
           let existingOccupation = state.occupations.find(o => o.title === cleanOccupation);
           
           if (!existingOccupation) {
-            const newOcc = await addOccupationAsync({ title: cleanOccupation });
+            const newOcc = await addOccupation({ title: cleanOccupation });
             existingOccupation = newOcc;
           }
           
           if (existingOccupation) {
-            await updateContactAsync(currentContact.id, { occupationId: existingOccupation.id });
+            await updateContact(currentContact.id, { occupation_id: existingOccupation.id });
           }
         }
       } catch (error) {
@@ -408,18 +409,18 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
       try {
         if (cleanOrganization === '') {
           // Clear the organization - use undefined instead of null
-          await updateContactAsync(currentContact.id, { organizationId: undefined });
+          await updateContact(currentContact.id, { organization_id: undefined });
         } else {
           // Check if organization already exists, if not create new one
           let existingOrganization = state.organizations.find(org => org.name === cleanOrganization);
           
           if (!existingOrganization) {
-            const newOrg = await addOrganizationAsync({ name: cleanOrganization });
+            const newOrg = await addOrganization({ name: cleanOrganization });
             existingOrganization = newOrg;
           }
           
           if (existingOrganization) {
-            await updateContactAsync(currentContact.id, { organizationId: existingOrganization.id });
+            await updateContact(currentContact.id, { organization_id: existingOrganization.id });
           }
         }
       } catch (error) {
@@ -470,7 +471,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   // Delete contact handler
   const handleDeleteContact = async () => {
     try {
-      await updateContactAsync(currentContact.id, { isTrashed: true });
+      await updateContact(currentContact.id, { is_trashed: true });
       setShowDeleteDialog(false);
       if (onMinimize) {
         onMinimize();
@@ -488,12 +489,12 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
 
   return (
     <>
-    <div className="w-fit h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-[15px] flex flex-col gap-[40px]">
+    <div className="w-[630px] h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-[15px] flex flex-col gap-[40px]">
       {/* Contact Info Section */}
-      <div className="w-fit h-fit flex flex-col gap-[10px]">
-        <div className="w-[600px] h-fit flex flex-row justify-between items-start gap-[136px]">
-          {/* Left side - Contact Info */}
-          <div className="w-fit h-fit flex flex-col gap-[10px]">
+      <div className="w-full h-fit flex flex-col gap-[10px]">
+        <div className="w-full h-fit flex flex-col gap-[10px]">
+          {/* Name and Buttons Row */}
+          <div className="w-full h-fit flex flex-row justify-between items-center">
             {/* Name */}
             <div className="w-fit h-[24px] flex items-center gap-2">
               {isNameEditing ? (
@@ -524,137 +525,145 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               
               {/* Name edit controls - show when editing, positioned to the right */}
               {isNameEditing && (
-                <div className="flex gap-2">
-                  <SaveButton onClick={handleNameSave} disabled={isNameSaving}>
-                    {isNameSaving ? 'Saving...' : 'Save'}
-                  </SaveButton>
-                  <CancelButton onClick={handleNameCancel} disabled={isNameSaving} />
+                <div className="flex gap-[2px]">
+                  <ConfirmButton 
+                    onClick={handleNameSave} 
+                    ariaLabel={isNameSaving ? 'Saving...' : 'Save name'}
+                  />
+                  <CancelButton 
+                    onClick={handleNameCancel} 
+                    ariaLabel="Cancel name edit"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right side - Back, Delete, and Minimize buttons */}
+            <div className="w-fit h-fit flex flex-row justify-end items-center gap-[2px]">
+              {/* Back button */}
+              <BackButton
+                onClick={() => handleBack('contactCardDetail', contact.id)}
+                className="hover:bg-circle-neutral-variant rounded transition-colors"
+                showIcon={true}
+                children=""
+                size="md"
+              />
+              
+              {/* Delete button */}
+              <RecycleButton
+                onClick={() => {
+                  setShowDeleteDialog(true);
+                }}
+                ariaLabel="Delete contact"
+              />
+              
+              {/* Minimize button */}
+              <MinimizeButton
+                onClick={() => {
+                  clearCardIndexArray();
+                  onMinimize?.();
+                }}
+                ariaLabel="Minimize contact detail"
+              />
+            </div>
+          </div>
+          
+          {/* Occupation and Organization */}
+          <div className="w-fit h-fit flex flex-col gap-0">
+            <div className="w-fit h-[20px] flex items-center gap-2">
+              {isOccupationEditing ? (
+                <ContentEditable
+                  innerRef={occupationContentEditableRef}
+                  html={editOccupation}
+                  onChange={(e) => setEditOccupation(e.target.value)}
+                  onKeyDown={handleOccupationKeyDown}
+                  onKeyDownCapture={handleOccupationKeyDown}
+                  onKeyUp={handleOccupationKeyUp}
+                  onBlur={handleOccupationBlur}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
+                  style={{
+                    minHeight: '20px',
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                />
+              ) : (
+                <div 
+                  onClick={handleOccupationEditClick}
+                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter text-sm leading-5 ${
+                    occupation?.title && occupation.title.trim() !== '' 
+                      ? 'text-circle-primary' 
+                      : 'text-circle-primary opacity-50 italic'
+                  }`}
+                  title="Click to edit"
+                >
+                  {occupation?.title && occupation.title.trim() !== '' ? occupation.title : 'no occupation'}
+                </div>
+              )}
+              
+              {/* Occupation edit controls - show when editing, positioned to the right */}
+              {isOccupationEditing && (
+                <div className="flex gap-[2px]">
+                  <ConfirmButton 
+                    onClick={handleOccupationSave} 
+                    ariaLabel="Save occupation"
+                  />
+                  <CancelButton 
+                    onClick={handleOccupationCancel}
+                    ariaLabel="Cancel occupation edit"
+                  />
                 </div>
               )}
             </div>
             
-            {/* Occupation and Organization */}
-            <div className="w-fit h-fit flex flex-col gap-0">
-              <div className="w-fit h-[20px] flex items-center gap-2">
-                {isOccupationEditing ? (
-                  <ContentEditable
-                    innerRef={occupationContentEditableRef}
-                    html={editOccupation}
-                    onChange={(e) => setEditOccupation(e.target.value)}
-                    onKeyDown={handleOccupationKeyDown}
-                    onKeyDownCapture={handleOccupationKeyDown}
-                    onKeyUp={handleOccupationKeyUp}
-                    onBlur={handleOccupationBlur}
-                    className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
-                    style={{
-                      minHeight: '20px',
-                      wordWrap: 'break-word',
-                      whiteSpace: 'pre-wrap'
-                    }}
-                  />
-                ) : (
-                  <div 
-                    onClick={handleOccupationEditClick}
-                    className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter text-sm leading-5 ${
-                      occupation?.title && occupation.title.trim() !== '' 
-                        ? 'text-circle-primary' 
-                        : 'text-circle-primary opacity-50 italic'
-                    }`}
-                    title="Click to edit"
-                  >
-                    {occupation?.title && occupation.title.trim() !== '' ? occupation.title : 'no occupation'}
-                  </div>
-                )}
-                
-                {/* Occupation edit controls - show when editing, positioned to the right */}
-                {isOccupationEditing && (
-                  <div className="flex gap-2">
-                    <SaveButton onClick={handleOccupationSave} />
-                    <CancelButton onClick={handleOccupationCancel} />
-                  </div>
-                )}
-              </div>
+            {/* Add conditional gap when occupation is editing */}
+            {isOccupationEditing && <div className="h-[10px]"></div>}
+            
+            <div className="w-fit h-[20px] flex items-center gap-2">
+              {isOrganizationEditing ? (
+                <ContentEditable
+                  innerRef={organizationContentEditableRef}
+                  html={editOrganization}
+                  onChange={(e) => setEditOrganization(e.target.value)}
+                  onKeyDown={handleOrganizationKeyDown}
+                  onKeyDownCapture={handleOrganizationKeyDown}
+                  onKeyUp={handleOrganizationKeyUp}
+                  onBlur={handleOrganizationBlur}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
+                  style={{
+                    minHeight: '20px',
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                />
+              ) : (
+                <div 
+                  onClick={handleOrganizationEditClick}
+                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter text-sm leading-5 ${
+                    organization?.name 
+                      ? 'text-circle-primary' 
+                      : 'text-circle-primary opacity-50 italic'
+                  }`}
+                  title="Click to edit"
+                >
+                  {organization?.name || 'organization'}
+                </div>
+              )}
               
-              {/* Add conditional gap when occupation is editing */}
-              {isOccupationEditing && <div className="h-[10px]"></div>}
-              
-              <div className="w-fit h-[20px] flex items-center gap-2">
-                {isOrganizationEditing ? (
-                  <ContentEditable
-                    innerRef={organizationContentEditableRef}
-                    html={editOrganization}
-                    onChange={(e) => setEditOrganization(e.target.value)}
-                    onKeyDown={handleOrganizationKeyDown}
-                    onKeyDownCapture={handleOrganizationKeyDown}
-                    onKeyUp={handleOrganizationKeyUp}
-                    onBlur={handleOrganizationBlur}
-                    className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
-                    style={{
-                      minHeight: '20px',
-                      wordWrap: 'break-word',
-                      whiteSpace: 'pre-wrap'
-                    }}
+              {/* Organization edit controls - show when editing, positioned to the right */}
+              {isOrganizationEditing && (
+                <div className="flex gap-[2px]">
+                  <ConfirmButton 
+                    onClick={handleOrganizationSave} 
+                    ariaLabel="Save organization"
                   />
-                ) : (
-                  <div 
-                    onClick={handleOrganizationEditClick}
-                    className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter text-sm leading-5 ${
-                      organization?.name 
-                        ? 'text-circle-primary' 
-                        : 'text-circle-primary opacity-50 italic'
-                    }`}
-                    title="Click to edit"
-                  >
-                    {organization?.name || 'organization'}
-                  </div>
-                )}
-                
-                {/* Organization edit controls - show when editing, positioned to the right */}
-                {isOrganizationEditing && (
-                  <div className="flex gap-2">
-                    <SaveButton onClick={handleOrganizationSave} />
-                    <CancelButton onClick={handleOrganizationCancel} />
-                  </div>
-                )}
-              </div>
+                  <CancelButton 
+                    onClick={handleOrganizationCancel}
+                    ariaLabel="Cancel organization edit"
+                  />
+                </div>
+              )}
             </div>
-          </div>
-
-          {/* Right side - Back, Delete, and Minimize buttons */}
-          <div className="w-fit h-[16px] flex flex-row justify-end items-center gap-[5px]">
-            {/* Back button */}
-            <button
-              onClick={() => handleBack('contactCardDetail', contact.id)}
-              className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
-              aria-label="Back"
-            >
-              <BackIcon width={16} height={16} className="text-circle-primary" />
-            </button>
-            
-            {/* Delete button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteDialog(true);
-              }}
-              className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
-              aria-label="Delete contact"
-            >
-              <DeleteIcon width={16} height={16} className="text-circle-primary" />
-            </button>
-            
-            {/* Minimize button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                clearCardIndexArray();
-                onMinimize?.();
-              }}
-              className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
-              aria-label="Minimize contact detail"
-            >
-              <MinimizeIcon width={16} height={16} className="text-circle-primary" />
-            </button>
           </div>
         </div>
 
@@ -668,7 +677,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               className="font-inter font-normal text-sm leading-5 text-circle-primary tracking-[0.25px] underline decoration-transparent hover:decoration-circle-primary/30 focus:decoration-circle-primary/50 rounded px-1 -mx-1"
               title="Click to set birth date"
             >
-              {formatBirthDate(currentContact.birthDate)}
+              {formatBirthDate(currentContact.birth_date)}
             </button>
           </div>
         </div>

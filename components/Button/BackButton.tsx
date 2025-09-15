@@ -19,9 +19,9 @@ const BackButton: React.FC<BackButtonProps> = ({
   size = 'md'
 }) => {
   const sizeClasses = {
-    sm: 'px-2 py-1 text-xs',
-    md: 'px-3 py-1.5 text-sm',
-    lg: 'px-4 py-2 text-base',
+    sm: 'p-1 text-xs',
+    md: 'p-1 text-sm',
+    lg: 'p-1 text-base',
   };
 
   const iconSizes = {
@@ -35,7 +35,7 @@ const BackButton: React.FC<BackButtonProps> = ({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-2 bg-circle-neutral text-circle-primary rounded hover:bg-opacity-60 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${sizeClasses[size]} ${className}`}
+      className={`flex items-center gap-2 bg-transparent text-circle-primary rounded hover:bg-circle-neutral-variant transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${sizeClasses[size]} ${className}`}
     >
       {showIcon && (
         <BackIcon 

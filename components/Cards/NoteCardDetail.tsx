@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Note, useContacts, Contact, parseTimeToTimeValue, TimeValue } from '../../contexts/ContactContext';
-import { CalendarIcon, DeleteIcon, MinimizeIcon, BackIcon } from '../icons';
+import { CalendarIcon } from '../icons';
+import { RecycleButton, MinimizeButton, BackButton, NewTagButton } from '../Button';
+import { SentimentTag } from '../Tag';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import { contactReference } from '../../data/referenceParsing';
 import NoteDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/NoteDatePicker';
@@ -19,7 +21,7 @@ interface NoteCardDetailProps {
 }
 
 const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, caller, onOpenContactDetail }) => {
-  const { state, updateNoteAsync } = useContacts();
+  const { state, updateNote } = useContacts();
   // Always render with the latest note from context in case it was updated
   const currentNote = state.notes.find(n => n.id === note.id) || note;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -27,16 +29,21 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const [dateValue, setDateValue] = useState<DynamicPrecisionDateValue>({ precision: 'none', year: null, month: null, day: null });
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [timeValue, setTimeValue] = useState<TimeValue>({ hour: null, minute: null });
+  const [sentimentUpdateTrigger, setSentimentUpdateTrigger] = useState(0);
 
-  if (currentNote.isTrashed) {
+  // Debug: Log when sentimentUpdateTrigger changes
+  useEffect(() => {
+    console.log('NoteCardDetail: sentimentUpdateTrigger changed to', sentimentUpdateTrigger);
+  }, [sentimentUpdateTrigger]);
+
+  if (currentNote.is_trashed) {
     return null;
   }
 
-  // Get the sentiment labels from the sentiment IDs
-  const sentimentLabels = (currentNote.sentimentIds || []).map(id => {
-    const sentiment = state.sentiments.find(s => s.id === id);
-    return sentiment?.label || 'unknown';
-  });
+  // Get the sentiment objects from the sentiment IDs
+  const sentimentObjects = (currentNote.sentiment_ids || [])
+    .map(id => state.sentiments.find(s => s.id === id))
+    .filter((sentiment): sentiment is NonNullable<typeof sentiment> => sentiment !== undefined);
 
   // Format the date (from note.date)
   const formatDate = (noteObj: Note) => {
@@ -59,14 +66,12 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
     }
   };
 
-  // Format the time (from note.time HH:mm)
+  // Format the time (from note.timeValue)
   const formatTime = (noteObj: Note) => {
     try {
-      const hhmm = /^(\d{1,2}):(\d{2})$/;
-      if (noteObj.time && hhmm.test(noteObj.time)) {
-        const [, h, m] = noteObj.time.match(hhmm)!;
-        const hh = String(parseInt(h, 10)).padStart(2, '0');
-        const mm = String(parseInt(m, 10)).padStart(2, '0');
+      if (noteObj.time_value && noteObj.time_value.hour !== null && noteObj.time_value.minute !== null) {
+        const hh = String(noteObj.time_value.hour).padStart(2, '0');
+        const mm = String(noteObj.time_value.minute).padStart(2, '0');
         return `${hh}:${mm}`;
       }
       return '--:--';
@@ -77,7 +82,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
 
   const handleDelete = async () => {
     try {
-      await updateNoteAsync(note.id, { isTrashed: true });
+      await updateNote(note.id, { is_trashed: true });
       setShowDeleteDialog(false);
       if (onMinimize) {
         onMinimize();
@@ -99,15 +104,15 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
 
   return (
     <>
-      <div className="w-[600px] h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-[12px] p-[15px] flex flex-col gap-[20px]">
+      <div className="w-fit h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-[12px] p-[15px] flex flex-col gap-[20px]">
         {/* Frame 124 */}
-        <div className="w-[570px] h-fit flex flex-col items-start gap-[20px] p-0">
+        <div className="w-fit h-fit flex flex-col items-start gap-[20px] p-0">
           {/* Info */}
-          <div className="w-[570px] h-fit flex flex-col items-start gap-[15px] p-0">
+          <div className="w-fit h-fit flex flex-col items-start gap-[15px] p-0">
             {/* Note info */}
-            <div className="w-[570px] h-fit flex flex-row items-start gap-[10px] p-0">
+            <div className="w-[600px] h-fit flex flex-row items-start gap-[10px] p-0">
               {/* Frame 69 */}
-              <div className="w-[570px] h-fit flex flex-row justify-between items-start gap-[111px] p-0 flex-1">
+              <div className="w-[600px] h-fit flex flex-row justify-between items-start gap-[111px] p-0 flex-1">
                 {/* Timestamp */}
                 <div className="w-fit h-fit flex flex-col items-start p-0 mx-auto">
                   {/* Title */}
@@ -119,50 +124,42 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 {/* Sentiment */}
                 <div className="w-[535px] h-fit flex flex-row justify-end items-center gap-[15px] p-0 mx-auto flex-1">
                   {/* Frame 105 */}
-                  <div className="w-fit h-[16px] flex flex-row items-center gap-[5px] p-0">
+                  <div className="w-fit h-[16px] flex flex-row items-center gap-[2px] p-0">
                     {/* Back button */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleBack('noteCardDetail', currentNote.id); }}
-                      className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
-                      aria-label="Back"
-                    >
-                      <BackIcon width={16} height={16} className="text-circle-primary" />
-                    </button>
+                    <BackButton
+                      onClick={() => { handleBack('noteCardDetail', currentNote.id); }}
+                      showIcon={true}
+                      children=""
+                      size="md"
+                    />
                     
                     {/* Delete button */}
-                    <button
+                    <RecycleButton
                       onClick={() => setShowDeleteDialog(true)}
-                      className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
-                      aria-label="Delete note"
-                    >
-                      <DeleteIcon width={16} height={16} className="text-circle-primary" />
-                    </button>
+                      ariaLabel="Delete note"
+                    />
                     
                     {/* Minimize button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                    <MinimizeButton
+                      onClick={() => {
                         clearCardIndexArray();
                         onMinimize?.();
                       }}
-                      className="w-4 h-4 flex items-center justify-center hover:bg-circle-neutral rounded transition-colors"
-                      aria-label="Minimize note detail"
-                    >
-                      <MinimizeIcon width={16} height={16} className="text-circle-primary" />
-                    </button>
+                      ariaLabel="Minimize note detail"
+                    />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Frame 119 */}
-            <div className="w-[570px] h-fit flex flex-col items-start gap-[4px] p-0">
+            <div className="w-[600px] h-fit flex flex-col items-start gap-[4px] p-0">
               {/* Note info */}
-              <div className="w-[570px] h-fit flex flex-row items-start gap-[10px] p-0">
+              <div className="w-[600px] h-fit flex flex-row items-start gap-[10px] p-0">
                 {/* Frame 69 */}
-                <div className="w-[570px] h-fit flex flex-row justify-between items-start gap-[111px] p-0 flex-1">
+                <div className="w-[600px] h-fit flex flex-row justify-between items-start gap-[111px] p-0 flex-1">
                   {/* Timestamp */}
-                  <div className="w-[570px] h-fit flex flex-col items-start p-0 mx-auto flex-1">
+                  <div className="w-[600px] h-fit flex flex-col items-start p-0 mx-auto flex-1">
                     {/* Date row */}
                     <div className="w-fit h-[20px] flex flex-row items-center gap-[10px] p-0">
                       {/* Calendar */}
@@ -179,22 +176,6 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                             if (currentNote.date.year && currentNote.date.month && currentNote.date.day) init = { precision: 'day', year: currentNote.date.year, month: currentNote.date.month, day: currentNote.date.day };
                             else if (currentNote.date.year && currentNote.date.month) init = { precision: 'month', year: currentNote.date.year, month: currentNote.date.month, day: null };
                             else if (currentNote.date.year) init = { precision: 'year', year: currentNote.date.year, month: null, day: null };
-                          } else if (currentNote.time) {
-                            if (fullDate.test(currentNote.time)) {
-                              const [, y, m, d] = currentNote.time.match(fullDate)!;
-                              init = { precision: 'day', year: parseInt(y, 10), month: parseInt(m, 10), day: parseInt(d, 10) };
-                            } else if (yearMonth.test(currentNote.time)) {
-                              const [, y, m] = currentNote.time.match(yearMonth)!;
-                              init = { precision: 'month', year: parseInt(y, 10), month: parseInt(m, 10), day: null };
-                            } else if (yearOnly.test(currentNote.time)) {
-                              const [, y] = currentNote.time.match(yearOnly)!;
-                              init = { precision: 'year', year: parseInt(y, 10), month: null, day: null };
-                            } else {
-                              const d = new Date(currentNote.time);
-                              if (!isNaN(d.getTime())) {
-                                init = { precision: 'day', year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
-                              }
-                            }
                           }
                           setDateValue(init);
                           setIsDatePickerOpen(true);
@@ -212,10 +193,8 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                       <button
                         type="button"
                         onClick={() => {
-                          const hhmm = /^(\d{1,2}):(\d{2})$/;
-                          if (currentNote.time && hhmm.test(currentNote.time)) {
-                            const [, h, m] = currentNote.time.match(hhmm)!;
-                            setTimeValue({ hour: parseInt(h, 10), minute: parseInt(m, 10) });
+                          if (currentNote.time_value && currentNote.time_value.hour !== null && currentNote.time_value.minute !== null) {
+                            setTimeValue({ hour: currentNote.time_value.hour, minute: currentNote.time_value.minute });
                           } else {
                             const currentTime = parseTimeToTimeValue(new Date());
                             setTimeValue(currentTime);
@@ -237,8 +216,8 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           </div>
 
           {/* Text */}
-          <div className="w-[570px] h-fit bg-circle-neutral-variant rounded-[12px] p-[10px] flex flex-row justify-start items-start">
-            <div className="w-[550px] h-fit font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary text-left">
+          <div className="w-[600px] h-fit bg-circle-neutral-variant rounded-[12px] p-[15px] flex flex-row justify-start items-start">
+            <div className="w-fit h-fit font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary text-left">
               {contactReference(
                 currentNote.text,
                 state.contacts,
@@ -257,14 +236,25 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           </div>
 
           {/* Sentiment Tags */}
-          <div className="w-[242px] h-[20px] flex flex-row items-center gap-[5px] p-0">
-            {sentimentLabels.map((label, index) => (
-              <div key={index} className="w-fit h-[20px] bg-circle-neutral rounded-[6px] p-[2px_5px] flex flex-row justify-center items-center">
-                <div className="w-fit h-[16px] font-inter font-medium text-[11px] leading-[16px] tracking-[0.5px] text-circle-primary flex items-center text-center">
-                  {label}
-                </div>
-              </div>
+          <div className="w-fit h-[20px] flex flex-row items-center gap-[5px] p-0">
+            {sentimentObjects.map((sentiment) => (
+              <SentimentTag
+                key={`${sentiment.id}-${sentimentUpdateTrigger}`}
+                sentiment={sentiment}
+                noteId={currentNote.id}
+                editable={true}
+                fillColor="bg-circle-neutral"
+                textColor="text-circle-primary"
+                onEditComplete={() => setSentimentUpdateTrigger(prev => prev + 1)}
+              />
             ))}
+            <NewTagButton
+              onClick={() => {
+                // TODO: Implement add new sentiment tag functionality
+                console.log('Add new sentiment tag clicked');
+              }}
+              aria-label="Add new sentiment tag"
+            />
           </div>
         </div>
       </div>
@@ -306,7 +296,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                             day: value.precision === 'day' ? (value.day ?? null) : null,
                           }
                         } as Partial<Note>;
-                        await updateNoteAsync(note.id, updated);
+                        await updateNote(note.id, updated);
                       } catch (err) {
                         console.error('Failed to update note date', err);
                       } finally {
@@ -343,7 +333,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                         const hh = value.hour == null ? null : String(value.hour).padStart(2, '0');
                         const mm = value.minute == null ? null : String(value.minute).padStart(2, '0');
                         const t = hh != null && mm != null ? `${hh}:${mm}` : undefined;
-                        await updateNoteAsync(note.id, { time: t });
+                        await updateNote(note.id, { time_value: { hour: value.hour, minute: value.minute } });
                       } catch (err) {
                         console.error('Failed to update note time', err);
                       } finally {

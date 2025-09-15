@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Commitment } from '../../contexts/ContactContext';
-import { DeleteIcon, MaximizeIcon } from '../icons';
+import { RecycleButton, MaximizeButton } from '../Button';
 
 interface CommitmentCardProps {
   commitment: Commitment;
@@ -8,7 +8,7 @@ interface CommitmentCardProps {
 
 const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
 
-  if (commitment.isTrashed) {
+  if (commitment.is_trashed) {
     return null;
   }
 
@@ -84,21 +84,16 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
         </div>
 
         {/* Actions */}
-        <div className="w-fit h-fit flex flex-row items-center gap-[5px]">
-          <button
+        <div className="w-fit h-fit flex flex-row items-center gap-[2px]">
+          <RecycleButton
             onClick={() => {/* TODO: implement trashing commitment */}}
-            className="p-1 hover:bg-circle-neutral rounded transition-colors duration-200"
-            aria-label="Delete commitment"
-          >
-            <DeleteIcon width={16} height={16} className="text-circle-primary" />
-          </button>
+            ariaLabel="Delete commitment"
+            hoverVariant="neutral"
+          />
 
-          <button
-            className="p-1 hover:bg-circle-neutral rounded transition-colors duration-200"
-            aria-label="Maximize commitment"
-          >
-            <MaximizeIcon width={16} height={16} className="text-circle-primary" />
-          </button>
+          <MaximizeButton
+            ariaLabel="Maximize commitment"
+          />
         </div>
       </div>
 

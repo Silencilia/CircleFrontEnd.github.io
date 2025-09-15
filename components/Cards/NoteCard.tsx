@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Contact, Note, useContacts } from '../../contexts/ContactContext';
-import { MenuIcon, DeleteIcon } from '../icons';
+import { MenuButton, RecycleButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import { contactReference } from '../../data/referenceParsing';
 import ContactCardDetail from './ContactCardDetail';
@@ -15,12 +15,12 @@ interface NoteCardProps {
   onOpenContactDetail?: (contact: Contact, source: CardIndex | null) => void;
   // Context flags for nested usage inside ContactCardDetail
   isNestedInContactDetail?: boolean;
-  currentContactId?: number;
+  currentContactId?: string;
 }
 
 const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, onOpenNoteDetail, onOpenContactDetail, isNestedInContactDetail = false, currentContactId }) => {
-  const { state, updateNoteAsync } = useContacts();
-  if (note.isTrashed) {
+  const { state, updateNote } = useContacts();
+  if (note.is_trashed) {
     return null;
   }
   const [isExpanded, setIsExpanded] = useState(false);
@@ -34,13 +34,13 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   // Get the sentiment labels from the sentiment IDs
-  const sentimentLabels = (note.sentimentIds || []).map(id => {
+  const sentimentLabels = (note.sentiment_ids || []).map(id => {
     const sentiment = state.sentiments.find(s => s.id === id);
     return sentiment?.label || 'unknown';
   });
 
 
-  // Format the date (from note.date) and time (from note.time HH:mm)
+  // Format the date (from note.date) and time (from note.timeValue)
   const formatDateTime = (noteObj: Note) => {
     try {
       let dateStr = '';
@@ -64,11 +64,9 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
         dateStr = 'no date';
       }
       let timeStr = '';
-      const hhmm = /^(\d{1,2}):(\d{2})$/;
-      if (noteObj.time && hhmm.test(noteObj.time)) {
-        const [, h, m] = noteObj.time.match(hhmm)!;
-        const hh = String(parseInt(h, 10)).padStart(2, '0');
-        const mm = String(parseInt(m, 10)).padStart(2, '0');
+      if (noteObj.time_value && noteObj.time_value.hour !== null && noteObj.time_value.minute !== null) {
+        const hh = String(noteObj.time_value.hour).padStart(2, '0');
+        const mm = String(noteObj.time_value.minute).padStart(2, '0');
         timeStr = `${hh}:${mm}`;
       }
       return { date: dateStr, time: timeStr };
@@ -144,21 +142,19 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
               </div>
 
               {/* Frame 105 */}
-              <div className="w-[37px] h-[16px] flex flex-row items-center gap-[5px] p-0">
-                {/* Delete button */}
-                <button
+              <div className="w-fit h-fit flex flex-row items-center gap-[2px] p-0">
+                {/* Recycle button */}
+                <RecycleButton
                   onClick={() => setShowDeleteDialog(true)}
-                  className="w-4 h-4 p-0"
-                  aria-label="Delete note"
-                >
-                  <DeleteIcon width={16} height={16} className="text-circle-primary" />
-                </button>
+                  ariaLabel="Delete note"
+                  hoverVariant="neutral"
+                />
 
                 {/* Menu icon button */}
-                <button
+                <MenuButton
                   onClick={() => {
                     // If nested inside a ContactCardDetail, push that contact onto the back stack
-                    if (isNestedInContactDetail && typeof currentContactId === 'number') {
+                    if (isNestedInContactDetail && typeof currentContactId === 'string') {
                       addToCardIndexArray(createSourceRecord('contactCardDetail', currentContactId));
                     }
                     if (onOpenNoteDetail) {
@@ -169,11 +165,9 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
                       setIsDetailOpen(true);
                     }
                   }}
-                  className="w-4 h-4 flex items-center justify-center"
-                  aria-label="Open note detail"
-                >
-                  <MenuIcon width={16} height={16} className="text-circle-primary" />
-                </button>
+                  ariaLabel="Open note detail"
+                  className="hover:!bg-circle-neutral"
+                />
               </div>
             </div>
           </div>
@@ -211,7 +205,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
             (contact) => {
               if (!contact) return;
               // Nested inside ContactCardDetail
-              if (isNestedInContactDetail && typeof currentContactId === 'number') {
+              if (isNestedInContactDetail && typeof currentContactId === 'string') {
                 // If clicking the same contact as the current detail, do nothing
                 if (contact.id === currentContactId) {
                   return;
@@ -247,7 +241,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
         onCancel={() => setShowDeleteDialog(false)}
         onConfirm={async () => {
           try {
-            await updateNoteAsync(note.id, { isTrashed: true });
+            await updateNote(note.id, { is_trashed: true });
           } catch (e) {
             console.error('Failed to trash note', e);
           } finally {
