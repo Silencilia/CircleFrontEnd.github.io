@@ -5,6 +5,9 @@ import NavigationBar from '../../components/NavigationBar';
 import DraftCardDetail from '../../components/Cards/DraftCardDetail';
 import ContactCardDetail from '../../components/Cards/ContactCardDetail';
 import NoteCardNew from '../../components/Cards/NoteCardNew';
+import Search from '../../components/Search';
+import NewButton from '../../components/Button/NewButton';
+import { NewNoteButton } from '../../components/Button';
 import { useContacts } from '../../contexts/ContactContext';
 import { supabase } from '../../lib/supabase';
 
@@ -136,13 +139,13 @@ export default function DeveloperPage() {
       {/* Main content area */}
       <div className="flex-1 flex items-center justify-center py-8">
         <div className="text-center space-y-8">
-          <h1 className="font-merriweather font-normal text-display-large text-circle-primary mb-4">
+          <h1 className="font-circledisplaylarge text-circle-primary mb-4">
             Developer Page
           </h1>
           
           {/* Supabase Connection Test Section */}
           <div className="space-y-6">
-            <h2 className="font-inter font-semibold text-xl text-circle-primary">
+            <h2 className="font-circletitlelarge text-circle-primary">
               Supabase Connection Test
             </h2>
             
@@ -209,7 +212,7 @@ export default function DeveloperPage() {
           
           {/* DraftCardDetail Section */}
           <div className="space-y-6">
-            <h2 className="font-inter font-semibold text-xl text-circle-primary">
+            <h2 className="font-circletitlelarge text-circle-primary">
               DraftCardDetail Component
             </h2>
             
@@ -233,7 +236,7 @@ export default function DeveloperPage() {
 
           {/* ContactCardDetail Section */}
           <div className="space-y-6">
-            <h2 className="font-inter font-semibold text-xl text-circle-primary">
+            <h2 className="font-circletitlelarge text-circle-primary">
               ContactCardDetail Component
             </h2>
             
@@ -257,7 +260,7 @@ export default function DeveloperPage() {
 
           {/* NoteCardNew Section */}
           <div className="space-y-6">
-            <h2 className="font-inter font-semibold text-xl text-circle-primary">
+            <h2 className="font-circletitlelarge text-circle-primary">
               NoteCardNew Component
             </h2>
             
@@ -278,9 +281,77 @@ export default function DeveloperPage() {
             </div>
           </div>
 
+          {/* Search Component Section */}
+          <div className="space-y-6">
+            <h2 className="font-circletitlelarge text-circle-primary">
+              Search Component
+            </h2>
+
+            <div className="flex flex-col items-center space-y-4">
+              <Search
+                onChange={(searchValue) => console.log('Search value:', searchValue)}
+              />
+            </div>
+
+            <div className="text-xs text-gray-500 max-w-md mx-auto">
+              <p>• Interactive search component with MagnifierIcon</p>
+              <p>• Uses label-large style at 50% opacity for input text</p>
+              <p>• Container width fills with max-width of 560px</p>
+              <p>• Rounded border with neutral variant color</p>
+              <p>• Passes search value to onChange callback for filtering</p>
+              <p>• Check browser console for search value updates</p>
+            </div>
+          </div>
+
+          {/* NewButton Component Section */}
+          <div className="space-y-6">
+            <h2 className="font-circletitlelarge text-circle-primary">
+              NewButton Component
+            </h2>
+
+            <div className="flex flex-col items-center space-y-4">
+              <NewButton
+                text="New Item"
+                onClick={() => console.log('NewButton clicked!')}
+              />
+            </div>
+
+            <div className="text-xs text-gray-500 max-w-md mx-auto">
+              <p>• Interactive button with PlusIcon and customizable text</p>
+              <p>• Uses neutral variant background with secondary hover state</p>
+              <p>• Icon and text transition colors on hover</p>
+              <p>• Rounded design with 15px border radius</p>
+              <p>• Fixed height of 30px with responsive padding</p>
+              <p>• Check browser console for click events</p>
+            </div>
+          </div>
+
+          {/* NewNoteButton Component Section */}
+          <div className="space-y-6">
+            <h2 className="font-circletitlelarge text-circle-primary">
+              NewNoteButton Component
+            </h2>
+
+            <div className="flex flex-col items-center space-y-4">
+              <NewNoteButton
+                onClick={() => console.log('NewNoteButton clicked!')}
+              />
+            </div>
+
+            <div className="text-xs text-gray-500 max-w-md mx-auto">
+              <p>• Specialized button for creating new notes</p>
+              <p>• Fixed text "new note" with PlusIcon</p>
+              <p>• Uses neutral variant background with secondary hover state</p>
+              <p>• Icon and text transition colors on hover</p>
+              <p>• Rounded design with 15px border radius</p>
+              <p>• Fixed height of 30px with 5px horizontal padding</p>
+              <p>• Check browser console for click events</p>
+            </div>
+          </div>
+
         </div>
       </div>
-      
+
       {/* NavigationBar */}
       <NavigationBar currentPage="developer" />
     </div>

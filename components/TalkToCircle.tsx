@@ -140,7 +140,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
     <div className="flex flex-col gap-[30px] items-center max-w-[1000px] mx-auto">
                     {/* Random Greeting Text */}
                     <div className="text-center">
-            <h2 className="font-merriweather font-normal text-headline-medium text-circle-primary">
+            <h2 className="font-circleheadlinemedium text-circle-primary">
               {greeting}
             </h2>
           </div>
@@ -171,7 +171,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
                   onChange={(e) => { setValue(e.target.value); adjustHeight(); }}
                   placeholder={STRINGS.PLACEHOLDERS.TALK_TO_CIRCLE}
                   rows={1}
-                  className="font-inter font-medium text-sm w-full resize-none overflow-hidden bg-transparent focus:outline-none text-circle-primary placeholder-circle-primary/35"
+                  className="font-circlebodymedium w-full resize-none overflow-hidden bg-transparent focus:outline-none text-circle-primary placeholder-circle-primary/35"
                   style={{
                     minHeight: 20,
                     paddingTop: 5,

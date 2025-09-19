@@ -244,25 +244,27 @@ export async function destroyAllUnusedEntitiesAndEmptyContacts(): Promise<{
 
 /**
  * Destroys all unused entities, empty contacts, and note cleanup
- * @returns Promise<{occupations: CleanupResult, organizations: CleanupResult, contacts: CleanupResult, notes: CleanupResult}>
+ * @returns Promise<{occupations: CleanupResult, organizations: CleanupResult, contacts: CleanupResult, notes: CleanupResult, sentiments: CleanupResult}>
  */
 export async function destroyAllUnusedEntitiesAndEmptyContactsAndNotes(): Promise<{
   occupations: CleanupResult;
   organizations: CleanupResult;
   contacts: CleanupResult;
   notes: CleanupResult;
+  sentiments: CleanupResult;
 }> {
-  console.log('Starting complete cleanup of all unused entities, empty contacts, and notes...');
+  console.log('Starting complete cleanup of all unused entities, empty contacts, notes, and sentiments...');
   
-  const [occupationsResult, organizationsResult, contactsResult, notesResult] = await Promise.all([
+  const [occupationsResult, organizationsResult, contactsResult, notesResult, sentimentsResult] = await Promise.all([
     destroyUnusedOccupations(),
     destroyUnusedOrganizations(),
     destroyEmptyContacts(),
-    destroyUnusedNotes()
+    destroyUnusedNotes(),
+    destroyUnusedSentiments()
   ]);
 
-  const totalDeleted = occupationsResult.deletedCount + organizationsResult.deletedCount + contactsResult.deletedCount + notesResult.deletedCount;
-  const totalErrors = occupationsResult.errors.length + organizationsResult.errors.length + contactsResult.errors.length + notesResult.errors.length;
+  const totalDeleted = occupationsResult.deletedCount + organizationsResult.deletedCount + contactsResult.deletedCount + notesResult.deletedCount + sentimentsResult.deletedCount;
+  const totalErrors = occupationsResult.errors.length + organizationsResult.errors.length + contactsResult.errors.length + notesResult.errors.length + sentimentsResult.errors.length;
 
   console.log(`Complete cleanup finished: ${totalDeleted} entities deleted, ${totalErrors} errors`);
 
@@ -270,7 +272,8 @@ export async function destroyAllUnusedEntitiesAndEmptyContactsAndNotes(): Promis
     occupations: occupationsResult,
     organizations: organizationsResult,
     contacts: contactsResult,
-    notes: notesResult
+    notes: notesResult,
+    sentiments: sentimentsResult
   };
 }
 
@@ -492,6 +495,97 @@ export async function destroyUnusedNotes(): Promise<CleanupResult> {
 }
 
 /**
+ * Destroys all sentiments that are not referenced by any notes
+ * @returns Promise<CleanupResult> - Result of the cleanup operation
+ */
+export async function destroyUnusedSentiments(): Promise<CleanupResult> {
+  const result: CleanupResult = {
+    deletedCount: 0,
+    deletedIds: [],
+    errors: []
+  };
+
+  try {
+    console.log('Starting cleanup of unused sentiments...');
+
+    // Get all sentiment IDs that are currently referenced by notes
+    const { data: notesWithSentiments, error: usedError } = await supabase
+      .from('notes')
+      .select('sentiment_ids')
+      .not('sentiment_ids', 'is', null);
+
+    if (usedError) {
+      result.errors.push(`Error fetching notes with sentiments: ${usedError.message}`);
+      return result;
+    }
+
+    // Extract unique sentiment IDs that are in use
+    const usedIds = new Set<string>();
+    notesWithSentiments?.forEach(note => {
+      if (note.sentiment_ids && Array.isArray(note.sentiment_ids)) {
+        note.sentiment_ids.forEach((sentimentId: string) => {
+          usedIds.add(sentimentId);
+        });
+      }
+    });
+
+    console.log(`Found ${usedIds.size} sentiments currently referenced by notes`);
+
+    // Get all sentiments
+    const { data: allSentiments, error: allError } = await supabase
+      .from('sentiments')
+      .select('id');
+
+    if (allError) {
+      result.errors.push(`Error fetching all sentiments: ${allError.message}`);
+      return result;
+    }
+
+    if (!allSentiments) {
+      console.log('No sentiments found');
+      return result;
+    }
+
+    // Find unused sentiments
+    const unusedSentiments = allSentiments.filter(
+      sentiment => !usedIds.has(sentiment.id)
+    );
+
+    console.log(`Found ${unusedSentiments.length} unused sentiments`);
+
+    if (unusedSentiments.length === 0) {
+      console.log('No unused sentiments to delete');
+      return result;
+    }
+
+    // Delete unused sentiments
+    const unusedIds = unusedSentiments.map(sentiment => sentiment.id);
+    const { error: deleteError } = await supabase
+      .from('sentiments')
+      .delete()
+      .in('id', unusedIds);
+
+    if (deleteError) {
+      result.errors.push(`Error deleting sentiments: ${deleteError.message}`);
+      return result;
+    }
+
+    result.deletedCount = unusedSentiments.length;
+    result.deletedIds = unusedIds;
+
+    console.log(`Successfully deleted ${unusedSentiments.length} unused sentiments`);
+    console.log('Deleted sentiment IDs:', unusedIds);
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    result.errors.push(`Unexpected error during sentiment cleanup: ${errorMessage}`);
+    console.error('Error during sentiment cleanup:', error);
+  }
+
+  return result;
+}
+
+/**
  * Destroys all notes that have empty title and text
  * @returns Promise<CleanupResult> - Result of the cleanup operation
  */
@@ -566,23 +660,61 @@ export async function destroyEmptyNotes(): Promise<CleanupResult> {
 }
 
 /**
- * Helper function to get usage statistics for occupations and organizations
- * @returns Promise<{occupations: {total: number, used: number, unused: number}, organizations: {total: number, used: number, unused: number}}>
+ * Destroys all unused entities (occupations, organizations, sentiments) and empty entities (contacts, notes)
+ * @returns Promise<{occupations: CleanupResult, organizations: CleanupResult, sentiments: CleanupResult, contacts: CleanupResult, notes: CleanupResult}>
+ */
+export async function destroyAllUnusedAndEmptyEntities(): Promise<{
+  occupations: CleanupResult;
+  organizations: CleanupResult;
+  sentiments: CleanupResult;
+  contacts: CleanupResult;
+  notes: CleanupResult;
+}> {
+  console.log('Starting comprehensive cleanup of all unused and empty entities...');
+  
+  const [occupationsResult, organizationsResult, sentimentsResult, contactsResult, notesResult] = await Promise.all([
+    destroyUnusedOccupations(),
+    destroyUnusedOrganizations(),
+    destroyUnusedSentiments(),
+    destroyEmptyContacts(),
+    destroyEmptyNotes()
+  ]);
+
+  const totalDeleted = occupationsResult.deletedCount + organizationsResult.deletedCount + sentimentsResult.deletedCount + contactsResult.deletedCount + notesResult.deletedCount;
+  const totalErrors = occupationsResult.errors.length + organizationsResult.errors.length + sentimentsResult.errors.length + contactsResult.errors.length + notesResult.errors.length;
+
+  console.log(`Comprehensive cleanup finished: ${totalDeleted} entities deleted, ${totalErrors} errors`);
+
+  return {
+    occupations: occupationsResult,
+    organizations: organizationsResult,
+    sentiments: sentimentsResult,
+    contacts: contactsResult,
+    notes: notesResult
+  };
+}
+
+/**
+ * Helper function to get usage statistics for occupations, organizations, and sentiments
+ * @returns Promise<{occupations: {total: number, used: number, unused: number}, organizations: {total: number, used: number, unused: number}, sentiments: {total: number, used: number, unused: number}}>
  */
 export async function getEntityUsageStats(): Promise<{
   occupations: { total: number; used: number; unused: number };
   organizations: { total: number; used: number; unused: number };
+  sentiments: { total: number; used: number; unused: number };
 }> {
   try {
-    // Get occupation stats
-    const [occupationStats, organizationStats] = await Promise.all([
+    // Get all stats in parallel
+    const [occupationStats, organizationStats, sentimentStats] = await Promise.all([
       getOccupationUsageStats(),
-      getOrganizationUsageStats()
+      getOrganizationUsageStats(),
+      getSentimentUsageStats()
     ]);
 
     return {
       occupations: occupationStats,
-      organizations: organizationStats
+      organizations: organizationStats,
+      sentiments: sentimentStats
     };
   } catch (error) {
     console.error('Error getting entity usage stats:', error);
@@ -644,6 +776,33 @@ async function getOrganizationUsageStats(): Promise<{ total: number; used: numbe
   if (allError) throw allError;
 
   const total = allOrganizations?.length || 0;
+  const used = usedIds.size;
+  const unused = total - used;
+
+  return { total, used, unused };
+}
+
+/**
+ * Helper function to get sentiment usage statistics
+ */
+async function getSentimentUsageStats(): Promise<{ total: number; used: number; unused: number }> {
+  const { data: usedSentimentIds, error: usedError } = await supabase
+    .from('note_sentiments')
+    .select('sentiment_id');
+
+  if (usedError) throw usedError;
+
+  const usedIds = new Set(
+    usedSentimentIds?.map(relation => relation.sentiment_id) || []
+  );
+
+  const { data: allSentiments, error: allError } = await supabase
+    .from('sentiments')
+    .select('id');
+
+  if (allError) throw allError;
+
+  const total = allSentiments?.length || 0;
   const used = usedIds.size;
   const unused = total - used;
 

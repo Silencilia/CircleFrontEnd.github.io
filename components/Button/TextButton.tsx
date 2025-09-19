@@ -27,7 +27,7 @@ const TextButton: React.FC<TextButtonProps> = ({
 
   const active = toggled !== undefined ? toggled : isActive;
   const baseClasses = 'inline-flex items-center justify-center px-2 h-5 rounded-[12px] transition-colors';
-  const fontClasses = 'font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px]';
+  const fontClasses = 'font-circlebodymedium';
   const defaultActive = 'bg-circle-primary text-circle-neutral';
   const defaultInactive = 'bg-circle-neutral text-circle-primary';
   const stateClasses = active

@@ -70,14 +70,14 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
       <div className="w-[220px] h-[40px] flex flex-row justify-between items-start gap-[10px]">
         {/* Timestamp */}
         <div className="w-[157px] h-[40px] flex flex-row justify-center items-start gap-[10px]">
-          <div className="w-[32px] h-[40px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-start">
+          <div className="w-[32px] h-[40px] font-circlebodymedium text-circle-primary flex items-start">
             Due:
           </div>
           <div className="w-[115px] h-[40px] flex flex-col justify-start items-start">
-            <div className="w-[115px] h-[20px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-start">
+            <div className="w-[115px] h-[20px] font-circlebodymedium text-circle-primary flex items-start">
               {date}
             </div>
-            <div className="w-[46px] h-[20px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-start">
+            <div className="w-[46px] h-[20px] font-circlebodymedium text-circle-primary flex items-start">
               {time}
             </div>
           </div>
@@ -100,7 +100,7 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
       {/* Description - fixed height */}
       <div
         className={
-          'w-[220px] font-inter font-normal text-[14px] leading-[20px] text-circle-primary tracking-[0.25px] text-left h-[60px] overflow-hidden'
+          'w-[220px] font-circlebodymedium text-circle-primary text-left h-[60px] overflow-hidden'
         }
       >
         {truncatedText}

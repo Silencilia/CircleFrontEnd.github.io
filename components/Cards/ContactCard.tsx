@@ -153,17 +153,17 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
         <div className="flex flex-row justify-between items-start w-full">
           {/* Contact Info Column */}
           <div className="flex flex-col gap-0 h-fit ">
-            <div className="font-inter font-medium text-base leading-6 text-circle-primary">
+            <div className="font-circlebodymedium text-circle-primary">
               {contact.name}
             </div>
-            <div className={`font-inter text-sm leading-5 h-[20px] ${
+            <div className={`font-circlebodymedium h-[20px] ${
               occupation?.title 
                 ? 'font-normal text-circle-primary' 
                 : 'font-normal text-circle-primary italic opacity-50'
             }`}>
               {occupation?.title || 'no occupation'}
             </div>
-            <div className={`font-inter text-sm leading-5 h-[20px] ${
+            <div className={`font-circlebodymedium h-[20px] ${
               organization?.name 
                 ? 'font-normal text-circle-primary' 
                 : 'font-normal text-circle-primary italic opacity-50'
@@ -182,7 +182,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
         
         {/* Birthdate and Notes Column */}
         <div className="flex flex-col gap-0 h-fit">
-          <div className={`font-inter text-sm leading-5 h-[20px] ${
+          <div className={`font-circlebodymedium h-[20px] ${
             contact.birth_date && contact.birth_date.year 
               ? 'font-normal text-circle-primary' 
               : 'font-normal text-circle-primary italic opacity-50'
@@ -197,7 +197,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
               </svg>
             </div>
             {/* Notes Count */}
-            <span className="font-inter font-normal text-sm leading-5 text-circle-primary">
+            <span className="font-circlebodymedium text-circle-primary">
               {contact.note_ids?.length || 0} notes
             </span>
           </div>

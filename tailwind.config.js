@@ -17,50 +17,148 @@ module.exports = {
         }
       },
       fontFamily: {
-        'inter': ['Inter', 'sans-serif'],
         'merriweather': ['Merriweather', 'serif'],
+        'inter': ['Inter', 'sans-serif'],
       },
-      fontSize: {
-        // Display styles - Merriweather
-        'display-large': ['57px', '64px'],
-        'display-medium': ['45px', '52px'],
-        'display-small': ['36px', '44px'],
-        
-        // Headline styles - Merriweather
-        'headline-large': ['32px', '40px'],
-        'headline-medium': ['28px', '36px'],
-        'headline-small': ['24px', '32px'],
-        'headline-xs': ['16px', '28px'],
-        
-        // Title styles - Inter
-        'title-large': ['22px', '28px'],
-        'title-medium': ['16px', '24px'],
-        'title-small': ['14px', '20px'],
-        
-        // Body styles - Inter
-        'body-large': ['16px', '24px'],
-        'body-medium': ['14px', '20px'],
-        'body-medium-draft': ['14px', '20px'],
-        'body-small': ['12px', '16px'],
-        
-        // Label styles - Inter
-        'label-large': ['14px', '20px'],
-        'label-medium': ['12px', '16px'],
-        'label-small': ['11px', '16px'],
-      },
-      letterSpacing: {
-        '0.15': '0.15px',
-        '0.25': '0.25px',
-        '0.5': '0.5px',
-        '0.1': '0.1px',
-        '0.4': '0.4px',
-        '-0.25': '-0.25px',
-      },
-      fontWeight: {
-        'normal': '400',
-        'medium': '500',
-      }
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      const typographyUtilities = {
+        // Display styles - Merriweather
+        '.font-circledisplaylarge': {
+          fontFamily: 'Merriweather, serif',
+          fontSize: '3.75rem', // 6xl
+          fontWeight: '400',
+          lineHeight: '1',
+          letterSpacing: '0',
+        },
+        '.font-circledisplaymedium': {
+          fontFamily: 'Merriweather, serif',
+          fontSize: '3rem', // 5xl
+          fontWeight: '400',
+          lineHeight: '1.25', // tight
+        },
+        '.font-circledisplaysmall': {
+          fontFamily: 'Merriweather, serif',
+          fontSize: '2.25rem', // 4xl
+          fontWeight: '400',
+          lineHeight: '1.25', // tight
+        },
+
+        // Headline styles - Merriweather
+        '.font-circleheadlinelarge': {
+          fontFamily: 'Merriweather, serif',
+          fontSize: '1.875rem', // 3xl
+          fontWeight: '400',
+          lineHeight: '2.5rem', // leading-10
+        },
+        '.font-circleheadlinemedium': {
+          fontFamily: 'Merriweather, serif',
+          fontSize: '1.875rem', // 3xl
+          fontWeight: '400',
+          lineHeight: '2.25rem', // leading-9
+        },
+        '.font-circleheadlinesmall': {
+          fontFamily: 'Merriweather, serif',
+          fontSize: '1.5rem', // 2xl
+          fontWeight: '400',
+          lineHeight: '2rem', // leading-8
+        },
+        '.font-circleheadlineextra-small': {
+          fontFamily: 'Merriweather, serif',
+          fontSize: '1rem', // base
+          fontWeight: '400',
+          lineHeight: '1.75rem', // leading-7
+        },
+
+        // Body styles - Inter
+        '.font-circlebodylarge': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '1rem', // base
+          fontWeight: '400',
+          lineHeight: '1.5rem', // leading-6
+          letterSpacing: '0.025em', // tracking-wide
+        },
+        '.font-circlebodymedium': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '0.875rem', // sm
+          fontWeight: '400',
+          lineHeight: '1.25rem', // leading-5
+          letterSpacing: '0.025em', // tracking-wide
+        },
+        '.font-circlebodymedium-draft': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '0.875rem', // sm
+          fontWeight: '400',
+          fontStyle: 'italic',
+          lineHeight: '1.25rem', // leading-5
+          letterSpacing: '0.025em', // tracking-wide
+        },
+        '.font-circlebodymedium-highlight': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '0.875rem', // sm
+          fontWeight: '400',
+          fontStyle: 'italic',
+          textDecoration: 'underline',
+          lineHeight: '1.25rem', // leading-5
+          letterSpacing: '0.025em', // tracking-wide
+        },
+        '.font-circlebodysmall': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '0.75rem', // xs
+          fontWeight: '400',
+          lineHeight: '1rem', // leading-4
+          letterSpacing: '0.025em', // tracking-wide
+        },
+
+        // Label styles - Inter
+        '.font-circlelabellarge': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '0.875rem', // sm
+          fontWeight: '500', // medium
+          lineHeight: '1.25rem', // leading-5
+          letterSpacing: '0', // tracking-normal
+        },
+        '.font-circlelabelmedium': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '0.75rem', // xs
+          fontWeight: '500', // medium
+          lineHeight: '1rem', // leading-4
+          letterSpacing: '0.05em', // tracking-wider
+        },
+        '.font-circlelabelsmall': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '0.75rem', // xs
+          fontWeight: '500', // medium
+          lineHeight: '1rem', // leading-4
+          letterSpacing: '0.05em', // tracking-wider
+        },
+
+        // Title styles - Inter
+        '.font-circletitlelarge': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '1.25rem', // xl
+          fontWeight: '400',
+          lineHeight: '1.75rem', // leading-7
+        },
+        '.font-circletitlemedium': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '1rem', // base
+          fontWeight: '500', // medium
+          lineHeight: '1.5rem', // leading-6
+          letterSpacing: '0', // tracking-normal
+        },
+        '.font-circletitlesmall': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '0.875rem', // sm
+          fontWeight: '500', // medium
+          lineHeight: '1.25rem', // leading-5
+          letterSpacing: '0', // tracking-normal
+        },
+      };
+
+      addUtilities(typographyUtilities);
+    }
+  ],
 }

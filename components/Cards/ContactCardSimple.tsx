@@ -65,10 +65,10 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact, onMenuCl
 			<div className="flex flex-row justify-between items-start w-full">
 				{/* Contact Info */}
 				<div className="flex flex-col h-fit gap-1 w-[144px]">
-					<div className="font-inter font-medium text-base leading-6 text-circle-primary truncate">
+					<div className="font-circlebodymedium text-circle-primary truncate">
 						{contact.name}
 					</div>
-					<div className={`font-inter text-sm leading-5 text-circle-primary truncate h-[20px] ${
+					<div className={`font-circlebodymedium text-circle-primary truncate h-[20px] ${
 						occupation?.title 
 							? 'font-normal' 
 							: 'font-normal italic opacity-50'
@@ -76,7 +76,7 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact, onMenuCl
 					>
 						{occupation?.title || 'no occupation'}
 					</div>
-					<div className={`font-inter text-sm leading-5 text-circle-primary truncate h-[20px] ${
+					<div className={`font-circlebodymedium text-circle-primary truncate h-[20px] ${
 						contact.birth_date && contact.birth_date.year 
 							? 'font-normal' 
 							: 'font-normal italic opacity-50'

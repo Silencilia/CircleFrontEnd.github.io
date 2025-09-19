@@ -18,7 +18,7 @@ export default function AccountPage() {
         style={{ top: 120, bottom: 80, overflowY: 'auto' }}
       >
         <div className="w-full h-full flex items-center justify-center p-6">
-          <div className="text-circle-primary font-inter">
+          <div className="text-circle-primary font-circlebodylarge">
             Account page content goes here
           </div>
         </div>

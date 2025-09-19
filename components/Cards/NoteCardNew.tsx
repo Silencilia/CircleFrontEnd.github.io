@@ -290,7 +290,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                         onKeyDownCapture={handleTitleKeyDown}
                         onKeyUp={handleTitleKeyUp}
                         onBlur={handleTitleBlur}
-                        className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter font-medium text-[16px] leading-[24px] tracking-[0.15px] text-circle-primary`}
+                        className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circletitlemedium text-circle-primary`}
                         style={{
                           minHeight: '20px',
                           wordWrap: 'break-word',
@@ -300,7 +300,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                     ) : (
                       <div
                         onClick={handleTitleEditClick}
-                        className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter font-medium text-[16px] leading-[24px] tracking-[0.15px] text-circle-primary"
+                        className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circletitlemedium text-circle-primary"
                         title="Click to edit"
                       >
                         {currentNote.title || (
@@ -375,7 +375,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                           setDateValue(init);
                           setIsDatePickerOpen(true);
                         }}
-                        className={`w-fit h-[20px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-center ${
+                        className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
                           date === 'no date' ? 'italic opacity-50' : ''
                         }`}
                         title="Click to edit note date"
@@ -396,7 +396,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                           }
                           setIsTimePickerOpen(true);
                         }}
-                        className={`w-fit h-[20px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-center ${
+                        className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
                           !hasTime ? 'italic opacity-50' : ''
                         }`}
                         title="Click to edit note time"
@@ -422,7 +422,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                   onKeyDownCapture={handleTextKeyDown}
                   onKeyUp={handleTextKeyUp}
                   onBlur={handleTextBlur}
-                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex-1`}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary flex-1`}
                   style={{
                     minHeight: '20px',
                     wordWrap: 'break-word',
@@ -432,7 +432,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
               ) : (
                 <div
                   onClick={handleTextEditClick}
-                  className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex-1"
+                  className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium text-circle-primary flex-1"
                   title="Click to edit"
                 >
                   {currentNote.text ? (
@@ -478,7 +478,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           <div className="w-[242px] h-[20px] flex flex-row items-center gap-[5px] p-0">
             {sentimentLabels.map((label, index) => (
               <div key={index} className="w-fit h-[20px] bg-circle-neutral rounded-[6px] p-[2px_5px] flex flex-row justify-center items-center">
-                <div className="w-fit h-[16px] font-inter font-medium text-[11px] leading-[16px] tracking-[0.5px] text-circle-primary flex items-center text-center">
+                <div className="w-fit h-[16px] font-circlelabelsmall text-circle-primary flex items-center text-center">
                   {label}
                 </div>
               </div>

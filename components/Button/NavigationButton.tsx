@@ -25,7 +25,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
   const content = (
     <>
       {icon}
-      <span className="font-inter font-medium text-xs leading-4 text-black text-center">
+      <span className="font-circlelabelsmall text-black text-center">
         {label}
       </span>
     </>

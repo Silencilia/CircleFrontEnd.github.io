@@ -152,7 +152,7 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
                 </div>
               ))
             ) : (
-              <div className="text-center text-circle-primary/60 font-inter py-8">
+              <div className="text-center text-circle-primary/60 font-circlebodymedium py-8">
                 No commitments to display
               </div>
             )}

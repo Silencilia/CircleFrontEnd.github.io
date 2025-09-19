@@ -37,7 +37,7 @@ const NoteGallery: React.FC<NoteGalleryProps> = ({ notes }) => {
             />
           ))
         ) : (
-          <div className="text-center text-circle-primary/60 font-inter w-full">No notes to display</div>
+          <div className="text-center text-circle-primary/60 font-circlebodymedium w-full">No notes to display</div>
         )}
       </div>
     </div>

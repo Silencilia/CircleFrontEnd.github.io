@@ -144,7 +144,7 @@ const RelationshipFilterDropdown: React.FC<RelationshipFilterDropdownProps> = ({
       {/* Dropdown Button */}
       <div className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-[25px] w-[240px] h-[30px] px-1.5">
         <div className="flex flex-row items-center gap-4 flex-1">
-          <span ref={textRef} className="h-5 font-inter font-medium text-sm leading-5 text-left text-circle-primary/35 pl-1.5 pr-2.5 flex-1 whitespace-nowrap overflow-hidden">
+          <span ref={textRef} className="h-5 font-circlebodymedium text-left text-circle-primary/35 pl-1.5 pr-2.5 flex-1 whitespace-nowrap overflow-hidden">
             {getDisplayText()}
           </span>
         </div>

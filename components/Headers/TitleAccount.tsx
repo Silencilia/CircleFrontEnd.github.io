@@ -8,7 +8,7 @@ const TitleAccount: React.FC = () => {
       className="w-full bg-circle-neutral flex items-center justify-center relative"
       style={{ height: TitleHeight }}
     >
-      <div className="font-merriweather font-normal text-display-small text-center text-circle-primary">
+      <div className="font-circledisplaysmall text-center text-circle-primary">
         Account
       </div>
 

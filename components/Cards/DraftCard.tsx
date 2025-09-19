@@ -58,11 +58,11 @@ const DraftCard: React.FC<DraftCardProps> = ({
           {/* Date and Time */}
           <div className="flex flex-row items-center p-0 pr-[10px] gap-[10px] w-fit h-[20px] justify-start">
             {/* Month DD, YYYY */}
-            <div className="w-fit h-[20px] font-inter font-normal italic text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary opacity-50 flex items-center">
+            <div className="w-fit h-[20px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-center">
               {dateStr}
             </div>
             {/* hh:mm */}
-            <div className="w-fit h-[20px] font-inter font-normal italic text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary opacity-50 flex items-center">
+            <div className="w-fit h-[20px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-center">
               {timeStr}
             </div>
           </div>
@@ -93,7 +93,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
 
       {/* Frame 128 - Description */}
       <div className="w-full h-[80px] max-h-[80px] flex flex-row items-start p-0">
-        <div className="w-full h-[80px] font-inter font-normal italic text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary opacity-50 flex items-start justify-start flex-1 overflow-hidden text-left">
+        <div className="w-full h-[80px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-start justify-start flex-1 overflow-hidden text-left">
           <div 
             className="overflow-hidden text-ellipsis text-left"
             style={{

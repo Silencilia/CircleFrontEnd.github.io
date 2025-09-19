@@ -5,11 +5,14 @@ import { CalendarIcon } from '../icons';
 import { RecycleButton, MinimizeButton, BackButton, NewTagButton } from '../Button';
 import { SentimentTag } from '../Tag';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
+import NewSentiment from '../Dialogs/NewSentiment';
+import MaximumSentimentDialog from '../Dialogs/MaximumSentimentDialog';
 import { contactReference } from '../../data/referenceParsing';
 import NoteDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/NoteDatePicker';
 import TimePicker from '../TimePicker';
 import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import useCardNavigation from '../../hooks/useCardNavigation';
+import { destroyUnusedSentiments } from '../../utils/entityCleanup';
 
 const Type: CardType = 'noteCardDetail';
 
@@ -30,11 +33,54 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [timeValue, setTimeValue] = useState<TimeValue>({ hour: null, minute: null });
   const [sentimentUpdateTrigger, setSentimentUpdateTrigger] = useState(0);
+  const [isSentimentDialogOpen, setIsSentimentDialogOpen] = useState(false);
+  const [isMaximumSentimentDialogOpen, setIsMaximumSentimentDialogOpen] = useState(false);
 
   // Debug: Log when sentimentUpdateTrigger changes
   useEffect(() => {
     console.log('NoteCardDetail: sentimentUpdateTrigger changed to', sentimentUpdateTrigger);
   }, [sentimentUpdateTrigger]);
+
+  // Handle sentiment selection from dialog
+  const handleSentimentSelect = async (selectedSentiment: any) => {
+    try {
+      // Add the selected sentiment to the note's sentiment_ids
+      const updatedSentimentIds = [...(currentNote.sentiment_ids || []), selectedSentiment.id];
+      await updateNote(currentNote.id, { sentiment_ids: updatedSentimentIds });
+      
+      // Trigger re-render of sentiment tags
+      setSentimentUpdateTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to add sentiment to note:', error);
+    }
+  };
+
+  // Handle new sentiment button click
+  const handleNewSentimentClick = async () => {
+    try {
+      // Clean up unused sentiments first
+      console.log('Cleaning up unused sentiments...');
+      const cleanupResult = await destroyUnusedSentiments();
+      console.log(`Cleanup completed: ${cleanupResult.deletedCount} unused sentiments deleted`);
+      
+      if (cleanupResult.errors.length > 0) {
+        console.error('Errors during cleanup:', cleanupResult.errors);
+      }
+      
+      // Trigger a re-render to refresh the sentiment list
+      setSentimentUpdateTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to cleanup unused sentiments:', error);
+    }
+
+    // Then proceed with sentiment selection
+    const currentSentimentCount = (currentNote.sentiment_ids || []).length;
+    if (currentSentimentCount >= 3) {
+      setIsMaximumSentimentDialogOpen(true);
+    } else {
+      setIsSentimentDialogOpen(true);
+    }
+  };
 
   if (currentNote.is_trashed) {
     return null;
@@ -116,7 +162,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 {/* Timestamp */}
                 <div className="w-fit h-fit flex flex-col items-start p-0 mx-auto">
                   {/* Title */}
-                  <div className="w-fit h-[24px] font-inter font-medium text-[16px] leading-[24px] tracking-[0.15px] text-circle-primary flex items-center">
+                  <div className="w-fit h-[24px] font-circletitlemedium text-circle-primary flex items-center">
                     {note.title}
                   </div>
                 </div>
@@ -180,7 +226,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                           setDateValue(init);
                           setIsDatePickerOpen(true);
                         }}
-                        className={`w-fit h-[20px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-center ${
+                        className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
                           date === 'no date' ? 'italic opacity-50' : ''
                         }`}
                         title="Click to edit note date"
@@ -201,7 +247,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                           }
                           setIsTimePickerOpen(true);
                         }}
-                        className={`w-fit h-[20px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-center ${
+                        className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
                           !hasTime ? 'italic opacity-50' : ''
                         }`}
                         title="Click to edit note time"
@@ -217,7 +263,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
 
           {/* Text */}
           <div className="w-[600px] h-fit bg-circle-neutral-variant rounded-[12px] p-[15px] flex flex-row justify-start items-start">
-            <div className="w-fit h-fit font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary text-left">
+            <div className="w-fit h-fit font-circlebodymedium text-circle-primary text-left">
               {contactReference(
                 currentNote.text,
                 state.contacts,
@@ -242,17 +288,12 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 key={`${sentiment.id}-${sentimentUpdateTrigger}`}
                 sentiment={sentiment}
                 noteId={currentNote.id}
-                editable={true}
                 fillColor="bg-circle-neutral"
                 textColor="text-circle-primary"
-                onEditComplete={() => setSentimentUpdateTrigger(prev => prev + 1)}
               />
             ))}
             <NewTagButton
-              onClick={() => {
-                // TODO: Implement add new sentiment tag functionality
-                console.log('Add new sentiment tag clicked');
-              }}
+              onClick={handleNewSentimentClick}
               aria-label="Add new sentiment tag"
             />
           </div>
@@ -266,6 +307,20 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
         onConfirm={handleDelete}
         itemType="note"
         itemName={note.title}
+      />
+
+      {/* New Sentiment Dialog */}
+      <NewSentiment
+        isOpen={isSentimentDialogOpen}
+        onClose={() => setIsSentimentDialogOpen(false)}
+        onSelect={handleSentimentSelect}
+        noteId={currentNote.id}
+      />
+
+      {/* Maximum Sentiment Dialog */}
+      <MaximumSentimentDialog
+        isOpen={isMaximumSentimentDialogOpen}
+        onClose={() => setIsMaximumSentimentDialogOpen(false)}
       />
 
       {/* Contact Detail Overlay removed; parent manages single overlay */}

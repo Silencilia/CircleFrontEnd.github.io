@@ -21,7 +21,7 @@ const ExtractButton: React.FC<ExtractButtonProps> = ({
       aria-label={ariaLabel}
     >
       {/* Text */}
-      <div className="h-[16px] font-inter font-medium text-[11px] leading-[16px] tracking-[0.5px] text-white flex items-center flex-none order-0 flex-grow-0">
+      <div className="h-[16px] font-circlelabelsmall text-white flex items-center flex-none order-0 flex-grow-0">
         {children}
       </div>
       

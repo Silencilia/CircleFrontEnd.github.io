@@ -155,6 +155,7 @@ type ContactAction =
   | { type: 'UPDATE_SUBJECT'; payload: Subject }
   | { type: 'ADD_ORGANIZATION'; payload: Organization }
   | { type: 'ADD_OCCUPATION'; payload: Occupation }
+  | { type: 'ADD_SENTIMENT'; payload: Sentiment }
   | { type: 'UPDATE_SENTIMENT'; payload: Sentiment }
   | { type: 'RESET_TO_SAMPLE' };
 
@@ -238,6 +239,9 @@ function contactReducer(state: ContactState, action: ContactAction): ContactStat
     case 'ADD_OCCUPATION':
       return { ...state, occupations: [...state.occupations, action.payload] };
 
+    case 'ADD_SENTIMENT':
+      return { ...state, sentiments: [...state.sentiments, action.payload] };
+
     case 'UPDATE_SENTIMENT':
       return {
         ...state,
@@ -270,7 +274,7 @@ interface ContactContextType {
   addOrganization: (organization: Omit<Organization, 'id'>) => Promise<Organization>;
   addOccupation: (occupation: Omit<Occupation, 'id'>) => Promise<Occupation>;
   addRelationship: (relationship: Omit<Relationship, 'id'>) => Promise<void>;
-  addSentiment: (sentiment: Omit<Sentiment, 'id'>) => Promise<void>;
+  addSentiment: (sentiment: Omit<Sentiment, 'id'>) => Promise<Sentiment>;
   updateSentiment: (id: string, updates: Partial<Sentiment>) => Promise<void>;
   // New contact creation
   createNewContact: () => Promise<Contact>;
@@ -401,9 +405,9 @@ export function ContactProvider({ children }: { children: ReactNode }) {
   const addSentiment = async (sentiment: Omit<Sentiment, 'id'>) => {
     try {
       const newSentiment = await dataService.addSentiment(sentiment);
-      // Note: We need to add SENTIMENT action type to the reducer
-      // For now, we'll reload all data
-      await loadData();
+      // Add the new sentiment to the state immediately
+      dispatch({ type: 'ADD_SENTIMENT', payload: newSentiment });
+      return newSentiment;
     } catch (error) {
       console.error('Failed to add sentiment:', error);
       throw error;

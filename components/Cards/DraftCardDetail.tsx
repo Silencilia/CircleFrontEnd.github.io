@@ -168,12 +168,12 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
                 <div className="flex flex-row items-center pr-[10px] gap-[10px] w-fit h-5 flex-none order-0 flex-grow-0">
                   
                   {/* Date */}
-                  <div className="w-fit h-5 font-inter italic font-normal text-[14px] leading-[20px] flex items-center tracking-[0.25px] text-circle-primary opacity-50 flex-none order-0 flex-grow-0">
+                  <div className="w-fit h-5 font-circlebodymedium-draft text-circle-primary opacity-50 flex-none order-0 flex-grow-0">
                     {formatDate(draft.date)}
                   </div>
                   
                   {/* Time */}
-                  <div className="w-fit h-5 font-inter italic font-normal text-[14px] leading-[20px] flex items-center tracking-[0.25px] text-circle-primary opacity-50 flex-none order-1 flex-grow-0">
+                  <div className="w-fit h-5 font-circlebodymedium-draft text-circle-primary opacity-50 flex-none order-1 flex-grow-0">
                     {formatTime(draft.time)}
                   </div>
                 </div>
@@ -244,7 +244,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
             `}</style>
             
             {/* Draft text */}
-            <div className="w-[580px] h-fit font-inter italic font-normal text-[14px] leading-[20px] text-left tracking-[0.25px] text-circle-primary opacity-50">
+            <div className="w-[580px] h-fit font-circlebodymedium-draft text-left text-circle-primary opacity-50">
               {draft.text}
             </div>
           </div>
