@@ -212,7 +212,7 @@ function Wheel({
           {paddedItems.map((label, i) => (
             <div
               key={i}
-              className={`flex items-center justify-center font-inter text-[16px] leading-6 tracking-[0.15px] text-circle-primary`}
+              className={`flex items-center justify-center font-circlebodylarge text-circle-primary`}
               style={{ height: ITEM_HEIGHT }}
               aria-hidden={label === ''}
             >
@@ -334,10 +334,10 @@ export const TimePicker: React.FC<TimePickerProps> = ({
     >
       <div className="flex flex-col items-center p-0 gap-[40px] w-[430px]">
         <div className="flex flex-col items-start p-0 gap-[25px] w-[430px] self-stretch">
-          <div className="w-[430px] h-6 font-inter font-medium text-[16px] leading-6 tracking-[0.15px] text-circle-primary flex items-center">
+          <div className="w-[430px] h-6 font-circletitlemedium text-circle-primary flex items-center">
             {label}
           </div>
-          <div className="w-[430px] h-5 font-inter font-normal text-[14px] leading-5 tracking-[0.25px] text-circle-primary flex items-center">
+          <div className="w-[430px] h-5 font-circlebodymedium text-circle-primary flex items-center">
             {subtitle}
           </div>
         </div>
@@ -393,7 +393,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   infinite={true}
                 />
               </div>
-              <div className="w-[16px] flex items-center justify-center font-inter text-[16px] leading-6 tracking-[0.15px] text-circle-primary">:</div>
+              <div className="w-[16px] flex items-center justify-center font-circlebodylarge text-circle-primary">:</div>
               <div className="w-[90px]">
                 <Wheel
                   items={minutes.map((m) => String(m).padStart(2, '0'))}
@@ -427,10 +427,10 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   max={is24h ? 23 : 12}
                   value={is24h ? String(effectiveHour).padStart(2, '0') : String(((effectiveHour % 12) || 12)).padStart(2, '0')}
                   onChange={(e) => handleHourTyped(e.target.value)}
-                  className="appearance-none w-[74px] h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant px-2 font-inter font-normal text-body-medium text-circle-primary text-center"
+                  className="appearance-none w-[74px] h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant px-2 font-circlebodymedium text-circle-primary text-center"
                 />
               </div>
-              <div className="w-[16px] flex items-center justify-center font-inter text-[16px] leading-6 tracking-[0.15px] text-circle-primary">:</div>
+              <div className="w-[16px] flex items-center justify-center font-circlebodylarge text-circle-primary">:</div>
               <div className="w-[90px] flex justify-center">
                 <input
                   type="number"
@@ -438,12 +438,12 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   max={59}
                   value={String(effectiveMinute).padStart(2, '0')}
                   onChange={(e) => handleMinuteTyped(e.target.value)}
-                  className="appearance-none w-[74px] h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant px-2 font-inter font-normal text-body-medium text-circle-primary text-center"
+                  className="appearance-none w-[74px] h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant px-2 font-circlebodymedium text-circle-primary text-center"
                 />
               </div>
               {!is24h && (
                 <div className="w-[90px] flex justify-center">
-                  <div className="appearance-none w-[74px] h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant px-2 font-inter font-normal text-body-medium text-circle-primary text-center flex items-center justify-center select-none">
+                  <div className="appearance-none w-[74px] h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant px-2 font-circlebodymedium text-circle-primary text-center flex items-center justify-center select-none">
                     {ampm}
                   </div>
                 </div>
@@ -453,7 +453,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
 
           {/* Footer */}
           <div className="flex flex-row justify-between items-start p-0 gap-[40px] w-[430px] self-stretch">
-            <div className="font-inter font-normal text-[12px] leading-4 tracking-[0.4px] text-circle-primary">
+            <div className="font-circlelabelsmall text-circle-primary">
               Current value: {is24h
                 ? `${String(effectiveHour).padStart(2, '0')}:${String(effectiveMinute).padStart(2, '0')}`
                 : `${String(((effectiveHour % 12) || 12)).padStart(2, '0')}:${String(effectiveMinute).padStart(2, '0')} ${effectiveHour >= 12 ? 'PM' : 'AM'}`}

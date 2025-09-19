@@ -4,12 +4,14 @@
 import { 
   destroyUnusedOccupations, 
   destroyUnusedOrganizations, 
+  destroyUnusedSentiments,
   destroyAllUnusedEntities,
   destroyEmptyContacts,
   destroyAllUnusedEntitiesAndEmptyContacts,
   destroyUnusedNotes,
   destroyEmptyNotes,
   destroyAllUnusedEntitiesAndEmptyContactsAndNotes,
+  destroyAllUnusedAndEmptyEntities,
   destroyAllEmptyEntities,
   getEntityUsageStats 
 } from './entityCleanup';
@@ -51,6 +53,26 @@ export async function cleanupOrganizationsExample() {
     }
   } catch (error) {
     console.error('Failed to cleanup organizations:', error);
+  }
+}
+
+/**
+ * Example: Clean up unused sentiments only
+ */
+export async function cleanupSentimentsExample() {
+  console.log('=== Cleaning up unused sentiments ===');
+  
+  try {
+    const result = await destroyUnusedSentiments();
+    
+    console.log(`Deleted ${result.deletedCount} unused sentiments`);
+    console.log('Deleted IDs:', result.deletedIds);
+    
+    if (result.errors.length > 0) {
+      console.error('Errors occurred:', result.errors);
+    }
+  } catch (error) {
+    console.error('Failed to cleanup sentiments:', error);
   }
 }
 
@@ -236,6 +258,12 @@ export async function getStatsExample() {
       used: stats.organizations.used,
       unused: stats.organizations.unused
     });
+    
+    console.log('Sentiment stats:', {
+      total: stats.sentiments.total,
+      used: stats.sentiments.used,
+      unused: stats.sentiments.unused
+    });
   } catch (error) {
     console.error('Failed to get stats:', error);
   }
@@ -289,6 +317,53 @@ export async function completeCleanupWorkflowWithNotes() {
   
   // Finally, get stats again to see the results
   console.log('\n=== Stats after complete cleanup with notes ===');
+  await getStatsExample();
+}
+
+/**
+ * Example: Clean up everything including sentiments
+ */
+export async function cleanupEverythingWithSentimentsExample() {
+  console.log('=== Cleaning up everything including sentiments ===');
+  
+  try {
+    const results = await destroyAllUnusedAndEmptyEntities();
+    
+    console.log(`Deleted ${results.occupations.deletedCount} unused occupations`);
+    console.log(`Deleted ${results.organizations.deletedCount} unused organizations`);
+    console.log(`Deleted ${results.sentiments.deletedCount} unused sentiments`);
+    console.log(`Deleted ${results.contacts.deletedCount} empty contacts`);
+    console.log(`Deleted ${results.notes.deletedCount} empty notes`);
+    
+    const totalErrors = results.occupations.errors.length + results.organizations.errors.length + results.sentiments.errors.length + results.contacts.errors.length + results.notes.errors.length;
+    if (totalErrors > 0) {
+      console.error('Errors occurred:', {
+        occupationErrors: results.occupations.errors,
+        organizationErrors: results.organizations.errors,
+        sentimentErrors: results.sentiments.errors,
+        contactErrors: results.contacts.errors,
+        noteErrors: results.notes.errors
+      });
+    }
+  } catch (error) {
+    console.error('Failed to cleanup everything with sentiments:', error);
+  }
+}
+
+/**
+ * Example: Complete workflow including sentiments
+ */
+export async function completeCleanupWorkflowWithSentiments() {
+  console.log('=== Complete cleanup workflow with sentiments ===');
+  
+  // First, get current stats
+  await getStatsExample();
+  
+  // Then perform complete cleanup including sentiments
+  await cleanupEverythingWithSentimentsExample();
+  
+  // Finally, get stats again to see the results
+  console.log('\n=== Stats after complete cleanup with sentiments ===');
   await getStatsExample();
 }
 

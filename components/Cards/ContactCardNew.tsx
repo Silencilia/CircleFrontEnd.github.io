@@ -551,7 +551,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   onKeyDownCapture={handleNameKeyDown}
                   onKeyUp={handleNameKeyUp}
                   onBlur={handleNameBlur}
-                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter font-medium text-base leading-6 text-circle-primary`}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary`}
                   style={{
                     minHeight: '20px',
                     wordWrap: 'break-word',
@@ -565,11 +565,11 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   title="Click to edit"
                 >
                   {currentContact.name ? (
-                    <span className="font-inter font-medium text-base leading-6 text-circle-primary">
+                    <span className="font-circlebodymedium text-circle-primary">
                       {currentContact.name}
                     </span>
                   ) : (
-                    <span className="font-inter font-medium text-body-medium text-circle-primary italic opacity-50">
+                    <span className="font-circlebodymedium text-circle-primary italic opacity-50">
                       New Contact
                     </span>
                   )}
@@ -625,7 +625,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   onKeyDownCapture={handleOccupationKeyDown}
                   onKeyUp={handleOccupationKeyUp}
                   onBlur={handleOccupationBlur}
-                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary`}
                   style={{
                     minHeight: '20px',
                     wordWrap: 'break-word',
@@ -635,7 +635,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               ) : (
                 <div 
                   onClick={handleOccupationEditClick}
-                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter text-sm leading-5 ${
+                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium ${
                     occupation?.title && occupation.title.trim() !== '' 
                       ? 'text-circle-primary' 
                       : 'text-circle-primary opacity-50 italic'
@@ -674,7 +674,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   onKeyDownCapture={handleOrganizationKeyDown}
                   onKeyUp={handleOrganizationKeyUp}
                   onBlur={handleOrganizationBlur}
-                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-inter text-sm leading-5 text-circle-primary`}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary`}
                   style={{
                     minHeight: '20px',
                     wordWrap: 'break-word',
@@ -684,7 +684,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               ) : (
                 <div 
                   onClick={handleOrganizationEditClick}
-                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-inter text-sm leading-5 ${
+                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium ${
                     organization?.name 
                       ? 'text-circle-primary' 
                       : 'text-circle-primary opacity-50 italic'
@@ -719,7 +719,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
             <button
               type="button"
               onClick={openBirthDatePicker}
-              className="font-inter font-normal text-sm leading-5 text-circle-primary tracking-[0.25px] underline decoration-transparent hover:decoration-circle-primary/30 focus:decoration-circle-primary/50 rounded px-1 -mx-1"
+              className="font-circlebodymedium text-circle-primary underline decoration-transparent hover:decoration-circle-primary/30 focus:decoration-circle-primary/50 rounded px-1 -mx-1"
               title="Click to set birth date"
             >
               {formatBirthDate(currentContact.birth_date)}

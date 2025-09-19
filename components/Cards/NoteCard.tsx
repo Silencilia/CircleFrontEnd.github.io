@@ -122,7 +122,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
           <div className="w-full h-[24px] flex flex-row justify-between items-start p-0 flex-1">
             {/* Title */}
             <div className="h-[24px] flex flex-row items-start p-0 flex-1 min-w-0">
-              <div className="h-[24px] font-inter font-medium text-[16px] leading-[24px] tracking-[0.15px] text-circle-primary flex items-center truncate">
+              <div className="h-[24px] font-circletitlemedium text-circle-primary flex items-center truncate">
                 {note.title}
               </div>
             </div>
@@ -134,7 +134,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
                 {/* Sentiment tags - show up to 3 sentiments */}
                 {sentimentLabels.slice(0, 3).map((label, index) => (
                   <div key={index} className="w-fit h-[20px] bg-circle-neutral rounded-[6px] p-[2px_5px] flex flex-row justify-center items-center">
-                    <div className="w-fit h-[16px] font-inter font-medium text-[11px] leading-[16px] tracking-[0.5px] text-circle-primary flex items-center text-center">
+                    <div className="w-fit h-[16px] font-circlelabelsmall text-circle-primary flex items-center text-center">
                       {label}
                     </div>
                   </div>
@@ -176,14 +176,14 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
         {/* Frame 125 - Date and Time (non-clickable) */}
         <div className="w-fit h-[20px] flex flex-row items-center gap-[10px] p-0">
           <div
-            className={`w-fit h-[20px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-center ${
+            className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
               date === 'no date' ? 'italic opacity-50' : ''
             }`}
           >
             {date}
           </div>
           <div
-            className={`w-fit h-[20px] font-inter font-normal text-[14px] leading-[20px] tracking-[0.25px] text-circle-primary flex items-center ${
+            className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
               time ? '' : 'italic opacity-50'
             }`}
           >
@@ -194,7 +194,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
 
       {/* Note description */}
       <div 
-        className={`w-[580px] font-inter font-normal text-[14px] leading-[20px] text-circle-primary tracking-[0.25px] text-left ${
+        className={`w-[580px] font-circlebodymedium text-circle-primary text-left ${
           isExpanded ? 'h-fit' : 'h-[40px] overflow-hidden'
         }`}
       >

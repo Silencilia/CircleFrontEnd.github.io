@@ -1,3 +1,7 @@
 {
-  "/memo/page": "app/memo/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/draft/page": "app/draft/page.js",
+  "/memo/page": "app/memo/page.js",
+  "/page": "app/page.js",
+  "/contacts/page": "app/contacts/page.js"
 }

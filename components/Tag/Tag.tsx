@@ -110,7 +110,7 @@ const Tag: React.FC<TagProps> = ({
           ref={editRef}
           contentEditable
           suppressContentEditableWarning
-          className={`font-inter font-medium text-[11px] leading-4 text-center tracking-[0.5px] ${textColor} outline-none`}
+          className={`font-circlelabelsmall text-center ${textColor} outline-none`}
           onInput={handleInput}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
@@ -118,7 +118,7 @@ const Tag: React.FC<TagProps> = ({
         />
       ) : (
         <span 
-          className={`font-inter font-medium text-[11px] leading-4 text-center tracking-[0.5px] ${textColor} ${isClickableEditable ? 'cursor-pointer' : ''}`}
+          className={`font-circlelabelsmall text-center ${textColor} ${isClickableEditable ? 'cursor-pointer' : ''}`}
           onClick={handleClick}
         >
           {children}

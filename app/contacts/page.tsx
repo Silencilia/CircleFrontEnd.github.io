@@ -41,10 +41,10 @@ export default function ContactsPage() {
         />
       </div>
       
-      {/* ContactGallery fixed between header (198px) and navbar (80px) with its own scroll area */}
+      {/* ContactGallery fixed between header (190px) and navbar (80px) with its own scroll area */}
       <div
         className="fixed left-0 right-0 z-40"
-        style={{ top: 198, bottom: 80, overflowY: 'auto' }}
+        style={{ top: 190, bottom: 80, overflowY: 'auto' }}
       >
         <div className="max-w-7xl mx-auto">
           <ContactGallery 

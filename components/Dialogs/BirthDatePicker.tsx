@@ -95,21 +95,21 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
 
   return (
     <div
-      className={`flex flex-col items-start p-[10px] gap-[40px] w-[450px] bg-circle-white rounded-[6px] ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}
+      className={`flex flex-col items-start p-[15px] gap-[40px] w-[450px] bg-circle-white rounded-[12px] ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}
       style={{ boxShadow: '2px 2px 10px rgba(0,0,0,0.25)' }}
     >
-      <div className="flex flex-col items-center p-0 gap-[40px] w-[430px]">
-        <div className="flex flex-col items-start p-0 gap-[25px] w-[430px] self-stretch">
-          <div className="w-[430px] h-6 font-inter font-medium text-[16px] leading-6 tracking-[0.15px] text-circle-primary flex items-center">
+      <div className="flex flex-col items-center p-0 gap-[40px] w-full">
+        <div className="flex flex-col items-start p-0 gap-[25px] w-full self-stretch">
+          <div className="w-[430px] h-6 font-circletitlemedium text-circle-primary flex items-center">
             {label}
           </div>
-          <div className="w-[430px] h-5 font-inter font-normal text-[14px] leading-5 tracking-[0.25px] text-circle-primary flex items-center">
+          <div className="w-full h-5 font-circlebodymedium text-circle-primary flex items-center">
             {subtitle}
           </div>
         </div>
 
-        <div className="flex flex-col items-start p-0 gap-[40px] w-[430px] self-stretch">
-          <div className="flex flex-row items-center p-0 gap-[20px] w-[430px] self-stretch">
+        <div className="flex flex-col items-start p-0 gap-[40px] w-full self-stretch">
+          <div className="flex flex-row items-center p-0 gap-[20px] w-full self-stretch">
             <div className="flex flex-row items-center p-0 gap-[5px]">
               <TextButton
                 minWidth={0}
@@ -142,14 +142,14 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
             </div>
           </div>
 
-          <div className="flex flex-col items-start p-0 gap-[15px] w-[430px] self-stretch">
+          <div className="flex flex-col items-start p-0 gap-[15px] w-full self-stretch">
             {/* Year pill */}
-            <div className="relative w-[430px] h-[25px]">
+            <div className="relative w-full h-[25px]">
               <select
                 value={value.year ?? ''}
                 onChange={(e) => handleFieldChange('year', e.target.value)}
                 disabled={disabled}
-                className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-inter font-medium text-[11px] leading-4 tracking-[0.5px] text-circle-primary disabled:cursor-not-allowed"
+                className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
               >
                 <option value="">Select year</option>
                 {years.map((year) => (
@@ -163,12 +163,12 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
 
             {/* Month pill */}
             {['month', 'day'].includes(value.precision) && (
-              <div className="relative w-[430px] h-[25px]">
+              <div className="relative w-full h-[25px]">
                 <select
                   value={value.month ?? ''}
                   onChange={(e) => handleFieldChange('month', e.target.value)}
                   disabled={disabled || !value.year}
-                  className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-inter font-medium text-[11px] leading-4 tracking-[0.5px] text-circle-primary disabled:cursor-not-allowed"
+                  className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
                 >
                   <option value="">Select month</option>
                   {monthOptions.map((m) => (
@@ -183,12 +183,12 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
 
             {/* Day pill */}
             {value.precision === 'day' && (
-              <div className="relative w-[430px] h-[25px]">
+              <div className="relative w-full h-[25px]">
                 <select
                   value={value.day ?? ''}
                   onChange={(e) => handleFieldChange('day', e.target.value)}
                   disabled={disabled || !value.year || !value.month}
-                  className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-inter font-medium text-[11px] leading-4 tracking-[0.5px] text-circle-primary disabled:cursor-not-allowed"
+                  className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
                 >
                   <option value="">Select day</option>
                   {value.year && value.month && Array.from({ length: getDaysInMonth(value.year, value.month) }, (_, i) => i + 1).map((d) => (
@@ -202,8 +202,8 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
             )}
           </div>
 
-          <div className="flex flex-row justify-between items-start p-0 gap-[40px] w-[430px] self-stretch">
-            <div className="font-inter font-normal text-[12px] leading-4 tracking-[0.4px] text-circle-primary">Current value: {formatDate(value)}</div>
+          <div className="flex flex-row justify-between items-start p-0 gap-[40px] w-full self-stretch">
+            <div className="font-circlelabelsmall text-circle-primary">Current value: {formatDate(value)}</div>
             <div className="flex flex-row justify-end items-center p-0 gap-[5px] w-[37px]">
               <button type="button" onClick={() => { setDatePicked(value); onConfirm?.(value); }} aria-label="Confirm" className="cursor-pointer">
                 <ConfirmIcon />

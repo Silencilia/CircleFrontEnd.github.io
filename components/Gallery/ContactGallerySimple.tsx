@@ -161,7 +161,7 @@ const ContactGallery: React.FC<ContactGalleryProps> = ({ contacts, title = 'Quic
                 </div>
               ))
             ) : (
-              <div className="text-center text-circle-primary/60 font-inter py-8">
+              <div className="text-center text-circle-primary/60 font-circlebodymedium py-8">
                 No contacts to display
               </div>
             )}

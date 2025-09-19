@@ -14,7 +14,7 @@ const NewButton: React.FC<NewButtonProps> = ({ text, onClick, className = '' }) 
       className={`
         group
         flex flex-row justify-center items-center
-        px-[5px] gap-[5px]
+        px-[5px] py-[5px] gap-[5px]
         w-fit h-[30px]
         bg-circle-neutral-variant
         rounded-[15px]
@@ -34,7 +34,7 @@ const NewButton: React.FC<NewButtonProps> = ({ text, onClick, className = '' }) 
       
       {/* Text Frame */}
       <div className="flex flex-row justify-center items-center gap-[10px] h-[16px] flex-none order-1 flex-grow-0">
-        <span className="h-[16px] font-inter font-medium text-[11px] leading-[16px] flex items-center tracking-[0.5px] text-circle-primary group-hover:text-circle-neutral transition-colors duration-200 flex-none order-0 flex-grow-0 pr-[5px]">
+        <span className="h-[16px] font-circlelabelsmall text-circle-primary group-hover:text-circle-neutral transition-colors duration-200 flex-none order-0 flex-grow-0 pr-[5px]">
           {text}
         </span>
       </div>

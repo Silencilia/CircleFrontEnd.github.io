@@ -65,10 +65,10 @@ export default function MemoPage() {
         />
       </div>
 
-      {/* Content between header (198px) and navbar (80px) minus CommitmentGallery target height */}
+      {/* Content between header (190px) and navbar (80px) minus CommitmentGallery target height */}
       <div
         className="fixed left-0 right-0 z-40"
-        style={{ top: 198, bottom: 80 + commitmentGalleryHeight, overflowY: 'auto' }}
+        style={{ top: 190, bottom: 80 + commitmentGalleryHeight, overflowY: 'auto' }}
       >
         <div className="min-h-full flex flex-col justify-end">
           <NoteGallery notes={filteredNotes} />

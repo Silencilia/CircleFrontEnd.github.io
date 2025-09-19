@@ -211,6 +211,8 @@ export class SupabaseDataService implements DataService {
   }
 
   async updateNote(id: string, updates: Partial<Note>): Promise<Note> {
+    console.log('SupabaseDataService: updateNote called with id:', id, 'updates:', updates);
+    
     const { date, time_value, sentiment_ids, contact_ids, ...otherUpdates } = updates;
     const dbUpdates: any = { ...otherUpdates };
     
@@ -225,14 +227,34 @@ export class SupabaseDataService implements DataService {
       dbUpdates.time_minute = time_minute;
     }
 
-    const { data, error } = await supabase
+    console.log('SupabaseDataService: dbUpdates to send:', dbUpdates);
+
+    // First, let's check if the note exists
+    const { data: existingNote, error: checkError } = await supabase
       .from('notes')
-      .update(dbUpdates)
+      .select('id, title')
       .eq('id', id)
-      .select()
       .single();
 
-    if (error) throw error;
+    console.log('SupabaseDataService: Note existence check:', { existingNote, checkError });
+
+    // Only update the main notes table if there are actual field updates
+    let data = existingNote;
+    if (Object.keys(dbUpdates).length > 0) {
+      const { data: updateData, error } = await supabase
+        .from('notes')
+        .update(dbUpdates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      console.log('SupabaseDataService: Update result:', { data: updateData, error });
+
+      if (error) throw error;
+      data = updateData;
+    } else {
+      console.log('SupabaseDataService: Skipping main table update - no field updates needed');
+    }
 
     // Update relationships if provided
     if (sentiment_ids) {

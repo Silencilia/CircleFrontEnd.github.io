@@ -15,7 +15,7 @@ const CancelButton: React.FC<CancelButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`p-1 flex items-center justify-center hover:bg-circle-neutral-variant rounded transition-colors group ${className}`}
+      className={`p-1 flex items-center justify-center hover:bg-circle-neutral-variant focus:outline-none focus:ring-2 focus:ring-inset focus:ring-circle-primary rounded transition-colors group ${className}`}
       aria-label={ariaLabel}
     >
         <CancelIcon
