@@ -24,7 +24,7 @@ interface NoteCardDetailProps {
 }
 
 const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, caller, onOpenContactDetail }) => {
-  const { state, updateNote } = useContacts();
+  const { state, updateNote, loadData } = useContacts();
   // Always render with the latest note from context in case it was updated
   const currentNote = state.notes.find(n => n.id === note.id) || note;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -66,6 +66,9 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
       if (cleanupResult.errors.length > 0) {
         console.error('Errors during cleanup:', cleanupResult.errors);
       }
+      
+      // Reload all data to refresh the sentiment list in the UI
+      await loadData();
       
       // Trigger a re-render to refresh the sentiment list
       setSentimentUpdateTrigger(prev => prev + 1);

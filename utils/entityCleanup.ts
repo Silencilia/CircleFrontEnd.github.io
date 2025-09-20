@@ -508,24 +508,21 @@ export async function destroyUnusedSentiments(): Promise<CleanupResult> {
   try {
     console.log('Starting cleanup of unused sentiments...');
 
-    // Get all sentiment IDs that are currently referenced by notes
-    const { data: notesWithSentiments, error: usedError } = await supabase
-      .from('notes')
-      .select('sentiment_ids')
-      .not('sentiment_ids', 'is', null);
+    // Get all sentiment IDs that are currently referenced by notes through note_sentiments table
+    const { data: noteSentiments, error: usedError } = await supabase
+      .from('note_sentiments')
+      .select('sentiment_id');
 
     if (usedError) {
-      result.errors.push(`Error fetching notes with sentiments: ${usedError.message}`);
+      result.errors.push(`Error fetching note sentiments: ${usedError.message}`);
       return result;
     }
 
     // Extract unique sentiment IDs that are in use
     const usedIds = new Set<string>();
-    notesWithSentiments?.forEach(note => {
-      if (note.sentiment_ids && Array.isArray(note.sentiment_ids)) {
-        note.sentiment_ids.forEach((sentimentId: string) => {
-          usedIds.add(sentimentId);
-        });
+    noteSentiments?.forEach(relation => {
+      if (relation.sentiment_id) {
+        usedIds.add(relation.sentiment_id);
       }
     });
 

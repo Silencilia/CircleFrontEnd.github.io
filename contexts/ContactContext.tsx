@@ -262,6 +262,7 @@ function contactReducer(state: ContactState, action: ContactAction): ContactStat
 interface ContactContextType {
   state: ContactState;
   //  methods with Supabase integration
+  loadData: () => Promise<void>;
   updateContact: (id: string, updates: Partial<Contact>) => Promise<void>;
   addContact: (contact: Omit<Contact, 'id'>) => Promise<void>;
   deleteContact: (id: string) => Promise<void>;
@@ -513,6 +514,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const value: ContactContextType = {
     state,
+    loadData,
     addContact,
     updateContact,
     deleteContact,
