@@ -5,7 +5,7 @@ import NavigationBar from '../../components/NavigationBar';
 import DraftCardDetail from '../../components/Cards/DraftCardDetail';
 import ContactCardDetail from '../../components/Cards/ContactCardDetail';
 import NoteCardNew from '../../components/Cards/NoteCardNew';
-import Search from '../../components/Search';
+import Search from '../../components/Headers/Search';
 import NewButton from '../../components/Button/NewButton';
 import { NewNoteButton } from '../../components/Button';
 import { useContacts } from '../../contexts/ContactContext';
