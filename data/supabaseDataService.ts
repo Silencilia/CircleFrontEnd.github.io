@@ -238,6 +238,9 @@ export class SupabaseDataService implements DataService {
 
     console.log('SupabaseDataService: Note existence check:', { existingNote, checkError });
 
+    if (checkError) throw checkError;
+    if (!existingNote) throw new Error(`Note with id ${id} not found`);
+
     // Only update the main notes table if there are actual field updates
     let data = existingNote;
     if (Object.keys(dbUpdates).length > 0) {
