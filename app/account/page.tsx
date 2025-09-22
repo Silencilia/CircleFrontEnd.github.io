@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import HeaderAccount from '../../components/Headers/HeaderAccount';
+import Title from '../../components/Headers/Title';
 import NavigationBar from '../../components/NavigationBar';
 
 export default function AccountPage() {
   return (
     <div className="relative w-full min-h-screen bg-[#FBF7F3]">
-      {/* HeaderAccount - fixed at top */}
+      {/* Title - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <HeaderAccount />
+        <Title title="Account" isAccountPage={true} />
       </div>
 
       {/* Content area between fixed header (120px) and navbar (80px) */}

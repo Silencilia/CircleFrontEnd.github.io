@@ -12,15 +12,13 @@ const NewNoteButton: React.FC<NewNoteButtonProps> = ({ className = '', onClick }
       onClick={onClick}
       className={`
         group
-        flex flex-row justify-center items-center
-        px-[5px] gap-[5px]
-        w-fit h-[30px]
+        btn-md
         bg-circle-neutral-variant
-        rounded-[15px]
         transition-colors duration-200
         hover:bg-circle-secondary
         ${className}
       `}
+      style={{ width: 'fit-content' }}
     >
       {/* Plus Icon */}
       <div className="flex-none order-0 flex-grow-0">
@@ -32,8 +30,8 @@ const NewNoteButton: React.FC<NewNoteButtonProps> = ({ className = '', onClick }
       </div>
       
       {/* Text Frame */}
-      <div className="flex flex-row justify-center items-center gap-[10px] h-[16px] flex-none order-1 flex-grow-0">
-        <span className="h-[16px] font-circlelabelsmall text-circle-primary group-hover:text-circle-neutral transition-colors duration-200 flex-none order-0 flex-grow-0 pr-[5px]">
+      <div className="flex flex-row justify-center items-center gap-[10px] flex-none order-1 flex-grow-0">
+        <span className="font-circlelabelsmall text-circle-primary group-hover:text-circle-neutral transition-colors duration-200 flex-none order-0 flex-grow-0 pr-[5px]">
           new note
         </span>
       </div>

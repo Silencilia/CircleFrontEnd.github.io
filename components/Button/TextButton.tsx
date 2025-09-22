@@ -26,8 +26,7 @@ const TextButton: React.FC<TextButtonProps> = ({
   const [isActive, setIsActive] = useState<boolean>(false);
 
   const active = toggled !== undefined ? toggled : isActive;
-  const baseClasses = 'inline-flex items-center justify-center px-2 h-5 rounded-[12px] transition-colors';
-  const fontClasses = 'font-circlebodymedium';
+  const baseClasses = 'btn-sm-txt font-circlebodymedium transition-colors';
   const defaultActive = 'bg-circle-primary text-circle-neutral';
   const defaultInactive = 'bg-circle-neutral text-circle-primary';
   const stateClasses = active
@@ -46,8 +45,8 @@ const TextButton: React.FC<TextButtonProps> = ({
       type="button"
       onClick={handleClick}
       disabled={disabled}
-      className={`${baseClasses} ${fontClasses} ${stateClasses} ${disabledClasses} ${className}`}
-      style={{ minWidth, paddingLeft: paddingX, paddingRight: paddingX }}
+      className={`${baseClasses} ${stateClasses} ${disabledClasses} ${className}`}
+      style={{ minWidth }}
     >
       {children}
     </button>
@@ -55,5 +54,3 @@ const TextButton: React.FC<TextButtonProps> = ({
 };
 
 export default TextButton;
-
-

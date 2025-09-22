@@ -7,7 +7,7 @@ import { ConfirmButton, CancelButton, NewTagButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import { contactReference } from '../../data/referenceParsing';
 import NoteDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/NoteDatePicker';
-import TimePicker from '../TimePicker';
+import TimePicker from '../Dialogs/TimePicker';
 import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import { EDITING_MODE_PADDING } from '../../data/variables';
 import useCardNavigation from '../../hooks/useCardNavigation';
@@ -477,7 +477,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           {/* Sentiment Tags */}
           <div className="w-[242px] h-[20px] flex flex-row items-center gap-[5px] p-0">
             {sentimentLabels.map((label, index) => (
-              <div key={index} className="w-fit h-[20px] bg-circle-neutral rounded-[6px] p-[2px_5px] flex flex-row justify-center items-center">
+              <div key={index} className="w-fit h-[20px] bg-circle-neutral rounded-xs p-[2px_5px] flex flex-row justify-center items-center">
                 <div className="w-fit h-[16px] font-circlelabelsmall text-circle-primary flex items-center text-center">
                   {label}
                 </div>

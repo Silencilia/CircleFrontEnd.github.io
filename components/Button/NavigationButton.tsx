@@ -18,17 +18,17 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
   onClick,
   className = '',
 }) => {
-  const baseClasses = 'flex flex-col items-center justify-center gap-1 w-16 sm:w-18 h-14 sm:h-15 rounded-xl p-1 transition-colors';
+  const baseClasses = 'btn-nav transition-colors';
   const activeClasses = isActive ? 'bg-circle-neutral-variant' : 'hover:bg-circle-neutral-variant';
   const combinedClasses = `${baseClasses} ${activeClasses} ${className}`;
 
   const content = (
-    <>
+    <div className="flex flex-col items-center gap-xs">
       {icon}
       <span className="font-circlelabelsmall text-black text-center">
         {label}
       </span>
-    </>
+    </div>
   );
 
   if (href) {

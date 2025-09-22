@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import HeaderCircle from '../components/Headers/HeaderCircle';
+import Title from '../components/Headers/Title';
 import TalkToCircle from '../components/TalkToCircle';
 // ContactPreview moved to Draft page
 import NavigationBar from '../components/NavigationBar';
@@ -80,9 +80,9 @@ export default function NotePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FBF7F3]">
-      {/* HeaderCircle - fixed at top */}
+      {/* Title - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <HeaderCircle />
+        <Title title="Circle" />
       </div>
       
       {/* Main content area - with top padding for header and bottom padding for navbar */}

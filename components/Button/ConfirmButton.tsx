@@ -15,11 +15,12 @@ const ConfirmButton: React.FC<ConfirmButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`p-1 flex items-center justify-center hover:bg-circle-neutral-variant focus:outline-none focus:ring-2 focus:ring-inset focus:ring-circle-primary rounded transition-colors group ${className}`}
+      className={`btn-sm bg-transparent hover:bg-circle-neutral-variant focus:outline-none focus:ring-2 focus:ring-inset focus:ring-circle-primary transition-colors group ${className}`}
       aria-label={ariaLabel}
     >
         <ConfirmIcon
           className="text-circle-primary"
+          strokeWidth={1.5}
         />
     </button>
   );

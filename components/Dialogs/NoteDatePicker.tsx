@@ -2,7 +2,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { TextButton } from '../Button';
-import { ConfirmIcon, CancelIcon, DownIcon } from '../icons';
+import { ConfirmButton, CancelButton } from '../Button';
+import { DownIcon } from '../icons';
 
 export type DatePrecision = 'none' | 'year' | 'month' | 'day';
 
@@ -95,11 +96,11 @@ export const NoteDatePicker: React.FC<NoteDatePickerProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-start p-[15px] gap-[40px] w-[450px] bg-circle-white rounded-[12px] ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}
+      className={`flex flex-col items-start p-md gap-4xl w-[450px] bg-circle-white rounded-md ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}
       style={{ boxShadow: '2px 2px 10px rgba(0,0,0,0.25)' }}
     >
-      <div className="flex flex-col items-center p-0 gap-[40px] w-full">
-        <div className="flex flex-col items-start p-0 gap-[25px] w-full self-stretch">
+      <div className="flex flex-col items-center gap-4xl w-full">
+        <div className="flex flex-col items-start gap-3xl w-full self-stretch">
           <div className="w-full h-6 font-circletitlemedium text-circle-primary flex items-center">
             {label}
           </div>
@@ -108,9 +109,9 @@ export const NoteDatePicker: React.FC<NoteDatePickerProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-col items-start p-0 gap-[40px] w-full self-stretch">
-          <div className="flex flex-row items-center p-0 gap-[20px] w-full self-stretch">
-            <div className="flex flex-row items-center p-0 gap-[5px]">
+        <div className="flex flex-col items-start  gap-4xl w-full self-stretch">
+          <div className="flex flex-row items-center gap-xl w-full self-stretch">
+            <div className="flex flex-row items-center gap-sm">
               <TextButton
                 minWidth={0}
                 toggled={value.precision === 'none'}
@@ -142,7 +143,7 @@ export const NoteDatePicker: React.FC<NoteDatePickerProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col items-start p-0 gap-[15px] w-full self-stretch">
+          <div className="flex flex-col items-start gap-lg w-full self-stretch">
             {/* Year pill */}
             <div className="relative w-full h-[25px]">
               <select
@@ -202,15 +203,17 @@ export const NoteDatePicker: React.FC<NoteDatePickerProps> = ({
             )}
           </div>
 
-          <div className="flex flex-row justify-between items-start p-0 gap-[40px] w-full self-stretch">
+          <div className="flex flex-row justify-between items-center w-full self-stretch">
             <div className="font-circlelabelsmall text-circle-primary">Current value: {formatDate(value)}</div>
-            <div className="flex flex-row justify-end items-center p-0 gap-[5px] w-[37px]">
-              <button type="button" onClick={() => { setDatePicked(value); onConfirm?.(value); }} aria-label="Confirm" className="cursor-pointer">
-                <ConfirmIcon />
-              </button>
-              <button type="button" onClick={() => onCancel?.()} aria-label="Cancel" className="cursor-pointer">
-                <CancelIcon />
-              </button>
+            <div className="flex flex-row justify-end items-center p-0 gap-xs w-fit">
+              <ConfirmButton
+                onClick={() => { setDatePicked(value); onConfirm?.(value); }}
+                ariaLabel="Confirm"
+              />
+              <CancelButton
+                onClick={() => onCancel?.()}
+                ariaLabel="Cancel"
+              />
             </div>
           </div>
         </div>
@@ -220,6 +223,3 @@ export const NoteDatePicker: React.FC<NoteDatePickerProps> = ({
 };
 
 export default NoteDatePicker;
-
-
-

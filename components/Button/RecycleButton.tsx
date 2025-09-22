@@ -19,10 +19,10 @@ const RecycleButton: React.FC<RecycleButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`p-1 flex items-center justify-center ${hoverClass} rounded transition-colors ${className}`}
+      className={`btn-sm ${hoverClass} transition-colors ${className}`}
       aria-label={ariaLabel}
     >
-      <RecycleIcon width={16} height={16} className="text-circle-primary" />
+      <RecycleIcon className="text-circle-primary" />
     </button>
   );
 };

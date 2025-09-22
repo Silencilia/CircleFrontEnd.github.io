@@ -15,10 +15,10 @@ const MenuButton: React.FC<MenuButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`p-1 flex items-center justify-center hover:bg-circle-neutral-variant rounded transition-colors duration-200 ${className}`}
+      className={`btn-sm hover:bg-circle-neutral-variant transition-colors duration-200 ${className}`}
       aria-label={ariaLabel}
     >
-      <MenuIcon width={16} height={16} className="text-circle-primary" />
+      <MenuIcon className="text-circle-primary" />
     </button>
   );
 };

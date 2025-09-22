@@ -20,8 +20,8 @@ const MaximumSentimentDialog: React.FC<MaximumSentimentDialogProps> = ({
       >
         {/* Header */}
         <div className="flex flex-col gap-2">
-          <h2 className="Circletitlemedium text-circle-primary">Maximum Sentiments Reached</h2>
-          <p className="Circlebodymedium text-circle-primary">
+          <h2 className="font-circletitlemedium text-circle-primary">Maximum Sentiments Reached</h2>
+          <p className="font-circlebodymedium text-circle-primary">
             You can only set up to three sentiments for a note. Click existing sentiment tags to delete some if you want to add a new one.
           </p>
         </div>

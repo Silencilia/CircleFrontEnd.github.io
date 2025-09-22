@@ -130,25 +130,25 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
         <div
-          className="bg-white rounded-lg shadow-xl max-w-md w-[450px] max-h-[80vh] px-[15px] py-[15px] flex flex-col gap-[40px] overflow-visible"
+          className="bg-white rounded-lg shadow-xl max-w-md w-[450px] max-h-[80vh] px-md py-md flex flex-col gap-5xl overflow-visible"
           onKeyDown={handleKeyDown}
         >
         {/* Header */}
-        <div className="flex flex-col gap-[25px]">
-          <h2 className="Circletitlemedium text-circle-primary">Select Sentiment</h2>
-            <p className="Circlebodymedium text-circle-primary">Pick an existing sentiment or add a new one?</p>
+        <div className="flex flex-col gap-3xl">
+          <h2 className="font-circletitlemedium text-circle-primary">Select Sentiment</h2>
+            <p className="font-circlebodymedium text-circle-primary">Pick an existing sentiment or add a new one?</p>
         </div>
 
        
-       <div className="flex flex-col h-fit gap-[40px]">
+       <div className="flex flex-col h-fit gap-5xl">
         {/* Content */}
-        <div className="flex flex-col h-fit gap-[40px]">
+        <div className="flex flex-col h-fit gap-5xl">
           {/* Existing Sentiments - Scrollable Column */}
           <div>
   
             <div
               ref={scrollContainerRef}
-              className="space-y-1 max-h-[240px] overflow-y-auto rounded-md px-[15px] cursor-grab active:cursor-grabbing"
+              className="space-y-1 max-h-[240px] overflow-y-auto rounded-md px-md cursor-grab active:cursor-grabbing"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -191,7 +191,7 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
 
           {/* Create New Sentiment */}
           {!isCreatingNew && (
-            <div className="Circlelabelsmall flex justify-center">
+            <div className="font-circlelabelsmall flex justify-center">
               <NewButton
                 text="new sentiment"
                 onClick={() => setIsCreatingNew(true)}
@@ -202,18 +202,18 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
 
           {/* New Sentiment Form */}
           {isCreatingNew && (
-            <div className="px-[15px] rounded-[12px] gap-[10px]bg-circle-neutral-variant text-circle-primary">
+            <div className="px-md rounded-sm gap-lg bg-circle-neutral-variant text-circle-primary">
 
               
 
               {/* input zone */}
-              <div className="flex flex-col gap-[30px]">
+              <div className="flex flex-col gap-4xl">
              
 
                  {/* Column 1: new sentiment and input field */}  
-                 <div className="flex flex-col gap-[10px]">
-                   <h3 className="Circlelabelmedium text-circle-primary/50">new sentiment</h3>
-                   <div className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-[25px] w-full h-[30px] px-1.5">
+                 <div className="flex flex-col gap-lg">
+                   <h3 className="font-circlelabelmedium text-circle-primary/50">new sentiment</h3>
+                   <div className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-lg w-full h-[30px] px-1.5">
                      <div className="flex flex-row items-center gap-4 flex-1">
                        <input
                          type="text"
@@ -232,11 +232,11 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
                  </div>
 
                  {/* Column 2: category and dropdown menu*/}  
-                 <div className="flex flex-col gap-[10px]">
-                   <h3 className="Circlelabelmedium text-circle-primary/50">category</h3>
+                 <div className="flex flex-col gap-lg">
+                   <h3 className="font-circlelabelmedium text-circle-primary/50">category</h3>
                    <div className="relative">
                      <div 
-                       className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-[25px] w-full h-[30px] px-1.5 cursor-pointer hover:bg-circle-neutral transition-colors"
+                       className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-lg w-full h-[30px] px-1.5 cursor-pointer hover:bg-circle-neutral transition-colors"
                        onClick={handleCategoryToggle}
                      >
                        <div className="flex flex-row items-center gap-4 flex-1">
@@ -278,13 +278,12 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
                  </div>
 
                  {/* Buttons */}
-                 <div className="flex gap-[10px]">
+                 <div className="flex gap-lg">
                    <TextButton
                      onClick={handleCreateNew}
                      disabled={!newSentimentLabel.trim() || isLoading}
-                     className="flex-1 !h-[30px] !rounded-[15px]"
+                     className="flex-1"
                      minWidth={80}
-                     paddingX={12}
                      inactiveClass="bg-circle-neutral-variant text-circle-primary hover:bg-circle-primary hover:text-white"
                    >
                      {isLoading ? 'Creating...' : 'Create'}
@@ -294,9 +293,8 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
                        setIsCreatingNew(false);
                        setNewSentimentLabel('');
                      }}
-                     className="flex-1 !h-[30px] !rounded-[15px]"
+                     className="flex-1"
                      minWidth={80}
-                     paddingX={12}
                      inactiveClass="bg-circle-neutral-variant text-circle-primary hover:bg-circle-primary hover:text-white"
                    >
                      Cancel
@@ -311,11 +309,11 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
         <div>
           <div className="w-full items-center flex justify-between">
             <div className="flex justify-start items-center">
-              <span className="Circlebodysmall text-circle-primary">
+              <span className="font-circlebodysmall text-circle-primary">
                 Total: {state.sentiments.length} sentiments
               </span>
             </div>
-            <div className="flex flex-row gap-[2px]">
+            <div className="flex flex-row gap-xs">
               <CancelButton onClick={onClose} />
               <ConfirmButton
                 onClick={handleConfirm}

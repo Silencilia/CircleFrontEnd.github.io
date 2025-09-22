@@ -7,7 +7,6 @@ interface DeleteTagButtonProps {
   buttonColor?: string;
   iconStrokeColor?: string;
   className?: string;
-  size?: number;
 }
 
 const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
@@ -15,7 +14,6 @@ const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
   buttonColor = COLORS.DELETE_TAG_FILL,
   iconStrokeColor = COLORS.DELETE_TAG_STROKE,
   className = '',
-  size = 10,
 }) => {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling to parent tag
@@ -27,15 +25,14 @@ const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
       onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
       onClick={handleClick}
       className={`
-        flex items-center justify-center
-        rounded-[6px]
+        btn-tg
         hover:opacity-80 transition-opacity
         ${className}
       `}
-      style={{ backgroundColor: buttonColor, width: `${size}px`, height: `${size}px` }}
+      style={{ backgroundColor: buttonColor }}
       aria-label="Delete tag"
     >
-      <DeleteTagIcon width={size} height={size} fillColor={buttonColor} strokeColor={iconStrokeColor} />
+      <DeleteTagIcon width={10} height={10} fillColor={buttonColor} strokeColor={iconStrokeColor} />
     </button>
   );
 };

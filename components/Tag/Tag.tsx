@@ -93,7 +93,7 @@ const Tag: React.FC<TagProps> = ({
     }
   };
 
-  const baseClasses = 'px-[5px] py-0.5 rounded-md flex items-center h-5 flex-shrink-0';
+  const baseClasses = 'tg flex items-center flex-shrink-0';
   const interactiveClasses = (isInteractive || isClickableEditable) ? 'cursor-pointer hover:opacity-80 transition-opacity' : '';
   const editableClasses = editable ? 'hover:bg-opacity-80' : '';
   const combinedClasses = `${baseClasses} ${fillColor} ${interactiveClasses} ${editableClasses} ${className}`;

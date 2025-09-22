@@ -129,19 +129,19 @@ const ContactGallery: React.FC<ContactGalleryProps> = ({ contacts, title = 'Quic
   }, [contacts, state.contacts]);
 
   return (
-    <div ref={rootRef} className="w-full px-[30px] pt-[20px] pb-[10px]">
-      <div className="flex flex-col gap-[30px] w-full">
-        <div className="flex flex-row items-center gap-[30px]">
-          <h2 className="font-serif text-[24px] leading-[32px] text-circle-primary">{title}</h2>
-          <button type="button" onClick={() => setIsCollapsed(prev => !prev)} aria-expanded={!isCollapsed}>
-            <DownIcon width={20} height={20} className={`[stroke-width:1.5px] transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+    <div ref={rootRef} className="w-full px-xl pt-lg pb-sm">
+      <div className="flex flex-col gap-4xl w-full">
+        <div className="flex flex-row items-center gap-4xl">
+          <h2 className="font-circleheadlinesmall text-circle-primary">{title}</h2>
+          <button type="button" onClick={() => setIsCollapsed(prev => !prev)} aria-expanded={!isCollapsed} className="btn-sm">
+            <DownIcon className={`[stroke-width:1.5px] transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
           </button>
         </div>
 
         {!isCollapsed && (
           <div
             ref={cardsContainerRef}
-            className={`flex flex-row items-start gap-[20px] overflow-x-auto select-none scrollbar-hide ${
+            className={`flex flex-row items-start gap-2xl overflow-x-auto select-none scrollbar-hide ${
               isDragging ? 'cursor-grabbing' : 'cursor-grab'
             }`}
             onMouseDown={handleMouseDown}

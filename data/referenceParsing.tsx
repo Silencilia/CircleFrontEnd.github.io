@@ -30,7 +30,7 @@ export function contactReference(
     parts.push(
       <span
         key={`contact-${contactId}-${match.index}`}
-        className="Circlebodymediumhighlight text-circle-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-circle-primary/50 rounded-sm"
+        className="font-circlebodymedium-highlight text-circle-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-circle-primary/50 rounded-sm"
         data-contact-ref="true"
         role="button"
         tabIndex={0}

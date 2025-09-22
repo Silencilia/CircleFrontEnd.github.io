@@ -21,9 +21,9 @@ const IconButton: React.FC<IconButtonProps> = ({
   'aria-label': ariaLabel,
 }) => {
   const sizeClasses = {
-    sm: 'w-8 h-8 p-1',
-    md: 'w-12 h-12 p-1.5',
-    lg: 'w-16 h-16 p-2',
+    sm: 'btn-sm',
+    md: 'btn-md',
+    lg: 'btn-lg',
   };
 
   const variantClasses = {

@@ -25,17 +25,17 @@ const Search: React.FC<SearchProps> = ({
   };
 
   return (
-    <div className={`flex flex-col items-start gap-2.5 w-full min-w-[240px] h-[30px] ${className}`}>
+    <div className={`flex flex-col items-start gap-2.5 w-full min-w-[240px] ${className}`}>
       {/* Search Field */}
-      <div className="flex flex-row justify-start items-center p-0 gap-[10px] box-border w-full h-[30px] bg-white border border-circle-neutral-variant rounded-[25px]">
+      <div className="flex flex-row justify-start items-center p-0 gap-lg box-border w-full h-full bg-white border border-circle-neutral-variant rounded-lg ctn-srch">
         {/* Frame 34 */}
-        
-          <div className="flex flex-row justify-center items-center p-1.5 gap-2.5 w-[30px] h-[30px] rounded-[25px]">
+
+          <div className="flex flex-row justify-center items-center btn-sm rounded-lg">
             {/* Magnifier Icon */}
-            <MagnifierIcon size={20} />
+            <MagnifierIcon />
           </div>
 
-        <div className="flex flex-row w-full items-center pr-[20px]">
+        <div className="flex flex-row w-full items-center pr-lg">
           {/* Search Input */}
           <input
             type="text"
@@ -43,7 +43,7 @@ const Search: React.FC<SearchProps> = ({
             value={searchValue}
             onChange={handleSearchChange}
             autoFocus={autoFocus}
-            className="h-5 font-circlebodymedium text-left text-circle-primary/35 placeholder-circle-primary/35 focus:outline-none flex-1"
+            className="font-circlebodymedium text-left text-circle-primary/35 placeholder-circle-primary/35 focus:outline-none flex-1"
           />
          </div>
       </div>

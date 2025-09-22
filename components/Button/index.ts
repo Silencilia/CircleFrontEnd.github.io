@@ -21,3 +21,4 @@ export { default as ExtractButton } from './ExtractButton';
 export { default as ConfirmButton } from './ConfirmButton';
 export { default as CancelButton } from './CancelButton';
 export { default as NewTagButton } from './NewTagButton';
+export { default as ToggleButton } from './ToggleButton';

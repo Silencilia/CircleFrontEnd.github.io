@@ -53,7 +53,7 @@ const SentimentTag: React.FC<SentimentTagProps> = ({
     }
   };
 
-  const baseClasses = 'px-[5px] py-0.5 rounded-md flex items-center h-5 flex-shrink-0 gap-[5px]';
+  const baseClasses = 'tg flex items-center flex-shrink-0';
   const interactiveClasses = 'cursor-pointer transition-all';
   const combinedClasses = `${baseClasses} ${fillColor} ${interactiveClasses} ${className}`;
 
@@ -70,7 +70,6 @@ const SentimentTag: React.FC<SentimentTagProps> = ({
         {/* Delete button - only show when clicked */}
         {showDeleteButton && (
           <DeleteTagButton
-            size={12}
             buttonColor="#262B35"
             iconStrokeColor="#FBF7F3"
             className="hover:opacity-80"

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import HeaderDraft from '../../components/Headers/HeaderDraft';
+import Title from '../../components/Headers/Title';
 import NavigationBar from '../../components/NavigationBar';
 import DraftGallery from '../../components/Gallery/DraftGallery';
 import DraftCardDetail from '../../components/Cards/DraftCardDetail';
@@ -67,16 +67,16 @@ export default function DraftPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FBF7F3]">
-      {/* HeaderDraft - fixed at top */}
+      {/* Title - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <HeaderDraft />
+        <Title title="Draft" />
       </div>
       
       {/* DraftGallery fixed between header and navigation bar */}
       <div
         className="fixed left-0 right-0 z-30"
-        style={{ 
-          top: 120, // HeaderDraft height (TitleHeight = 120px)
+        style={{
+          top: 120, // HeaderDraft height (TITLE_HEIGHT_DESKTOP = 120px)
           bottom: bottomOffset // NavigationBar height only
         }}
       >

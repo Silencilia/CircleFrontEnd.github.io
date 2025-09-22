@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import HeaderContacts from '../../components/Headers/HeaderContacts';
+import Title from '../../components/Headers/Title';
+import SearchBar from '../../components/Headers/SearchBar';
+import { NewContactButton } from '../../components/Button';
 import ContactGallery from '../../components/Gallery/ContactGallery';
 import NavigationBar from '../../components/NavigationBar';
 import { useContacts } from '../../contexts/ContactContext';
@@ -32,13 +34,22 @@ export default function ContactsPage() {
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-[#FBF7F3]">
-      {/* HeaderContacts - fixed at top */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <HeaderContacts 
-          onSearchChange={handleSearchChange}
-          onRelationshipFilterChange={handleRelationshipFilterChange}
-        />
+    <div className="relative w-full min-h-screen bg-circle-neutral">
+      {/* Title and SearchBar - fixed at top */}
+      <div className="fixed top-0 left-0 right-0 z-50 w-full bg-circle-neutral flex flex-col items-center">
+          {/* Title - Above */}
+          <Title title="Contacts" />
+
+          {/* Search, Relationship Filter, and New Contact Button - Below */}
+          <SearchBar
+            onSearchChange={handleSearchChange}
+            searchQuery={searchQuery}
+            showRelationshipFilter={true}
+            relationships={state.relationships}
+            selectedRelationshipIds={relationshipFilterIds}
+            onRelationshipFilterChange={handleRelationshipFilterChange}
+            actionButton={<NewContactButton />}
+          />
       </div>
       
       {/* ContactGallery fixed between header (190px) and navbar (80px) with its own scroll area */}

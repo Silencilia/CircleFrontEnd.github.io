@@ -9,7 +9,7 @@ import NewSentiment from '../Dialogs/NewSentiment';
 import MaximumSentimentDialog from '../Dialogs/MaximumSentimentDialog';
 import { contactReference } from '../../data/referenceParsing';
 import NoteDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/NoteDatePicker';
-import TimePicker from '../TimePicker';
+import TimePicker from '../Dialogs/TimePicker';
 import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { destroyUnusedSentiments } from '../../utils/entityCleanup';
@@ -153,13 +153,13 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
 
   return (
     <>
-      <div className="w-fit h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-[12px] p-[15px] flex flex-col gap-[20px]">
+      <div className="w-fit h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-sm p-md flex flex-col gap-2xl">
         {/* Frame 124 */}
-        <div className="w-fit h-fit flex flex-col items-start gap-[20px] p-0">
+        <div className="w-fit h-fit flex flex-col items-start gap-2xl p-0">
           {/* Info */}
-          <div className="w-fit h-fit flex flex-col items-start gap-[15px] p-0">
+          <div className="w-fit h-fit flex flex-col items-start gap-lg p-0">
             {/* Note info */}
-            <div className="w-[600px] h-fit flex flex-row items-start gap-[10px] p-0">
+            <div className="w-[600px] h-fit flex flex-row items-start gap-lg p-0">
               {/* Frame 69 */}
               <div className="w-[600px] h-fit flex flex-row justify-between items-start gap-[111px] p-0 flex-1">
                 {/* Timestamp */}
@@ -171,9 +171,9 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 </div>
 
                 {/* Sentiment */}
-                <div className="w-[535px] h-fit flex flex-row justify-end items-center gap-[15px] p-0 mx-auto flex-1">
+                <div className="w-[535px] h-fit flex flex-row justify-end items-center gap-lg p-0 mx-auto flex-1">
                   {/* Frame 105 */}
-                  <div className="w-fit h-[16px] flex flex-row items-center gap-[2px] p-0">
+                  <div className="w-fit h-[16px] flex flex-row items-center gap-xs p-0">
                     {/* Back button */}
                     <BackButton
                       onClick={() => { handleBack('noteCardDetail', currentNote.id); }}
@@ -202,15 +202,15 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
             </div>
 
             {/* Frame 119 */}
-            <div className="w-[600px] h-fit flex flex-col items-start gap-[4px] p-0">
+            <div className="w-[600px] h-fit flex flex-col items-start gap-sm p-0">
               {/* Note info */}
-              <div className="w-[600px] h-fit flex flex-row items-start gap-[10px] p-0">
+              <div className="w-[600px] h-fit flex flex-row items-start gap-lg p-0">
                 {/* Frame 69 */}
                 <div className="w-[600px] h-fit flex flex-row justify-between items-start gap-[111px] p-0 flex-1">
                   {/* Timestamp */}
                   <div className="w-[600px] h-fit flex flex-col items-start p-0 mx-auto flex-1">
                     {/* Date row */}
-                    <div className="w-fit h-[20px] flex flex-row items-center gap-[10px] p-0">
+                    <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
                       {/* Calendar */}
                       <CalendarIcon width={16} height={16} className="text-circle-primary" />
                       {/* Date (clickable) */}
@@ -238,7 +238,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                       </button>
                     </div>
                     {/* Time row */}
-                    <div className="w-fit h-[20px] flex flex-row items-center gap-[10px] p-0">
+                    <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
                       <button
                         type="button"
                         onClick={() => {
@@ -265,7 +265,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           </div>
 
           {/* Text */}
-          <div className="w-[600px] h-fit bg-circle-neutral-variant rounded-[12px] p-[15px] flex flex-row justify-start items-start">
+          <div className="w-[600px] h-fit bg-circle-neutral-variant rounded-sm p-[15px] flex flex-row justify-start items-start">
             <div className="w-fit h-fit font-circlebodymedium text-circle-primary text-left">
               {contactReference(
                 currentNote.text,
@@ -285,7 +285,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           </div>
 
           {/* Sentiment Tags */}
-          <div className="w-fit h-[20px] flex flex-row items-center gap-[5px] p-0">
+          <div className="w-fit h-[20px] flex flex-row items-center gap-xm p-0">
             {sentimentObjects.map((sentiment) => (
               <SentimentTag
                 key={`${sentiment.id}-${sentimentUpdateTrigger}`}

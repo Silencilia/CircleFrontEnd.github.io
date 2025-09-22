@@ -113,11 +113,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
   };
 
   return (
-    <div className="w-[600px] h-[114px] bg-circle-neutral-variant rounded-[12px] p-[10px] flex flex-col gap-[10px]">
+    <div className="w-[600px] h-[114px] bg-circle-neutral-variant rounded-sm p-sm flex flex-col gap-lg">
       {/* Frame 126 */}
       <div className="w-[580px] h-[44px] flex flex-col items-start p-0">
         {/* Note info */}
-        <div className="w-[580px] h-[24px] flex flex-row items-start gap-[10px] p-0">
+        <div className="w-[580px] h-[24px] flex flex-row items-start gap-lg p-0">
           {/* Frame 69 */}
           <div className="w-full h-[24px] flex flex-row justify-between items-start p-0 flex-1">
             {/* Title */}
@@ -128,12 +128,12 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
             </div>
 
             {/* Sentiment */}
-            <div className="h-[20px] flex flex-row justify-end items-center gap-[15px] p-0">
+            <div className="h-[20px] flex flex-row justify-end items-center gap-lg p-0">
               {/* Frame 73 */}
-              <div className="w-fit h-[20px] flex flex-row items-center gap-[5px] p-0">
+              <div className="w-fit h-[20px] flex flex-row items-center gap-xm p-0">
                 {/* Sentiment tags - show up to 3 sentiments */}
                 {sentimentLabels.slice(0, 3).map((label, index) => (
-                  <div key={index} className="w-fit h-[20px] bg-circle-neutral rounded-[6px] p-[2px_5px] flex flex-row justify-center items-center">
+                  <div key={index} className="w-fit h-[20px] bg-circle-neutral rounded-xs p-[2px_5px] flex flex-row justify-center items-center">
                     <div className="w-fit h-[16px] font-circlelabelsmall text-circle-primary flex items-center text-center">
                       {label}
                     </div>
@@ -142,7 +142,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
               </div>
 
               {/* Frame 105 */}
-              <div className="w-fit h-fit flex flex-row items-center gap-[2px] p-0">
+              <div className="w-fit h-fit flex flex-row items-center gap-xs p-0">
                 {/* Recycle button */}
                 <RecycleButton
                   onClick={() => setShowDeleteDialog(true)}
@@ -174,7 +174,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
         </div>
 
         {/* Frame 125 - Date and Time (non-clickable) */}
-        <div className="w-fit h-[20px] flex flex-row items-center gap-[10px] p-0">
+        <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
           <div
             className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
               date === 'no date' ? 'italic opacity-50' : ''

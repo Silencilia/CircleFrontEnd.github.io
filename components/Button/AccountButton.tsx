@@ -12,7 +12,7 @@ interface AccountButtonProps {
 }
 
 const AccountButton: React.FC<AccountButtonProps> = ({ onClick, className = '', 'aria-label': ariaLabel, href = '/account', active = false, disabled = false }) => {
-  const baseButtonClasses = 'group w-[54px] h-[54px] rounded-[30px] flex flex-col items-center justify-center p-0 gap-[2px] outline-none focus:outline-none focus:ring-0 focus-visible:outline-none active:outline-none';
+  const baseButtonClasses = 'group btn-nav outline-none focus:outline-none focus:ring-0 focus-visible:outline-none active:outline-none';
   const bgClasses = active ? 'bg-circle-secondary' : 'bg-circle-white hover:bg-circle-secondary';
   const iconClasses = active ? 'text-circle-neutral' : 'text-circle-primary group-hover:text-circle-neutral';
 
@@ -22,6 +22,7 @@ const AccountButton: React.FC<AccountButtonProps> = ({ onClick, className = '', 
       aria-label={ariaLabel ?? 'Account'}
       disabled={disabled}
       className={`${baseButtonClasses} ${bgClasses} ${disabled ? 'pointer-events-none' : ''} ${className}`}
+      style={{ borderRadius: '50%' }}
     >
       <UserIcon
         width={30}

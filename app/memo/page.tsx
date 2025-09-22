@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import HeaderMemo from '../../components/Headers/HeaderMemo';
+import Title from '../../components/Headers/Title';
+import SearchBar from '../../components/Headers/SearchBar';
+import { NewNoteButton } from '../../components/Button';
 import NavigationBar from '../../components/NavigationBar';
 import CommitmentGallery, { COMMITMENT_GALLERY_TARGET_HEIGHT } from '../../components/Gallery/CommitmentGallery';
 import { useContacts, Note, Contact } from '../../contexts/ContactContext';
@@ -10,6 +12,7 @@ import NoteGallery from '../../components/Gallery/NoteGallery';
 import NoteCardDetail from '../../components/Cards/NoteCardDetail';
 import NoteCardNew from '../../components/Cards/NoteCardNew';
 import ContactCardDetail from '../../components/Cards/ContactCardDetail';
+import { NAV_BAR_HEIGHT_MOBILE, NAV_BAR_HEIGHT_DESKTOP } from '../../utils/designConstants';
 
 export default function MemoPage() {
   const { state, createNewNote } = useContacts();
@@ -18,6 +21,7 @@ export default function MemoPage() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [newNote, setNewNote] = useState<Note | null>(null);
+  const [navBarHeight, setNavBarHeight] = useState<string>(NAV_BAR_HEIGHT_MOBILE);
 
   // Avoid conditional hook usage: render loading state inside return instead of early return
 
@@ -33,6 +37,18 @@ export default function MemoPage() {
       console.error('Failed to create new note:', error);
     }
   };
+
+  // Update navigation bar height based on screen size
+  useEffect(() => {
+    const updateNavBarHeight = () => {
+      const isMobile = window.innerWidth < 640;
+      setNavBarHeight(isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP);
+    };
+
+    updateNavBarHeight();
+    window.addEventListener('resize', updateNavBarHeight);
+    return () => window.removeEventListener('resize', updateNavBarHeight);
+  }, []);
 
 
 
@@ -57,26 +73,32 @@ export default function MemoPage() {
 
   return (
     <div className="relative w-full min-h-screen bg-[#FBF7F3]">
-      {/* HeaderMemo - fixed at top */}
+      {/* Title and SearchBar - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <HeaderMemo 
-          onSearchChange={handleSearchChange}
-          onNewNote={handleNewNote}
-        />
+        <div className="w-full justify-center items-center bg-circle-neutral flex flex-col">
+          {/* Title - Above */}
+          <Title title="Memo" />
+
+          {/* SearchBar and New Note Button - Below */}
+          <SearchBar
+            onSearchChange={handleSearchChange}
+            actionButton={<NewNoteButton onClick={handleNewNote} />}
+          />
+        </div>
       </div>
 
-      {/* Content between header (190px) and navbar (80px) minus CommitmentGallery target height */}
+      {/* Content between header (190px) and navbar minus CommitmentGallery target height */}
       <div
         className="fixed left-0 right-0 z-40"
-        style={{ top: 190, bottom: 80 + commitmentGalleryHeight, overflowY: 'auto' }}
+        style={{ top: 190, bottom: parseInt(navBarHeight) + commitmentGalleryHeight, overflowY: 'auto' }}
       >
         <div className="min-h-full flex flex-col justify-end">
           <NoteGallery notes={filteredNotes} />
         </div>
       </div>
 
-      {/* CommitmentGallery fixed above navigation bar (80px) - height fits content */}
-      <div className="fixed left-0 right-0 z-40" style={{ bottom: 80 }}>
+      {/* CommitmentGallery fixed above navigation bar - height fits content */}
+      <div className="fixed left-0 right-0 z-40" style={{ bottom: navBarHeight }}>
         <CommitmentGallery commitments={state.commitments} onHeightChange={setCommitmentGalleryHeight} />
       </div>
       

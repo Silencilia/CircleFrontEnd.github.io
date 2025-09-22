@@ -596,7 +596,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               {/* Confirm button */}
               <button
                 onClick={handleConfirm}
-                className="p-1 flex items-center justify-center hover:bg-circle-neutral-variant rounded transition-colors group"
+                className="btn-sm hover:bg-circle-neutral-variant transition-colors group"
                 aria-label="Confirm contact"
               >
                 <ConfirmIcon className="text-circle-primary" />
@@ -605,7 +605,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               {/* Cancel button */}
               <button
                 onClick={handleCancel}
-                className="p-1 flex items-center justify-center hover:bg-circle-neutral-variant rounded transition-colors group"
+                className="btn-sm hover:bg-circle-neutral-variant transition-colors group"
                 aria-label="Cancel contact"
               >
                 <CancelIcon className="text-circle-primary" />

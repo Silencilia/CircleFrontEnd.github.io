@@ -107,14 +107,15 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
     // Randomize greeting after hydration to avoid SSR/client mismatch
     setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
     
-    // Focus the textarea when component mounts (when user enters circle page)
-    const el = textareaRef.current;
-    if (el) {
-      // Small delay to ensure component is fully rendered
-      setTimeout(() => {
-        el.focus();
-      }, 100);
-    }
+  // Focus the textarea when component mounts (when user enters circle page)
+  // Only auto-focus on desktop to avoid triggering mobile keyboard
+  const el = textareaRef.current;
+  if (el && typeof window !== 'undefined' && window.innerWidth >= 768) {
+    // Small delay to ensure component is fully rendered
+    setTimeout(() => {
+      el.focus();
+    }, 100);
+  }
     
     const onResize = () => adjustHeight();
     window.addEventListener('resize', onResize);
@@ -137,9 +138,9 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
   }, [isWrapped, forceWrapped]);
 
   return (
-    <div className="flex flex-col gap-[30px] items-center max-w-[1000px] mx-auto">
-                    {/* Random Greeting Text */}
-                    <div className="text-center">
+    <div className="flex flex-col gap-xl items-center mx-auto">
+      {/* Random Greeting Text */}
+          <div className="text-center">
             <h2 className="font-circleheadlinemedium text-circle-primary">
               {greeting}
             </h2>
@@ -148,12 +149,11 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
           {/* Container that switches layout via CSS Grid */}
           <div className="w-full flex justify-center h-fit">
             <div
-              className="bg-circle-white border border-circle-neutral-variant rounded-[25px] self-start w-[1000px] max-w-[1000px] px-[5px] py-[5px]"
-              style={
-                (forceWrapped ?? isWrapped)
-                  ? { display: 'grid', gridTemplateRows: 'auto 38px', gridTemplateColumns: '1fr', rowGap: 10, alignItems: 'start' }
-                  : { display: 'grid', gridTemplateColumns: '38px 1fr 38px', alignItems: 'end', columnGap: 15 }
-              }
+              className={`bg-circle-white border border-circle-neutral-variant rounded-[25px] self-start w-[85vw] ${
+               (forceWrapped ?? isWrapped)
+                ? "grid grid-rows-btn-layout grid-cols-1 items-start"
+                : "grid grid-cols-btn-layout items-end gap-x-md"
+              }`}
             >
               {/* Upload button: bottom row when wrapped; left column when single-line */}
               <div style={{ gridRow: (forceWrapped ?? isWrapped) ? '2' : '1', gridColumn: '1' }}>
@@ -162,7 +162,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
 
               {/* Textarea region */}
               <div
-                className={(forceWrapped ?? isWrapped) ? undefined : 'flex items-center h-[38px]'}
+                className={`${(forceWrapped ?? isWrapped) ? '' : 'textarea-container-unwrapped'}`}
                 style={{ gridRow: '1', gridColumn: (forceWrapped ?? isWrapped) ? '1' : '2', height: (forceWrapped ?? isWrapped) ? 'fit-content' : undefined, alignSelf: (forceWrapped ?? isWrapped) ? 'start' : undefined }}
               >
                 <textarea
@@ -171,16 +171,9 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped }) => {
                   onChange={(e) => { setValue(e.target.value); adjustHeight(); }}
                   placeholder={STRINGS.PLACEHOLDERS.TALK_TO_CIRCLE}
                   rows={1}
-                  className="font-circlebodymedium w-full resize-none overflow-hidden bg-transparent focus:outline-none text-circle-primary placeholder-circle-primary/35"
-                  style={{
-                    minHeight: 20,
-                    paddingTop: 5,
-                    paddingBottom: 5,
-                    paddingLeft: (forceWrapped ?? isWrapped) ? 15 : 0,
-                    paddingRight: (forceWrapped ?? isWrapped) ? 15 : 0,
-                    height: (forceWrapped ?? isWrapped) ? 'fit-content' as unknown as undefined : undefined,
-                    maxHeight: (forceWrapped ?? isWrapped) ? 120 : undefined,
-                  }}
+                  className={`font-circlebodymedium w-full resize-none overflow-hidden bg-transparent focus:outline-none text-circle-primary placeholder-circle-primary/35 ${
+                    (forceWrapped ?? isWrapped) ? 'textarea-wrapped' : 'textarea-unwrapped'
+                  }`}
                 />
               </div>
 

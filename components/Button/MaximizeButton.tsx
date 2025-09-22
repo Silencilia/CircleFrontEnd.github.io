@@ -15,10 +15,10 @@ const MaximizeButton: React.FC<MaximizeButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`p-1 hover:bg-circle-neutral rounded transition-colors duration-200 ${className}`}
+      className={`btn-sm hover:bg-circle-neutral transition-colors duration-200 ${className}`}
       aria-label={ariaLabel}
     >
-      <MaximizeIcon width={16} height={16} className="text-circle-primary" />
+      <MaximizeIcon className="text-circle-primary" />
     </button>
   );
 };

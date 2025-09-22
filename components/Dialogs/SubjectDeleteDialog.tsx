@@ -40,25 +40,25 @@ const SubjectDeleteDialog: React.FC<SubjectDeleteDialogProps> = ({
         tabIndex={-1}
       >
         <div className="bg-circle-white border border-circle-neutral-variant rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
-          <h3 className="Circletitlemedium text-circle-primary mb-3">
+          <h3 className="font-circletitlemedium text-circle-primary mb-3">
             Remove Subject
           </h3>
           
-          <p className="Circlebodymedium text-circle-primary mb-6 leading-relaxed">
+          <p className="font-circlebodymedium text-circle-primary mb-6 leading-relaxed">
             Are you sure you want to remove "{subjectLabel}" from this contact?
           </p>
           
           <div className="flex gap-3 justify-end">
             <button
               onClick={onCancel}
-              className="px-4 py-2 Circlelabelmedium text-circle-primary bg-circle-neutral-variant hover:bg-circle-neutral rounded-md transition-colors"
+              className="px-4 py-2 font-circlelabelmedium text-circle-primary bg-circle-neutral-variant hover:bg-circle-neutral rounded-md transition-colors"
             >
               Cancel
             </button>
             
             <button
               onClick={onConfirm}
-              className="px-4 py-2 Circlelabelmedium rounded-md transition-colors bg-circle-secondary hover:bg-circle-secondary/90 text-circle-white"
+              className="px-4 py-2 font-circlelabelmedium rounded-md transition-colors bg-circle-secondary hover:bg-circle-secondary/90 text-circle-white"
             >
               Remove
             </button>

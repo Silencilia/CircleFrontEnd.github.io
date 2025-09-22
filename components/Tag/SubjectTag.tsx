@@ -126,7 +126,7 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
     }
   };
 
-  const baseClasses = 'px-[5px] py-0.5 rounded-md flex items-center h-5 flex-shrink-0 gap-[5px]';
+  const baseClasses = 'tg flex items-center flex-shrink-0';
   const interactiveClasses = (onClick || editable) ? 'cursor-pointer hover:opacity-80 transition-opacity' : '';
   const combinedClasses = `${baseClasses} ${fillColor} ${interactiveClasses} ${className}`;
 
@@ -158,7 +158,6 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
         {/* Delete button - only show when editing */}
         {isEditing && (
           <DeleteTagButton
-            size={12}
             buttonColor="#FFFFFF"
             iconStrokeColor="#E76835"
             className="hover:bg-gray-100"

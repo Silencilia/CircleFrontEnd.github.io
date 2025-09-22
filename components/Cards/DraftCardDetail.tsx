@@ -198,7 +198,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
                 {/* Minimize Button */}
                 <button
                   onClick={handleMinimizeClick}
-                  className="flex flex-row justify-center items-center p-1 gap-[10px] w-6 h-6 hover:bg-circle-neutral-variant rounded transition-colors"
+                  className="btn-sm hover:bg-circle-neutral-variant transition-colors"
                   aria-label="Minimize draft"
                 >
                   <svg

@@ -15,10 +15,10 @@ const MinimizeButton: React.FC<MinimizeButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`p-1 flex items-center justify-center hover:bg-circle-neutral-variant rounded transition-colors ${className}`}
+      className={`btn-sm hover:bg-circle-neutral-variant transition-colors ${className}`}
       aria-label={ariaLabel}
     >
-      <MinimizeIcon width={16} height={16} className="text-circle-primary" />
+      <MinimizeIcon className="text-circle-primary" />
     </button>
   );
 };

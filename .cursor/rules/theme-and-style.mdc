@@ -1,5 +1,5 @@
 ---
-description:When using colors, the theme colors saved in tailwind.config.js should be referenced whenever possible. If using additional colors seems necessary, advise first and ask for the user's approval. Never hard-code colors.
+description:Always refer to the styles and classes saved in tailwind.config.js for colors, typographies, spacings, paddings, gaps, dimensions, etc. Avoid hardcoding at all cost. If using new values for these properties seems necessary, advise first and ask for the user's approval. 
 globs:
 alwaysApply: true
 ---
