@@ -338,7 +338,30 @@ module.exports = {
             height: '22px',
           },
         },
-        
+        '.btn-nav': {
+          width: '54px',  // Mobile default
+          height: '48px', // Mobile default
+          borderRadius: '10px', // Slightly smaller radius for mobile
+          gap: '2px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          // Automatically switch to desktop size at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '66px',
+            height: '60px',
+            borderRadius: '12px',
+          },
+          '& svg': {
+            width: '24px',  // Mobile icon size
+            height: '24px', // Mobile icon size
+            // Desktop icon size
+            [`@media (min-width: 640px)`]: {
+              width: '30px',
+              height: '30px',
+            },
+          },
+        },
         '.btn-account': {
           width: '48px',  // Mobile default
           height: '48px', // Mobile default
