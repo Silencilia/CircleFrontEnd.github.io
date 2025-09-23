@@ -38,7 +38,7 @@ const Search: React.FC<SearchProps> = ({
         <div className="flex flex-row items-center pr-lg overflow-hidden">
           {/* Search Input */}
           <input
-            type="text"s
+            type="text"
             placeholder={placeholder}
             value={searchValue}
             onChange={handleSearchChange}
