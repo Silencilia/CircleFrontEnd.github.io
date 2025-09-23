@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Title from '../../components/Headers/Title';
 import NavigationBar from '../../components/NavigationBar';
 import DraftGallery from '../../components/Gallery/DraftGallery';
@@ -10,31 +10,8 @@ import { Draft } from '../../contexts/ContactContext';
 
 export default function DraftPage() {
   const { state } = useContacts();
-  const [navigationBarHeight, setNavigationBarHeight] = useState('80px'); // Default fallback
   const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
   const [isDraftDetailOpen, setIsDraftDetailOpen] = useState(false);
-
-  // Read the CSS variable for navigation bar height and update on window resize
-  useEffect(() => {
-    const updateNavigationBarHeight = () => {
-      const height = getComputedStyle(document.documentElement).getPropertyValue('--NavigationBarHeight').trim();
-      if (height) {
-        setNavigationBarHeight(height);
-        console.log('DraftPage: NavigationBar height updated to:', height);
-      }
-    };
-
-    // Set initial height
-    updateNavigationBarHeight();
-
-    // Update on window resize
-    window.addEventListener('resize', updateNavigationBarHeight);
-    
-    return () => window.removeEventListener('resize', updateNavigationBarHeight);
-  }, []);
-
-  // Calculate bottom offset: NavigationBar height only
-  const bottomOffset = navigationBarHeight;
 
   // Handle menu click to open draft detail
   const handleMenuDraft = (draft: Draft) => {
@@ -73,13 +50,7 @@ export default function DraftPage() {
       </div>
       
       {/* DraftGallery fixed between header and navigation bar */}
-      <div
-        className="fixed left-0 right-0 z-30"
-        style={{
-          top: 120, // HeaderDraft height (TITLE_HEIGHT_DESKTOP = 120px)
-          bottom: bottomOffset // NavigationBar height only
-        }}
-      >
+      <div className="draft-gallery">
         <DraftGallery 
           drafts={state.drafts || []}
           onDeleteDraft={handleDeleteDraft}

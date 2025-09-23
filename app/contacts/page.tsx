@@ -14,7 +14,7 @@ export default function ContactsPage() {
   const [relationshipFilterIds, setRelationshipFilterIds] = useState<string[]>([]);
 
   // Loading state
-  if (state.isLoading || !state.contacts) {
+  if (state.isLoading || state.contacts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#FBF7F3]">
         <div className="text-center">

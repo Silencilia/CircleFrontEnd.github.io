@@ -156,12 +156,12 @@ const RelationshipFilter: React.FC<RelationshipFilterProps> = ({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-circle-neutral-variant rounded-sm shadow-lg z-50 max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-circle-neutral-variant rounded-sm shadow-lg z-50 max-h-[300px] overflow-y-auto">
           {/* Select All Option */}
           <button
             onClick={handleSelectAll}
-            className={`w-full px-4 py-2 text-left text-sm hover:bg-circle-neutral transition-colors ${
-              selectedRelationshipIds.length === 0 ? 'bg-circle-neutral font-medium' : ''
+            className={`w-full px-sm py-sm text-left text-sm hover:bg-circle-neutral transition-colors ${
+              selectedRelationshipIds.length === 0 ? 'bg-circle-neutral font-circlebodymedium' : ''
             }`}
           >
             All relationships
@@ -175,8 +175,8 @@ const RelationshipFilter: React.FC<RelationshipFilterProps> = ({
             <button
               key={relationship.id}
               onClick={() => handleRelationshipToggle(relationship.id)}
-              className={`w-full px-4 py-2 text-left text-sm hover:bg-circle-neutral transition-colors flex items-center gap-2 ${
-                selectedRelationshipIds.includes(relationship.id) ? 'bg-circle-neutral font-medium' : ''
+              className={`w-full h-[30px] px-sm py-sm text-left font-circlebodymedium hover:bg-circle-neutral transition-colors flex items-center gap-sm ${
+                selectedRelationshipIds.includes(relationship.id) ? 'bg-circle-neutral' : ''
               }`}
             >
               {/* Checkbox */}

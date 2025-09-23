@@ -25,20 +25,20 @@ const Search: React.FC<SearchProps> = ({
   };
 
   return (
-    <div className={`flex flex-col items-start gap-2.5 w-full min-w-[240px] ${className}`}>
+    <div className={`flex flex-col items-start gap-sm w-full min-w-[150px] ${className}`}>
       {/* Search Field */}
-      <div className="flex flex-row justify-start items-center p-0 gap-lg box-border w-full h-full bg-white border border-circle-neutral-variant rounded-lg ctn-srch">
+      <div className="flex flex-row justify-start items-center gap-lg box-border w-full h-full bg-white border border-circle-neutral-variant rounded-lg ctn-srch">
         {/* Frame 34 */}
 
-          <div className="flex flex-row justify-center items-center btn-sm rounded-lg">
+          <div className="flex flex-row justify-start items-center btn-sm rounded-lg">
             {/* Magnifier Icon */}
             <MagnifierIcon />
           </div>
 
-        <div className="flex flex-row w-full items-center pr-lg">
+        <div className="flex flex-row items-center pr-lg overflow-hidden">
           {/* Search Input */}
           <input
-            type="text"
+            type="text"s
             placeholder={placeholder}
             value={searchValue}
             onChange={handleSearchChange}

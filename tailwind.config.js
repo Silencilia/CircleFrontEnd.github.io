@@ -48,14 +48,14 @@ module.exports = {
         'lg': '25px',   // Large radius
       },
       gap: {
-        'xs': '2px',    // Extra small gap
-        'xm': '5px',    // Medium gap
-        'md': '10px',   // Large gap
-        'lg': '15px',   // Extra large gap
-        'xl': '20px',  // 2X large gap
-        '2xl': '25px',  // 3X large gap
-        '3xl': '30px',  // 4X large gap
-        '4xl': '40px',  // 5X large gap
+        'xs': 'var(--gap-xs)',    // Extra small gap - responsive
+        'xm': 'var(--gap-xm)',    // Medium gap - responsive
+        'md': 'var(--gap-md)',   // Large gap - responsive
+        'lg': 'var(--gap-lg)',   // Extra large gap - responsive
+        'xl': 'var(--gap-xl)',  // 2X large gap - responsive
+        '2xl': 'var(--gap-2xl)',  // 3X large gap - responsive
+        '3xl': 'var(--gap-3xl)',  // 4X large gap - responsive
+        '4xl': 'var(--gap-4xl)',  // 5X large gap - responsive
       },
     },
   },
@@ -65,68 +65,103 @@ module.exports = {
         // Display styles - Merriweather
         '.font-circledisplaylarge': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '60px', // 3.75rem
+          fontSize: '48px', // Mobile: 3rem (down from 60px)
           fontWeight: '400',
-          lineHeight: '60px', // 1
+          lineHeight: '52px', // Mobile: adjusted
           letterSpacing: '0',
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '60px', // 3.75rem
+            lineHeight: '60px', // 1
+          },
         },
         '.font-circledisplaymedium': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '48px', // 3rem
+          fontSize: '36px', // Mobile: 2.25rem (down from 48px)
           fontWeight: '400',
-          lineHeight: '60px', // 1.25
+          lineHeight: '44px', // Mobile: adjusted
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '48px', // 3rem
+            lineHeight: '60px', // 1.25
+          },
         },
         '.font-circledisplaysmall': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '36px', // 2.25rem
+          fontSize: '28px', // Mobile: 1.75rem (down from 36px)
           fontWeight: '400',
-          lineHeight: '45px', // 1.25
+          lineHeight: '36px', // Mobile: adjusted
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '36px', // 2.25rem
+            lineHeight: '45px', // 1.25
+          },
         },
 
         // Headline styles - Merriweather
         '.font-circleheadlinelarge': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '30px', // 1.875rem
+          fontSize: '24px', // Mobile: 1.5rem (down from 30px)
           fontWeight: '400',
-          lineHeight: '40px', // 2.5rem
+          lineHeight: '32px', // Mobile: adjusted
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '30px', // 1.875rem
+            lineHeight: '40px', // 2.5rem
+          },
         },
         '.font-circleheadlinemedium': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '30px', // 1.875rem
+          fontSize: '24px', // Mobile: 1.5rem (down from 30px)
           fontWeight: '400',
-          lineHeight: '36px', // 2.25rem
+          lineHeight: '30px', // Mobile: adjusted
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '30px', // 1.875rem
+            lineHeight: '36px', // 2.25rem
+          },
         },
         '.font-circleheadlinesmall': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '24px', // 1.5rem
+          fontSize: '20px', // Mobile: 1.25rem (down from 24px)
           fontWeight: '400',
-          lineHeight: '32px', // 2rem
+          lineHeight: '26px', // Mobile: adjusted
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '24px', // 1.5rem
+            lineHeight: '32px', // 2rem
+          },
         },
         '.font-circleheadlineextra-small': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '20px', // 1.25rem
+          fontSize: '18px', // Mobile: 1.125rem (down from 20px)
           fontWeight: '400',
-          lineHeight: '28px', // 1.75rem
+          lineHeight: '24px', // Mobile: adjusted
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '20px', // 1.25rem
+            lineHeight: '28px', // 1.75rem
+          },
         },
 
         // Body styles - Inter
         '.font-circlebodylarge': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '16px', // 1rem
+          fontSize: '16px', // Mobile: 1rem (same as desktop)
           fontWeight: '400',
           lineHeight: '24px', // 1.5rem
           letterSpacing: '0.025em', // tracking-wide
         },
         '.font-circlebodymedium': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '14px', // 0.875rem
+          fontSize: '14px', // Mobile: 0.875rem (same as desktop)
           fontWeight: '400',
           lineHeight: '20px', // 1.25rem
           letterSpacing: '0.025em', // tracking-wide
         },
         '.font-circlebodymedium-draft': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '14px', // 0.875rem
+          fontSize: '14px', // Mobile: 0.875rem (same as desktop)
           fontWeight: '400',
           fontStyle: 'italic',
           lineHeight: '20px', // 1.25rem
@@ -134,7 +169,7 @@ module.exports = {
         },
         '.font-circlebodymedium-highlight': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '14px', // 0.875rem
+          fontSize: '14px', // Mobile: 0.875rem (same as desktop)
           fontWeight: '400',
           fontStyle: 'italic',
           textDecoration: 'underline',
@@ -143,7 +178,7 @@ module.exports = {
         },
         '.font-circlebodysmall': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '12px', // 0.75rem
+          fontSize: '12px', // Mobile: 0.75rem (same as desktop)
           fontWeight: '400',
           lineHeight: '16px', // 1rem
           letterSpacing: '0.025em', // tracking-wide
@@ -152,42 +187,59 @@ module.exports = {
         // Label styles - Inter
         '.font-circlelabellarge': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '14px', // 0.875rem
+          fontSize: '14px', // Mobile: 0.875rem (same as desktop)
           fontWeight: '500', // medium
           lineHeight: '20px', // 1.25rem
           letterSpacing: '0', // tracking-normal
         },
         '.font-circlelabelmedium': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '12px', // 0.75rem
+          fontSize: '12px', // Mobile: 0.75rem (same as desktop)
           fontWeight: '500', // medium
           lineHeight: '16px', // 1rem
           letterSpacing: '0.05em', // tracking-wider
         },
         '.font-circlelabelsmall': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '12px', // 0.75rem
+          fontSize: '12px', // Mobile: 0.75rem (same as desktop)
           fontWeight: '500', // medium
           lineHeight: '16px', // 1rem
           letterSpacing: '0.05em', // tracking-wider
         },
+        '.font-circlelabelnav': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '10px', // Mobile: 0.6875rem (down from 12px)
+          fontWeight: '500', // medium
+          lineHeight: '12px', // Mobile: adjusted (down from 16px)
+          letterSpacing: '0.05em', // tracking-wider
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '12px', // 0.75rem
+            lineHeight: '16px', // 1rem
+          },
+        },
         // Title styles - Inter
         '.font-circletitlelarge': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '20px', // 1.25rem
+          fontSize: '18px', // Mobile: 1.125rem (down from 20px)
           fontWeight: '400',
-          lineHeight: '28px', // 1.75rem
+          lineHeight: '24px', // Mobile: adjusted
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '20px', // 1.25rem
+            lineHeight: '28px', // 1.75rem
+          },
         },
         '.font-circletitlemedium': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '16px', // 1rem
+          fontSize: '16px', // Mobile: 1rem (same as desktop)
           fontWeight: '500', // medium
           lineHeight: '24px', // 1.5rem
           letterSpacing: '0', // tracking-normal
         },
         '.font-circletitlesmall': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '14px', // 0.875rem
+          fontSize: '14px', // Mobile: 0.875rem (same as desktop)
           fontWeight: '500', // medium
           lineHeight: '20px', // 1.25rem
           letterSpacing: '0', // tracking-normal
@@ -255,14 +307,20 @@ module.exports = {
           },
         },
         '.btn-md': {
-          width: '30px',
-          height: '30px',
+          width: '24px',
+          height: '24px', // Mobile height
           padding: '0 5px',
           gap: '5px',
-          borderRadius: '15px',
+          borderRadius: '12px', // Mobile border radius
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            height: '30px',
+            width: '30px',
+            borderRadius: '15px',
+          },
           '& svg': {
             width: '20px',
             height: '20px',
@@ -280,17 +338,29 @@ module.exports = {
             height: '22px',
           },
         },
-        '.btn-nav': {
-          width: '60px',
-          height: '60px',
-          borderRadius: '12px',
+        
+        '.btn-account': {
+          width: '48px',  // Mobile default
+          height: '48px', // Mobile default
+          borderRadius: '10px', // Slightly smaller radius for mobile
           gap: '2px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          // Automatically switch to desktop size at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '60px',
+            height: '60px',
+            borderRadius: '12px',
+          },
           '& svg': {
-            width: '30px',
-            height: '30px',
+            width: '24px',  // Mobile icon size
+            height: '24px', // Mobile icon size
+            // Desktop icon size
+            [`@media (min-width: 640px)`]: {
+              width: '30px',
+              height: '30px',
+            },
           },
         },
       };
@@ -300,45 +370,76 @@ module.exports = {
     function({ addUtilities }) {
       const containerUtilities = {
         '.ctn-srch': {
-          height: '30px',
-          padding: '0 5px',
+          height: '24px', // Mobile height
+          padding: '0 4px',
           gap: '5px',
-          borderRadius: '15px',
+          borderRadius: '12px', // Mobile border radius
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'start',
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            height: '30px',
+            borderRadius: '15px',
+          },
           '& input, & span': {
             height: '20px',
           },
           '& button': {
-            width: '30px',
-            height: '30px',
+            width: '24px', // Mobile button size
+            height: '24px', // Mobile button size
+            // Desktop button size
+            [`@media (min-width: 640px)`]: {
+              width: '30px',
+              height: '30px',
+            },
           },
           '& svg': {
-            width: '20px',
-            height: '20px',
+            width: '16px', // Mobile icon size
+            height: '16px', // Mobile icon size
+            // Desktop icon size
+            [`@media (min-width: 640px)`]: {
+              width: '20px',
+              height: '20px',
+            },
           },
         },
 
         '.ctn-fltr': {
-          width: '240px',
-          height: '30px',
+          width: '150px',
+          height: '24px', // Mobile height
           padding: '0 5px',
           gap: '5px',
-          borderRadius: '15px',
+          borderRadius: '12px', // Mobile border radius
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'full',
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '240px',
+            height: '30px',
+            borderRadius: '15px',
+          },
           '& input, & span': {
             height: '20px',
           },
           '& button': {
-            width: '30px',
-            height: '30px',
+            width: '24px', // Mobile button size
+            height: '24px', // Mobile button size
+            // Desktop button size
+            [`@media (min-width: 640px)`]: {
+              width: '30px',
+              height: '30px',
+            },
           },
           '& svg': {
-            width: '20px',
-            height: '20px',
+            width: '16px', // Mobile icon size
+            height: '16px', // Mobile icon size
+            // Desktop icon size
+            [`@media (min-width: 640px)`]: {
+              width: '20px',
+              height: '20px',
+            },
           },
         },
       };
@@ -411,10 +512,11 @@ module.exports = {
           alignItems: 'center',
           paddingLeft: '30px',  // px-xl value
           paddingRight: '30px', // px-xl value
-          gap: '20px',  // gap-lg value (20px)
+          gap: '12px',  // gap-lg value (20px)
           // Automatically switch to desktop height at 640px+
           [`@media (min-width: 640px)`]: {
             height: SEARCH_BAR_HEIGHT_DESKTOP,
+            gap: '20px', 
           },
         },
 
@@ -440,9 +542,53 @@ module.exports = {
             height: COMMITMENT_GALLERY_HEIGHT_COLLAPSED_DESKTOP,
           },
         },
+
+        '.draft-gallery': {
+          position: 'fixed',
+          left: '0',
+          right: '0',
+          zIndex: '30',
+          top: TITLE_HEIGHT_MOBILE,  // Default mobile top offset
+          bottom: NAV_BAR_HEIGHT_MOBILE,  // Default mobile bottom offset
+          // Automatically switch to desktop offsets at 640px+
+          [`@media (min-width: 640px)`]: {
+            top: TITLE_HEIGHT_DESKTOP,
+            bottom: NAV_BAR_HEIGHT_DESKTOP,
+          },
+        },
       };
 
       addUtilities(pageUtilities);
+    },
+    function({ addUtilities }) {
+      const responsiveGapUtilities = {
+        ':root': {
+          // Mobile-first gap values (default)
+          '--gap-xs': '2px',    // Extra small gap
+          '--gap-xm': '4px',    // Medium gap
+          '--gap-md': '8px',   // Large gap
+          '--gap-lg': '12px',   // Extra large gap
+          '--gap-xl': '15px',  // 2X large gap
+          '--gap-2xl': '20px',  // 3X large gap
+          '--gap-3xl': '25px',  // 4X large gap
+          '--gap-4xl': '30px',  // 5X large gap
+        },
+        // Desktop values at 640px+
+        '@media (min-width: 640px)': {
+          ':root': {
+            '--gap-xs': '2px',    // Extra small gap
+            '--gap-xm': '5px',    // Medium gap
+            '--gap-md': '10px',   // Large gap
+            '--gap-lg': '15px',   // Extra large gap
+            '--gap-xl': '20px',  // 2X large gap
+            '--gap-2xl': '25px',  // 3X large gap
+            '--gap-3xl': '30px',  // 4X large gap
+            '--gap-4xl': '40px',  // 5X large gap
+          },
+        },
+      };
+
+      addUtilities(responsiveGapUtilities);
     }
   ],
 }

@@ -5,11 +5,11 @@ export const NAV_BAR_HEIGHT_MOBILE = '56px';  // Mobile (< 640px)
 export const NAV_BAR_HEIGHT_DESKTOP = '72px'; // Desktop (≥ 640px)
 
 // Header
-export const TITLE_HEIGHT_MOBILE = '100px';   // Mobile (< 640px)
+export const TITLE_HEIGHT_MOBILE = '72px';   // Mobile (< 640px)
 export const TITLE_HEIGHT_DESKTOP = '120px';  // Desktop (≥ 640px)
 
 // Search Bar
-export const SEARCH_BAR_HEIGHT_MOBILE = '50px';  // Mobile (< 640px)
+export const SEARCH_BAR_HEIGHT_MOBILE = '40px';  // Mobile (< 640px)
 export const SEARCH_BAR_HEIGHT_DESKTOP = '60px'; // Desktop (≥ 640px)
 
 // Commitment Gallery

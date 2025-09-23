@@ -74,8 +74,7 @@ export default function DeveloperPage() {
         const contacts = state.contacts;
         const notes = state.notes;
         const drafts = state.drafts;
-        const isUsingSupabase = process.env.NEXT_PUBLIC_USE_SUPABASE === 'true';
-        setDataSourceStatus(`Using ${isUsingSupabase ? 'Supabase' : 'Mock Data'} - ${contacts.length} contacts, ${notes.length} notes, ${drafts.length} drafts loaded`);
+        setDataSourceStatus(`Using Supabase - ${contacts.length} contacts, ${notes.length} notes, ${drafts.length} drafts loaded`);
       } catch (error) {
         setDataSourceStatus(`Error loading data: ${error}`);
       }
