@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { CancelButton, ConfirmButton } from '../Button';
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
@@ -39,40 +40,34 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   };
 
   return createPortal(
-    (
-      <div 
-        className="fixed inset-0 bg-circle-primary/50 flex items-center justify-center z-[9999]"
-        onClick={handleBackdropClick}
-        onKeyDown={handleKeyDown}
-        tabIndex={-1}
-      >
-        <div className="bg-circle-white border border-circle-neutral-variant rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
-          <h3 className="font-circletitlemedium text-circle-primary mb-3">
-            {title}
-          </h3>
+    <div 
+      className="fixed inset-0 bg-circle-primary/50 flex items-center justify-center z-[9999]"
+      onClick={handleBackdropClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={-1}
+    >
+      <div className="bg-circle-white border border-circle-neutral-variant rounded-md p-md max-w-[480px] w-full mx-md shadow-lg">
+        <h3 className="font-circletitlemedium text-circle-primary mb-lg">
+          {title}
+        </h3>
+        
+        <p className="font-circlebodymedium-draft text-circle-primary mb-lg leading-relaxed">
+          {message}
+        </p>
+        
+        <div className="flex flex-row gap-xs justify-end">
+          <CancelButton
+            onClick={onCancel}
+            ariaLabel="Cancel deletion"
+          />
           
-          <p className="font-circlebodymedium text-circle-primary mb-6 leading-relaxed">
-            {message}
-          </p>
-          
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 font-circlelabelmedium text-circle-primary bg-circle-neutral-variant hover:bg-circle-neutral rounded-md transition-colors"
-            >
-              Cancel
-            </button>
-            
-            <button
-              onClick={onConfirm}
-              className="px-4 py-2 font-circlelabelmedium rounded-md transition-colors bg-circle-secondary hover:bg-circle-secondary/90 text-circle-white"
-            >
-              Delete
-            </button>
-          </div>
+          <ConfirmButton
+            onClick={onConfirm}
+            ariaLabel="Confirm deletion"
+          />
         </div>
       </div>
-    ),
+    </div>,
     document.body
   );
 };

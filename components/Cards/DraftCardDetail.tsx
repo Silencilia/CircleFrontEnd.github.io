@@ -155,7 +155,8 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
 
   return (
     <>
-      <div className="flex flex-col items-start p-0 gap-5 w-[630px] h-fit bg-white rounded-[12px]">
+      {/* Desktop Version */}
+      <div className="hidden md:flex flex-col items-start p-0 gap-5 w-[630px] h-fit bg-white rounded-[12px]">
         {/* Main container */}
         <div className="flex flex-col items-start p-[15px] gap-5 w-[630px] h-fit bg-white rounded-[12px] flex-none order-0 self-stretch flex-grow-0">
           
@@ -246,6 +247,95 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
             {/* Draft text */}
             <div className="w-[580px] h-fit font-circlebodymedium-draft text-left text-circle-primary opacity-50">
               {draft.text}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Version */}
+      <div className="block md:hidden fixed inset-0 flex flex-col items-start p-0 gap-5 bg-white">
+        {/* Main container */}
+        <div className="flex flex-col items-start p-md gap-xl w-full h-full bg-white order-0 self-stretch">
+
+                    {/* Title: Draft detail */}
+          <div className="w-full h-fit font-circletitlemedium text-circle-primary flex items-center">
+            Draft detail
+          </div>
+
+          {/* Note info row */}
+          <div className="flex flex-row justify-between items-center gap-md w-full h-fit flex-none order-0 self-stretch flex-grow-0">
+            
+            {/* Timestamp */}
+            <div className="flex flex-row items-center p-0 gap-md w-fit h-5 flex-none order-0 flex-grow-0">
+              <div className="flex flex-col items-start p-0 w-fit h-5 flex-none order-0 flex-grow-0">
+                <div className="flex flex-row items-center pr-md gap-md w-fit h-5 flex-none order-0 flex-grow-0">
+                  
+                  {/* Date */}
+                  <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex-none order-0 flex-grow-0">
+                    {formatDate(draft.date)}
+                  </div>
+                  
+                  {/* Time */}
+                  <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex-none order-1 flex-grow-0">
+                    {formatTime(draft.time)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons Container */}
+            <div className="flex flex-row items-center gap-md w-fit h-fit p-0 flex-none order-1 flex-grow-0">
+
+              {/* Extract Button */}
+              <div className="flex flex-row items-center w-fit h-fit flex-none order-1 flex-grow-0">
+                <ExtractButton onClick={handleExtractClick} />
+              </div>
+
+              {/* Delete and Minimize Buttons */}
+              <div className="flex flex-row items-center w-fit h-fit flex-none order-2 flex-grow-0">
+                {/* Delete Button */}
+                <RecycleButton
+                  onClick={handleDeleteClick}
+                  ariaLabel="Delete draft"
+                />
+                
+                {/* Minimize Button */}
+                <MinimizeButton
+                  onClick={handleMinimizeClick}
+                  ariaLabel="Minimize draft"
+                />
+
+              </div>
+            </div>
+          </div>
+
+          {/* Text container */}
+          <div 
+            ref={textContainerRef}
+            className="flex flex-col justify-start items-start w-full flex-1 bg-circle-neutral-variant rounded-md order-1 overflow-y-auto"
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              userSelect: isDragging ? 'none' : 'auto',
+            }}
+          >
+            {/* Hide scrollbar for webkit browsers */}
+            <style jsx>{`
+              div::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+            
+            {/* Inner padded wrapper to preserve padding while scrolling */}
+            <div className="w-full min-h-full p-md">
+              {/* Draft text */}
+              <div className="w-full h-fit font-circlebodymedium-draft text-left text-circle-primary opacity-50">
+                {draft.text}
+              </div>
             </div>
           </div>
         </div>

@@ -293,15 +293,24 @@ module.exports = {
           },
         },
         '.btn-sm': {
-          width: '24px',
-          height: '24px',
+          width: '20px', // Mobile width
+          height: '20px', // Mobile height
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           '& svg': {
-            width: '16px',
-            height: '16px',
+            width: '14px', // Mobile icon size
+            height: '14px', // Mobile icon size
+          },
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '24px',
+            height: '24px',
+            '& svg': {
+              width: '16px',
+              height: '16px',
+            },
           },
         },
         '.btn-sm-txt': {

@@ -115,7 +115,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
       {/* Mobile Version */}
       <div className="block md:hidden h-fit bg-white rounded-md p-md flex flex-col gap-md">
         {/* Frame 126 - Header */}
-        <div className="w-full h-fit flex flex-col items-start p-0">
+        <div className="w-full h-fit flex flex-col items-start">
           {/* Note info */}
           <div className="w-full h-fit flex flex-row justify-between items-center gap-md">
             {/* Date and Time */}
@@ -131,7 +131,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
             </div>
 
             {/* Buttons */}
-            <div className="flex flex-row justify-end items-center p-0 gap-[10px] w-fit h-[24px]">
+            <div className="flex flex-row justify-end items-center gap-sm w-fit h-fit">
               {/* Extract Button */}
               <ExtractButton 
                 onClick={onExtract}
@@ -139,7 +139,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
               />
               
               {/* Frame 130 */}
-              <div className="flex flex-row items-center p-0 gap-[2px] w-fit h-[24px]">
+              <div className="flex flex-row items-center w-fit h-fit gap-xs">
                 <RecycleButton 
                   onClick={onDelete}
                   ariaLabel="Delete draft"
