@@ -113,19 +113,19 @@ const DraftCard: React.FC<DraftCardProps> = ({
       </div>
 
       {/* Mobile Version */}
-      <div className="block md:hidden h-[140px] bg-white rounded-md p-md flex flex-col gap-md">
+      <div className="block md:hidden h-fit bg-white rounded-md p-md flex flex-col gap-md">
         {/* Frame 126 - Header */}
-        <div className="w-full h-[20px] flex flex-col justify-center items-start p-0">
+        <div className="w-full h-fit flex flex-col items-start p-0">
           {/* Note info */}
-          <div className="w-full h-[24px] flex flex-row justify-between items-center p-0 gap-md">
+          <div className="w-full h-fit flex flex-row justify-between items-center gap-md">
             {/* Date and Time */}
-            <div className="flex flex-row items-center p-0 pr-sm gap-md w-fit h-[20px] justify-start">
+            <div className="flex flex-row items-center p-0 pr-sm gap-md w-fit h-fit justify-start">
               {/* Month DD, YYYY */}
-              <div className="w-fit h-[20px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-center">
+              <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-center">
                 {dateStr}
               </div>
               {/* hh:mm */}
-              <div className="w-fit h-[20px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-center">
+              <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-center">
                 {timeStr}
               </div>
             </div>
@@ -155,16 +155,16 @@ const DraftCard: React.FC<DraftCardProps> = ({
         </div>
 
         {/* Frame 128 - Description */}
-        <div className="w-full h-[80px] max-h-[80px] flex flex-row items-start p-0">
-          <div className="w-full h-[80px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-start justify-start flex-1 overflow-hidden text-left">
+        <div className="w-full h-fit max-h-[64px] flex flex-row items-start">
+          <div className="w-full h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-start justify-start flex-1 overflow-hidden text-left">
             <div 
               className="overflow-hidden text-ellipsis text-left"
               style={{
                 display: '-webkit-box',
                 WebkitLineClamp: 4,
                 WebkitBoxOrient: 'vertical',
-                lineHeight: '20px',
-                maxHeight: '80px'
+                lineHeight: '16px',
+                maxHeight: '64px'
               }}
             >
               {draft.text}

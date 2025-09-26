@@ -1,15 +1,15 @@
 import React from 'react';
 
 interface ZapIconProps {
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
   className?: string;
   strokeColor?: string;
 }
 
 const ZapIcon: React.FC<ZapIconProps> = ({ 
-  width = 16, 
-  height = 16, 
+  width,
+  height,
   className = '',
   strokeColor = 'currentColor'
 }) => {

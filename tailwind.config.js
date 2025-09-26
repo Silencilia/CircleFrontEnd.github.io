@@ -183,6 +183,14 @@ module.exports = {
           lineHeight: '16px', // 1rem
           letterSpacing: '0.025em', // tracking-wide
         },
+        '.font-circlebodysmall-draft': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '12px', // Mobile: 0.75rem (same as desktop)
+          fontWeight: '400',
+          fontStyle: 'italic',
+          lineHeight: '16px', // 1rem
+          letterSpacing: '0.025em', // tracking-wide
+        },
 
         // Label styles - Inter
         '.font-circlelabellarge': {
@@ -205,6 +213,15 @@ module.exports = {
           fontWeight: '500', // medium
           lineHeight: '16px', // 1rem
           letterSpacing: '0.05em', // tracking-wider
+          
+        },
+        '.font-circlelabelxsmall': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '10px', // Mobile: 0.75rem (same as desktop)
+          fontWeight: '500', // medium
+          lineHeight: '12px', // 1rem
+          letterSpacing: '0.05em', // tracking-wider
+          
         },
         '.font-circlelabelnav': {
           fontFamily: 'Inter, sans-serif',
@@ -289,13 +306,18 @@ module.exports = {
         },
         '.btn-sm-txt': {
           width: 'fit-content',
-          height: '20px',
+          height: '20px', // Mobile height
           padding: '0 5px',
           gap: '5px',
-          borderRadius: '10px',
+          borderRadius: '10px', // Mobile border radius
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            height: '24px',
+            borderRadius: '12px',
+          },
           '& svg': {
             width: '16px',
             height: '16px',
