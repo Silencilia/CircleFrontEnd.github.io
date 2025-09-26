@@ -6,22 +6,30 @@ import Title from '../../components/Headers/Title';
 import SearchBar from '../../components/Headers/SearchBar';
 import { NewNoteButton } from '../../components/Button';
 import NavigationBar from '../../components/NavigationBar';
-import CommitmentGallery, { COMMITMENT_GALLERY_TARGET_HEIGHT } from '../../components/Gallery/CommitmentGallery';
+import CommitmentGallery from '../../components/Gallery/CommitmentGallery';
 import { useContacts, Note, Contact } from '../../contexts/ContactContext';
 import NoteGallery from '../../components/Gallery/NoteGallery';
 import NoteCardDetail from '../../components/Cards/NoteCardDetail';
 import NoteCardNew from '../../components/Cards/NoteCardNew';
 import ContactCardDetail from '../../components/Cards/ContactCardDetail';
-import { NAV_BAR_HEIGHT_MOBILE, NAV_BAR_HEIGHT_DESKTOP } from '../../utils/designConstants';
+import {
+  NAV_BAR_HEIGHT_MOBILE,
+  NAV_BAR_HEIGHT_DESKTOP,
+  COMMITMENT_GALLERY_HEIGHT_EXPANDED_MOBILE,
+  COMMITMENT_GALLERY_HEIGHT_EXPANDED_DESKTOP,
+  COMMITMENT_GALLERY_HEIGHT_COLLAPSED_MOBILE,
+  COMMITMENT_GALLERY_HEIGHT_COLLAPSED_DESKTOP
+} from '../../utils/designConstants';
 
 export default function MemoPage() {
   const { state, createNewNote } = useContacts();
   const [searchQuery, setSearchQuery] = useState('');
-  const [commitmentGalleryHeight, setCommitmentGalleryHeight] = useState<number>(COMMITMENT_GALLERY_TARGET_HEIGHT);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [newNote, setNewNote] = useState<Note | null>(null);
   const [navBarHeight, setNavBarHeight] = useState<string>(NAV_BAR_HEIGHT_MOBILE);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isCommitmentGalleryCollapsed, setIsCommitmentGalleryCollapsed] = useState(false);
 
   // Avoid conditional hook usage: render loading state inside return instead of early return
 
@@ -38,16 +46,17 @@ export default function MemoPage() {
     }
   };
 
-  // Update navigation bar height based on screen size
+  // Update navigation bar height and mobile detection based on screen size
   useEffect(() => {
-    const updateNavBarHeight = () => {
-      const isMobile = window.innerWidth < 640;
-      setNavBarHeight(isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP);
+    const updateScreenSize = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      setNavBarHeight(mobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP);
     };
 
-    updateNavBarHeight();
-    window.addEventListener('resize', updateNavBarHeight);
-    return () => window.removeEventListener('resize', updateNavBarHeight);
+    updateScreenSize();
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
 
 
@@ -59,10 +68,10 @@ export default function MemoPage() {
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(note => 
+      filtered = filtered.filter(note =>
         note.text.toLowerCase().includes(query) ||
         // Search in sentiment labels
-        (note.sentiment_ids || []).some((sentimentId: string) => 
+        (note.sentiment_ids || []).some((sentimentId: string) =>
           state.sentiments.find(s => s.id === sentimentId)?.label.toLowerCase().includes(query)
         )
       );
@@ -70,6 +79,15 @@ export default function MemoPage() {
 
     return filtered;
   }, [state.notes, state.sentiments, searchQuery]);
+
+  // Calculate commitment gallery height based on collapsed state and screen size
+  const commitmentGalleryHeight = useMemo(() => {
+    if (isCommitmentGalleryCollapsed) {
+      return parseInt(isMobile ? COMMITMENT_GALLERY_HEIGHT_COLLAPSED_MOBILE : COMMITMENT_GALLERY_HEIGHT_COLLAPSED_DESKTOP);
+    } else {
+      return parseInt(isMobile ? COMMITMENT_GALLERY_HEIGHT_EXPANDED_MOBILE : COMMITMENT_GALLERY_HEIGHT_EXPANDED_DESKTOP);
+    }
+  }, [isCommitmentGalleryCollapsed, isMobile]);
 
   return (
     <div className="relative w-full min-h-screen bg-[#FBF7F3]">
@@ -99,7 +117,11 @@ export default function MemoPage() {
 
       {/* CommitmentGallery fixed above navigation bar - height fits content */}
       <div className="fixed left-0 right-0 z-40" style={{ bottom: navBarHeight }}>
-        <CommitmentGallery commitments={state.commitments} onHeightChange={setCommitmentGalleryHeight} />
+        <CommitmentGallery
+          commitments={state.commitments}
+          isCollapsed={isCommitmentGalleryCollapsed}
+          onToggle={() => setIsCommitmentGalleryCollapsed(prev => !prev)}
+        />
       </div>
       
       {/* NavigationBar - positioned at very bottom (80px height) */}

@@ -32,7 +32,7 @@ const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
       style={{ backgroundColor: buttonColor }}
       aria-label="Delete tag"
     >
-      <DeleteTagIcon width={10} height={10} fillColor={buttonColor} strokeColor={iconStrokeColor} />
+      <DeleteTagIcon fillColor={buttonColor} strokeColor={iconStrokeColor} />
     </button>
   );
 };

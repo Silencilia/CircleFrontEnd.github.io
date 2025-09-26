@@ -34,18 +34,18 @@ module.exports = {
         'inter': ['Inter', 'sans-serif'],
       },
       spacing: {
-        'xs': '5px',    // Extra small spacing
-        'sm': '10px',   // Small spacing
-        'md': '15px',   // Medium spacing
-        'lg': '20px',   // Large spacing
-        'xl': '30px',   // Extra large spacing
-        'btn-lg': '36px', // Button large size
+        'xs': 'var(--spacing-xs)',    // Extra small spacing - responsive
+        'sm': 'var(--spacing-sm)',   // Small spacing - responsive
+        'md': 'var(--spacing-md)',   // Medium spacing - responsive
+        'lg': 'var(--spacing-lg)',   // Large spacing - responsive
+        'xl': 'var(--spacing-xl)',   // Extra large spacing - responsive
+        'btn-lg': 'var(--spacing-btn-lg)', // Button large size - responsive
       },
       borderRadius: {
-        'xs': '6px',    // Extra small radius
-        'sm': '12px',   // Small radius
-        'md': '15px',   // Medium radius
-        'lg': '25px',   // Large radius
+        'xs': 'var(--border-radius-xs)',    // Extra small radius - responsive
+        'sm': 'var(--border-radius-sm)',   // Small radius - responsive
+        'md': 'var(--border-radius-md)',   // Medium radius - responsive
+        'lg': 'var(--border-radius-lg)',   // Large radius - responsive
       },
       gap: {
         'xs': 'var(--gap-xs)',    // Extra small gap - responsive
@@ -256,11 +256,6 @@ module.exports = {
           padding: '0px 5px',
           gap: '5px',
           borderRadius: '6px',
-          '& svg': {
-            width: '15px',
-            height: '15px',
-            strokeWidth: '1.5px',
-          },
         },
       };
 
@@ -269,15 +264,15 @@ module.exports = {
     function({ addUtilities }) {    
       const buttonUtilities = {
         '.btn-tg': {
-          width: '10px',
-          height: '10px',
+          width: '12px',
+          height: '12px',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           '& svg': {
-            width: '10px',
-            height: '10px',
+            width: '12px',
+            height: '12px',
           },
         },
         '.btn-sm': {
@@ -584,7 +579,7 @@ module.exports = {
       addUtilities(pageUtilities);
     },
     function({ addUtilities }) {
-      const responsiveGapUtilities = {
+      const responsiveLayoutUtilities = {
         ':root': {
           // Mobile-first gap values (default)
           '--gap-xs': '2px',    // Extra small gap
@@ -595,6 +590,19 @@ module.exports = {
           '--gap-2xl': '20px',  // 3X large gap
           '--gap-3xl': '25px',  // 4X large gap
           '--gap-4xl': '30px',  // 5X large gap
+          // Mobile-first spacing values (default)
+          '--spacing-xs': '5px',    // Extra small spacing
+          '--spacing-sm': '10px',   // Small spacing
+          '--spacing-md': '15px',   // Medium spacing
+          '--spacing-lg': '20px',   // Large spacing
+          '--spacing-xl': '30px',   // Extra large spacing
+          '--spacing-btn-lg': '36px', // Button large size
+          // Mobile-first border radius values (default)
+          '--border-radius-xs': '6px',    // Extra small radius
+          '--border-radius-sm': '12px',   // Small radius
+          '--border-radius-md': '15px',   // Medium radius
+          '--border-radius-lg': '25px',   // Large radius
+
         },
         // Desktop values at 640px+
         '@media (min-width: 640px)': {
@@ -607,11 +615,23 @@ module.exports = {
             '--gap-2xl': '25px',  // 3X large gap
             '--gap-3xl': '30px',  // 4X large gap
             '--gap-4xl': '40px',  // 5X large gap
+            // Desktop spacing values
+            '--spacing-xs': '5px',    // Extra small spacing
+            '--spacing-sm': '10px',   // Small spacing
+            '--spacing-md': '15px',   // Medium spacing
+            '--spacing-lg': '20px',   // Large spacing
+            '--spacing-xl': '30px',   // Extra large spacing
+            '--spacing-btn-lg': '36px', // Button large size
+            // Desktop border radius values
+            '--border-radius-xs': '6px',    // Extra small radius
+            '--border-radius-sm': '12px',   // Small radius
+            '--border-radius-md': '15px',   // Medium radius
+            '--border-radius-lg': '25px',   // Large radius
           },
         },
       };
 
-      addUtilities(responsiveGapUtilities);
+      addUtilities(responsiveLayoutUtilities);
     }
   ],
 }

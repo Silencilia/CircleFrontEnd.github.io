@@ -1,12 +1,12 @@
 import React from 'react';
 
 interface PlusIconProps {
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
   className?: string;
 }
 
-const PlusIcon: React.FC<PlusIconProps> = ({ width = 22, height = 22, className = '' }) => {
+const PlusIcon: React.FC<PlusIconProps> = ({ width, height, className = '' }) => {
   return (
     <svg
       width={width}

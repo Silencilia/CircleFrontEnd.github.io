@@ -6,6 +6,8 @@ import DownIcon from '../icons/DownIcon';
 interface CommitmentGalleryProps {
   commitments: Commitment[];
   title?: string;
+  isCollapsed?: boolean;
+  onToggle?: () => void;
   onHeightChange?: (h: number) => void;
 }
 
@@ -14,13 +16,12 @@ interface CommitmentGalleryProps {
 export let COMMITMENT_GALLERY_TARGET_HEIGHT = 20 + 32 + 30 + 155 + 10; // 247px (mutable for live updates)
 
 // Horizontally scrollable row of CommitmentCard items with drag-to-scroll behavior
-const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, title = 'Upcoming commitments', onHeightChange }) => {
+const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, title = 'Upcoming commitments', isCollapsed = false, onToggle, onHeightChange }) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Keep last measured expanded heights to compute collapsed target height accurately
   const lastExpandedRootHeightRef = useRef<number>(COMMITMENT_GALLERY_TARGET_HEIGHT);
@@ -127,7 +128,7 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
       <div className="flex flex-col gap-xl w-full">
         <div className="flex flex-row items-center gap-4xl">
           <h2 className="font-circleheadlineextra-small text-circle-primary">{title}</h2>
-          <button type="button" onClick={() => setIsCollapsed(prev => !prev)} aria-expanded={!isCollapsed} className="btn-sm">
+          <button type="button" onClick={() => onToggle?.()} aria-expanded={!isCollapsed} className="btn-sm">
             <DownIcon className={`[stroke-width:1.5px] transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
           </button>
         </div>
