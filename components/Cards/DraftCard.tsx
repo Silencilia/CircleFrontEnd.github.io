@@ -1,6 +1,7 @@
 import React from 'react';
 import { Draft } from '../../contexts/ContactContext';
 import { ExtractButton, RecycleButton, MenuButton } from '../Button';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface DraftCardProps {
   draft: Draft;
@@ -15,6 +16,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
   onExtract,
   onMenu
 }) => {
+  const isMobile = useIsMobile();
   // Format the date
   const formatDate = (date: Draft['date']) => {
     if (!date.year) return 'no date';
@@ -49,131 +51,133 @@ const DraftCard: React.FC<DraftCardProps> = ({
   const dateStr = formatDate(draft.date);
   const timeStr = formatTime(draft.time);
 
-  return (
-    <>
-      {/* Desktop Version */}
-      <div className="hidden md:flex w-[600px] h-[140px] bg-white rounded-md p-md flex flex-col gap-md">
-        {/* Frame 126 - Header */}
-        <div className="w-full h-[20px] flex flex-col justify-center items-start p-0">
-          {/* Note info */}
-          <div className="w-full h-[24px] flex flex-row justify-between items-center p-0 gap-md">
-            {/* Date and Time */}
-            <div className="flex flex-row items-center p-0 pr-sm gap-md w-fit h-[20px] justify-start">
-              {/* Month DD, YYYY */}
-              <div className="w-fit h-[20px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-center">
-                {dateStr}
-              </div>
-              {/* hh:mm */}
-              <div className="w-fit h-[20px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-center">
-                {timeStr}
-              </div>
+  // Desktop Layout
+  const DesktopLayout = () => (
+    <div className="w-[600px] h-[140px] bg-white rounded-md p-md flex flex-col gap-md">
+      {/* Frame 126 - Header */}
+      <div className="w-full h-[20px] flex flex-col justify-center items-start p-0">
+        {/* Note info */}
+        <div className="w-full h-[24px] flex flex-row justify-between items-center p-0 gap-md">
+          {/* Date and Time */}
+          <div className="flex flex-row items-center p-0 pr-sm gap-md w-fit h-[20px] justify-start">
+            {/* Month DD, YYYY */}
+            <div className="w-fit h-[20px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-center">
+              {dateStr}
             </div>
-
-            {/* Buttons */}
-            <div className="flex flex-row justify-end items-center p-0 gap-md w-fit h-[24px]">
-              {/* Extract Button */}
-              <ExtractButton 
-                onClick={onExtract}
-                ariaLabel="Extract draft"
-              />
-              
-              {/* Frame 130 */}
-              <div className="flex flex-row items-center p-0 gap-xs w-fit h-[24px]">
-                <RecycleButton 
-                  onClick={onDelete}
-                  ariaLabel="Delete draft"
-                />
-                
-                <MenuButton 
-                  onClick={onMenu}
-                  ariaLabel="Draft menu"
-                />
-              </div>
+            {/* hh:mm */}
+            <div className="w-fit h-[20px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-center">
+              {timeStr}
             </div>
           </div>
-        </div>
 
-        {/* Frame 128 - Description */}
-        <div className="w-full h-[80px] max-h-[80px] flex flex-row items-start p-0">
-          <div className="w-full h-[80px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-start justify-start flex-1 overflow-hidden text-left">
-            <div 
-              className="overflow-hidden text-ellipsis text-left"
-              style={{
-                display: '-webkit-box',
-                WebkitLineClamp: 4,
-                WebkitBoxOrient: 'vertical',
-                lineHeight: '20px',
-                maxHeight: '80px'
-              }}
-            >
-              {draft.text}
+          {/* Buttons */}
+          <div className="flex flex-row justify-end items-center p-0 gap-md w-fit h-[24px]">
+            {/* Extract Button */}
+            <ExtractButton
+              onClick={onExtract}
+              ariaLabel="Extract draft"
+            />
+
+            {/* Frame 130 */}
+            <div className="flex flex-row items-center p-0 gap-xs w-fit h-[24px]">
+              <RecycleButton
+                onClick={onDelete}
+                ariaLabel="Delete draft"
+              />
+
+              <MenuButton
+                onClick={onMenu}
+                ariaLabel="Draft menu"
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Version */}
-      <div className="block md:hidden h-fit bg-white rounded-md p-md flex flex-col gap-md">
-        {/* Frame 126 - Header */}
-        <div className="w-full h-fit flex flex-col items-start">
-          {/* Note info */}
-          <div className="w-full h-fit flex flex-row justify-between items-center gap-md">
-            {/* Date and Time */}
-            <div className="flex flex-row items-center p-0 pr-sm gap-md w-fit h-fit justify-start">
-              {/* Month DD, YYYY */}
-              <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-center">
-                {dateStr}
-              </div>
-              {/* hh:mm */}
-              <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-center">
-                {timeStr}
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex flex-row justify-end items-center gap-sm w-fit h-fit">
-              {/* Extract Button */}
-              <ExtractButton 
-                onClick={onExtract}
-                ariaLabel="Extract draft"
-              />
-              
-              {/* Frame 130 */}
-              <div className="flex flex-row items-center w-fit h-fit gap-xs">
-                <RecycleButton 
-                  onClick={onDelete}
-                  ariaLabel="Delete draft"
-                />
-                
-                <MenuButton 
-                  onClick={onMenu}
-                  ariaLabel="Draft menu"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Frame 128 - Description */}
-        <div className="w-full h-fit max-h-[64px] flex flex-row items-start">
-          <div className="w-full h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-start justify-start flex-1 overflow-hidden text-left">
-            <div 
-              className="overflow-hidden text-ellipsis text-left"
-              style={{
-                display: '-webkit-box',
-                WebkitLineClamp: 4,
-                WebkitBoxOrient: 'vertical',
-                lineHeight: '16px',
-                maxHeight: '64px'
-              }}
-            >
-              {draft.text}
-            </div>
+      {/* Frame 128 - Description */}
+      <div className="w-full h-[80px] max-h-[80px] flex flex-row items-start p-0">
+        <div className="w-full h-[80px] font-circlebodymedium-draft text-circle-primary opacity-50 flex items-start justify-start flex-1 overflow-hidden text-left">
+          <div
+            className="overflow-hidden text-ellipsis text-left"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: 'vertical',
+              lineHeight: '20px',
+              maxHeight: '80px'
+            }}
+          >
+            {draft.text}
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
+
+  // Mobile Layout
+  const MobileLayout = () => (
+    <div className="h-fit bg-white rounded-md p-md flex flex-col gap-md">
+      {/* Frame 126 - Header */}
+      <div className="w-full h-fit flex flex-col items-start">
+        {/* Note info */}
+        <div className="w-full h-fit flex flex-row justify-between items-center gap-md">
+          {/* Date and Time */}
+          <div className="flex flex-row items-center p-0 pr-sm gap-md w-fit h-fit justify-start">
+            {/* Month DD, YYYY */}
+            <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-center">
+              {dateStr}
+            </div>
+            {/* hh:mm */}
+            <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-center">
+              {timeStr}
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-row justify-end items-center gap-sm w-fit h-fit">
+            {/* Extract Button */}
+            <ExtractButton
+              onClick={onExtract}
+              ariaLabel="Extract draft"
+            />
+
+            {/* Frame 130 */}
+            <div className="flex flex-row items-center w-fit h-fit gap-xs">
+              <RecycleButton
+                onClick={onDelete}
+                ariaLabel="Delete draft"
+              />
+
+              <MenuButton
+                onClick={onMenu}
+                ariaLabel="Draft menu"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Frame 128 - Description */}
+      <div className="w-full h-fit max-h-[64px] flex flex-row items-start">
+        <div className="w-full h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex items-start justify-start flex-1 overflow-hidden text-left">
+          <div
+            className="overflow-hidden text-ellipsis text-left"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: 'vertical',
+              lineHeight: '16px',
+              maxHeight: '64px'
+            }}
+          >
+            {draft.text}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return isMobile ? <MobileLayout /> : <DesktopLayout />;
 };
 
 export default DraftCard;

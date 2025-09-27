@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import Title from '../../components/Headers/Title';
-import SearchBar from '../../components/Headers/SearchBar';
+import Search from '../../components/Headers/Search';
 import { NewNoteButton } from '../../components/Button';
 import NavigationBar from '../../components/NavigationBar';
 import CommitmentGallery from '../../components/Gallery/CommitmentGallery';
@@ -12,24 +12,30 @@ import NoteGallery from '../../components/Gallery/NoteGallery';
 import NoteCardDetail from '../../components/Cards/NoteCardDetail';
 import NoteCardNew from '../../components/Cards/NoteCardNew';
 import ContactCardDetail from '../../components/Cards/ContactCardDetail';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   NAV_BAR_HEIGHT_MOBILE,
   NAV_BAR_HEIGHT_DESKTOP,
   COMMITMENT_GALLERY_HEIGHT_EXPANDED_MOBILE,
   COMMITMENT_GALLERY_HEIGHT_EXPANDED_DESKTOP,
   COMMITMENT_GALLERY_HEIGHT_COLLAPSED_MOBILE,
-  COMMITMENT_GALLERY_HEIGHT_COLLAPSED_DESKTOP
+  COMMITMENT_GALLERY_HEIGHT_COLLAPSED_DESKTOP,
+  TITLE_HEIGHT_MOBILE,
+  TITLE_HEIGHT_DESKTOP,
 } from '../../utils/designConstants';
 
 export default function MemoPage() {
   const { state, createNewNote } = useContacts();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [newNote, setNewNote] = useState<Note | null>(null);
-  const [navBarHeight, setNavBarHeight] = useState<string>(NAV_BAR_HEIGHT_MOBILE);
-  const [isMobile, setIsMobile] = useState(false);
   const [isCommitmentGalleryCollapsed, setIsCommitmentGalleryCollapsed] = useState(false);
+
+  const titleHeight = isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP;
+  const searchBarHeight = isMobile ? '40px' : '60px';
+  const navBarHeight = isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP;
 
   // Avoid conditional hook usage: render loading state inside return instead of early return
 
@@ -46,18 +52,6 @@ export default function MemoPage() {
     }
   };
 
-  // Update navigation bar height and mobile detection based on screen size
-  useEffect(() => {
-    const updateScreenSize = () => {
-      const mobile = window.innerWidth < 640;
-      setIsMobile(mobile);
-      setNavBarHeight(mobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP);
-    };
-
-    updateScreenSize();
-    window.addEventListener('resize', updateScreenSize);
-    return () => window.removeEventListener('resize', updateScreenSize);
-  }, []);
 
 
 
@@ -89,26 +83,38 @@ export default function MemoPage() {
     }
   }, [isCommitmentGalleryCollapsed, isMobile]);
 
-  return (
-    <div className="relative w-full min-h-screen bg-[#FBF7F3]">
+  // Desktop Layout
+  const DesktopLayout = () => (
+    <div className="relative w-full min-h-screen bg-circle-neutral">
       {/* Title and SearchBar - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="w-full justify-center items-center bg-circle-neutral flex flex-col">
+        <div className="w-full bg-circle-neutral flex flex-col">
           {/* Title - Above */}
           <Title title="Memo" />
 
-          {/* SearchBar and New Note Button - Below */}
-          <SearchBar
-            onSearchChange={handleSearchChange}
-            actionButton={<NewNoteButton onClick={handleNewNote} />}
-          />
+          {/* Desktop Search Bar */}
+          <div className="flex flex-row w-full justify-center">
+            <div className="flex flex-row w-full max-w-[900px] items-center px-xl gap-lg bg-circle-neutral" style={{ height: searchBarHeight }}>
+              {/* Search */}
+              <Search
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="Search notes..."
+                autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
+              />
+
+              <div className="flex-shrink-0">
+                <NewNoteButton onClick={handleNewNote} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Content between header (190px) and navbar minus CommitmentGallery target height */}
+      {/* Content between header and navbar minus CommitmentGallery target height */}
       <div
         className="fixed left-0 right-0 z-40"
-        style={{ top: 190, bottom: parseInt(navBarHeight) + commitmentGalleryHeight, overflowY: 'auto' }}
+        style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
       >
         <div className="min-h-full flex flex-col justify-end">
           <NoteGallery notes={filteredNotes} />
@@ -123,16 +129,74 @@ export default function MemoPage() {
           onToggle={() => setIsCommitmentGalleryCollapsed(prev => !prev)}
         />
       </div>
-      
-      {/* NavigationBar - positioned at very bottom (80px height) */}
+
+      {/* NavigationBar - positioned at very bottom */}
       <NavigationBar currentPage="memo" />
+    </div>
+  );
+
+  // Mobile Layout
+  const MobileLayout = () => (
+    <div className="relative w-full min-h-screen bg-circle-neutral">
+      {/* Title and SearchBar - fixed at top */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <div className="w-full bg-circle-neutral flex flex-col">
+          {/* Title - Above */}
+          <Title title="Memo" />
+
+          {/* Mobile Search Bar */}
+          <div className="flex flex-row w-full justify-center">
+            <div className="flex flex-row w-full max-w-[900px] items-center px-lg gap-md h-[40px] bg-circle-neutral">
+              {/* Search */}
+              <Search
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="Search notes..."
+                autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
+              />
+
+              <div className="flex-shrink-0">
+                <NewNoteButton onClick={handleNewNote} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content between header and navbar minus CommitmentGallery target height */}
+      <div
+        className="fixed left-0 right-0 z-40"
+        style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
+      >
+        <div className="min-h-full flex flex-col justify-end">
+          <NoteGallery notes={filteredNotes} />
+        </div>
+      </div>
+
+      {/* CommitmentGallery fixed above navigation bar - height fits content */}
+      <div className="fixed left-0 right-0 z-40" style={{ bottom: navBarHeight }}>
+        <CommitmentGallery
+          commitments={state.commitments}
+          isCollapsed={isCommitmentGalleryCollapsed}
+          onToggle={() => setIsCommitmentGalleryCollapsed(prev => !prev)}
+        />
+      </div>
+
+      {/* NavigationBar - positioned at very bottom */}
+      <NavigationBar currentPage="memo" />
+    </div>
+  );
+
+  return (
+    <>
+      {isMobile ? <MobileLayout /> : <DesktopLayout />}
 
       {/* Overlays for new/opened items */}
       {typeof window !== 'undefined' && selectedNote
         ? createPortal(
             (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-                <NoteCardDetail 
+                <NoteCardDetail
                   note={selectedNote}
                   onMinimize={() => setSelectedNote(null)}
                   onOpenContactDetail={(contact) => {
@@ -149,7 +213,7 @@ export default function MemoPage() {
         ? createPortal(
             (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-                <NoteCardNew 
+                <NoteCardNew
                   note={newNote}
                   onMinimize={() => setNewNote(null)}
                   onOpenContactDetail={(contact) => {
@@ -166,7 +230,7 @@ export default function MemoPage() {
         ? createPortal(
             (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-                <ContactCardDetail 
+                <ContactCardDetail
                   contact={selectedContact}
                   onMinimize={() => setSelectedContact(null)}
                   onOpenNote={(note) => {
@@ -180,6 +244,6 @@ export default function MemoPage() {
             document.body
           )
         : null}
-    </div>
+    </>
   );
 }

@@ -139,7 +139,7 @@ const DraftGallery: React.FC<DraftGalleryProps> = ({
           scrollBehavior: isDragging ? 'auto' : 'smooth'
         }}
       >
-        <div className="flex flex-wrap gap-lg justify-center px-4 py-sm">
+        <div className="flex flex-wrap gap-lg justify-center px-lg py-sm">
           {drafts.length > 0 ? (
             drafts.map((draft, index) => (
               <DraftCard 

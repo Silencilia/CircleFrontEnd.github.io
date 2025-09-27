@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import CommitmentCard from '../Cards/CommitmentCard';
 import { Commitment } from '../../contexts/ContactContext';
 import DownIcon from '../icons/DownIcon';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface CommitmentGalleryProps {
   commitments: Commitment[];
@@ -17,6 +18,7 @@ export let COMMITMENT_GALLERY_TARGET_HEIGHT = 20 + 32 + 30 + 155 + 10; // 247px 
 
 // Horizontally scrollable row of CommitmentCard items with drag-to-scroll behavior
 const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, title = 'Upcoming commitments', isCollapsed = false, onToggle, onHeightChange }) => {
+  const isMobile = useIsMobile();
   const rootRef = useRef<HTMLDivElement>(null);
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -123,11 +125,53 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
 
   const items = useMemo(() => (commitments || []).filter(c => !c.is_trashed), [commitments]);
 
-  return (
+  // Mobile Layout
+  const MobileLayout = () => (
+    <div ref={rootRef} className={`w-full px-lg pt-sm ${isCollapsed ? 'commitment-gallery-collapsed' : 'commitment-gallery-expanded'}`}>
+      <div className="flex flex-col gap-md w-full">
+        <div className="flex flex-row items-center gap-xl">
+          <h2 className="font-circletitlesmall text-circle-primary">{title}</h2>
+          <button type="button" onClick={() => onToggle?.()} aria-expanded={!isCollapsed} className="btn-sm">
+            <DownIcon className={`[stroke-width:1.5px] transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        {!isCollapsed && (
+          <div
+            ref={cardsContainerRef}
+            className={`flex flex-row items-start gap-lg overflow-x-auto select-none scrollbar-hide ${
+              isDragging ? 'cursor-grabbing' : 'cursor-grab'
+            }`}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{ scrollBehavior: isDragging ? 'auto' : 'smooth', userSelect: isDragging ? 'none' : 'auto' }}
+          >
+            {items.length > 0 ? (
+              items.map((commitment) => (
+                <div key={commitment.id} className="flex-shrink-0">
+                  <CommitmentCard commitment={commitment} />
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-circle-primary/60 font-circlebodymedium py-8">
+                No commitments to display
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Desktop Layout
+  const DesktopLayout = () => (
     <div ref={rootRef} className={`w-full px-xl pt-md ${isCollapsed ? 'commitment-gallery-collapsed' : 'commitment-gallery-expanded'}`}>
-      <div className="flex flex-col gap-xl w-full">
-        <div className="flex flex-row items-center gap-4xl">
-          <h2 className="font-circleheadlineextra-small text-circle-primary">{title}</h2>
+      <div className="flex flex-col gap-lg w-full">
+        <div className="flex flex-row items-center gap-2xl">
+          <h2 className="font-circleheadlinexsmall text-circle-primary">{title}</h2>
           <button type="button" onClick={() => onToggle?.()} aria-expanded={!isCollapsed} className="btn-sm">
             <DownIcon className={`[stroke-width:1.5px] transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
           </button>
@@ -162,6 +206,8 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
       </div>
     </div>
   );
+
+  return isMobile ? <MobileLayout /> : <DesktopLayout />;
 };
 
 export default CommitmentGallery;

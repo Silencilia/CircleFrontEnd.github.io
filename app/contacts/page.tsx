@@ -36,7 +36,7 @@ export default function ContactsPage() {
   return (
     <div className="relative w-full min-h-screen bg-circle-neutral">
       {/* Title and SearchBar - fixed at top */}
-      <div className="fixed top-0 left-0 right-0 z-50 w-full bg-circle-neutral flex flex-col items-center">
+      <div className="fixed top-0 left-0 right-0 z-50 w-full bg-circle-neutral flex flex-col items-stretch">
           {/* Title - Above */}
           <Title title="Contacts" />
 

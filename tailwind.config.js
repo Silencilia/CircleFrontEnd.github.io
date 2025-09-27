@@ -8,8 +8,6 @@ const {
   COMMITMENT_GALLERY_HEIGHT_COLLAPSED_DESKTOP,
   TITLE_HEIGHT_DESKTOP,
   TITLE_HEIGHT_MOBILE,
-  SEARCH_BAR_HEIGHT_MOBILE,
-  SEARCH_BAR_HEIGHT_DESKTOP,
 } = require('./utils/designConstants');
 
 module.exports = {
@@ -34,28 +32,28 @@ module.exports = {
         'inter': ['Inter', 'sans-serif'],
       },
       spacing: {
-        'xs': 'var(--spacing-xs)',    // Extra small spacing - responsive
-        'sm': 'var(--spacing-sm)',   // Small spacing - responsive
-        'md': 'var(--spacing-md)',   // Medium spacing - responsive
-        'lg': 'var(--spacing-lg)',   // Large spacing - responsive
-        'xl': 'var(--spacing-xl)',   // Extra large spacing - responsive
-        'btn-lg': 'var(--spacing-btn-lg)', // Button large size - responsive
+        'xs': '5px',    // Extra small spacing
+        'sm': '10px',   // Small spacing
+        'md': '15px',   // Medium spacing
+        'lg': '20px',   // Large spacing
+        'xl': '30px',   // Extra large spacing
+        'btn-lg': '36px', // Button large size
       },
       borderRadius: {
-        'xs': 'var(--border-radius-xs)',    // Extra small radius - responsive
-        'sm': 'var(--border-radius-sm)',   // Small radius - responsive
-        'md': 'var(--border-radius-md)',   // Medium radius - responsive
-        'lg': 'var(--border-radius-lg)',   // Large radius - responsive
+        'xs': '6px',    // Extra small radius
+        'sm': '12px',   // Small radius
+        'md': '15px',   // Medium radius
+        'lg': '25px',   // Large radius
       },
       gap: {
-        'xs': 'var(--gap-xs)',    // Extra small gap - responsive
-        'xm': 'var(--gap-xm)',    // Medium gap - responsive
-        'md': 'var(--gap-md)',   // Large gap - responsive
-        'lg': 'var(--gap-lg)',   // Extra large gap - responsive
-        'xl': 'var(--gap-xl)',  // 2X large gap - responsive
-        '2xl': 'var(--gap-2xl)',  // 3X large gap - responsive
-        '3xl': 'var(--gap-3xl)',  // 4X large gap - responsive
-        '4xl': 'var(--gap-4xl)',  // 5X large gap - responsive
+        'xs': '2px',    // Extra small gap
+        'sm': '4px',    // Small gap
+        'md': '8px',   // Large gap
+        'lg': '12px',   // Extra large gap
+        'xl': '15px',  // 2X large gap
+        '2xl': '20px',  // 3X large gap
+        '3xl': '25px',  // 4X large gap
+        '4xl': '30px',  // 5X large gap
       },
     },
   },
@@ -88,14 +86,16 @@ module.exports = {
         },
         '.font-circledisplaysmall': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '28px', // Mobile: 1.75rem (down from 36px)
+          fontSize: '36px',
           fontWeight: '400',
-          lineHeight: '36px', // Mobile: adjusted
-          // Desktop sizes at 640px+
-          [`@media (min-width: 640px)`]: {
-            fontSize: '36px', // 2.25rem
-            lineHeight: '45px', // 1.25
-          },
+          lineHeight: '45px',
+        },
+
+        '.font-circledisplayxsmall': {
+          fontFamily: 'Merriweather, serif',
+          fontSize: '24px',
+          fontWeight: '400',
+          lineHeight: '32px',
         },
 
         // Headline styles - Merriweather
@@ -132,17 +132,12 @@ module.exports = {
             lineHeight: '32px', // 2rem
           },
         },
-        '.font-circleheadlineextra-small': {
+        '.font-circleheadlinexsmall': {
           fontFamily: 'Merriweather, serif',
-          fontSize: '18px', // Mobile: 1.125rem (down from 20px)
+          fontSize: '18px', // 1.25rem
           fontWeight: '400',
-          lineHeight: '24px', // Mobile: adjusted
-          // Desktop sizes at 640px+
-          [`@media (min-width: 640px)`]: {
-            fontSize: '20px', // 1.25rem
-            lineHeight: '28px', // 1.75rem
+          lineHeight: '24px', // 1.75rem
           },
-        },
 
         // Body styles - Inter
         '.font-circlebodylarge': {
@@ -552,22 +547,6 @@ module.exports = {
           },
         },
 
-        '.search-bar': {
-          height: SEARCH_BAR_HEIGHT_MOBILE,  // Default mobile height
-          display: 'flex',
-          flexDirection: 'row',
-          width: '100%',
-          maxWidth: '900px',
-          alignItems: 'center',
-          paddingLeft: '30px',  // px-xl value
-          paddingRight: '30px', // px-xl value
-          gap: '12px',  // gap-lg value (20px)
-          // Automatically switch to desktop height at 640px+
-          [`@media (min-width: 640px)`]: {
-            height: SEARCH_BAR_HEIGHT_DESKTOP,
-            gap: '20px', 
-          },
-        },
 
         '.commitment-gallery-expanded': {
           height: COMMITMENT_GALLERY_HEIGHT_EXPANDED_MOBILE,  // Default mobile height
@@ -610,59 +589,16 @@ module.exports = {
       addUtilities(pageUtilities);
     },
     function({ addUtilities }) {
-      const responsiveLayoutUtilities = {
-        ':root': {
-          // Mobile-first gap values (default)
-          '--gap-xs': '2px',    // Extra small gap
-          '--gap-xm': '4px',    // Medium gap
-          '--gap-md': '8px',   // Large gap
-          '--gap-lg': '12px',   // Extra large gap
-          '--gap-xl': '15px',  // 2X large gap
-          '--gap-2xl': '20px',  // 3X large gap
-          '--gap-3xl': '25px',  // 4X large gap
-          '--gap-4xl': '30px',  // 5X large gap
-          // Mobile-first spacing values (default)
-          '--spacing-xs': '5px',    // Extra small spacing
-          '--spacing-sm': '10px',   // Small spacing
-          '--spacing-md': '15px',   // Medium spacing
-          '--spacing-lg': '20px',   // Large spacing
-          '--spacing-xl': '30px',   // Extra large spacing
-          '--spacing-btn-lg': '36px', // Button large size
-          // Mobile-first border radius values (default)
-          '--border-radius-xs': '6px',    // Extra small radius
-          '--border-radius-sm': '12px',   // Small radius
-          '--border-radius-md': '15px',   // Medium radius
-          '--border-radius-lg': '25px',   // Large radius
-
-        },
-        // Desktop values at 640px+
-        '@media (min-width: 640px)': {
-          ':root': {
-            '--gap-xs': '2px',    // Extra small gap
-            '--gap-xm': '5px',    // Medium gap
-            '--gap-md': '10px',   // Large gap
-            '--gap-lg': '15px',   // Extra large gap
-            '--gap-xl': '20px',  // 2X large gap
-            '--gap-2xl': '25px',  // 3X large gap
-            '--gap-3xl': '30px',  // 4X large gap
-            '--gap-4xl': '40px',  // 5X large gap
-            // Desktop spacing values
-            '--spacing-xs': '5px',    // Extra small spacing
-            '--spacing-sm': '10px',   // Small spacing
-            '--spacing-md': '15px',   // Medium spacing
-            '--spacing-lg': '20px',   // Large spacing
-            '--spacing-xl': '30px',   // Extra large spacing
-            '--spacing-btn-lg': '36px', // Button large size
-            // Desktop border radius values
-            '--border-radius-xs': '6px',    // Extra small radius
-            '--border-radius-sm': '12px',   // Small radius
-            '--border-radius-md': '15px',   // Medium radius
-            '--border-radius-lg': '25px',   // Large radius
-          },
+      const clampUtilities = {
+        '.line-clamp-2': {
+          display: '-webkit-box',
+          '-webkit-line-clamp': '2',
+          '-webkit-box-orient': 'vertical',
+          overflow: 'hidden',
         },
       };
 
-      addUtilities(responsiveLayoutUtilities);
-    }
+      addUtilities(clampUtilities);
+    },
   ],
 }
