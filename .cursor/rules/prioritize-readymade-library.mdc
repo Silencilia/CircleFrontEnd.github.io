@@ -1,0 +1,4 @@
+---
+When the user asks you to implement a new functionality, you should always first search if there is an existing library that achieves it, instead of directly writing a customized function. If there is a good match between an existing library and the user's demand, you should suggest it first and let the user decide whether to use it or not. You should follow this rule regardless of whether the user explicitly asks you to search for existing libraries for a demand or not.
+alwaysApply: true
+---

@@ -23,6 +23,7 @@
     "react-aria-components": "^1.12.1",
     "react-contenteditable": "^3.3.7",
     "react-dom": "^18",
+    "react-indiana-drag-scroll": "2.2.1",
     "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {

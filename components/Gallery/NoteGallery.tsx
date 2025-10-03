@@ -1,22 +1,17 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useMemo } from 'react';
 import NoteCard from '../Cards/NoteCard';
-import ContactCardDetail from '../Cards/ContactCardDetail';
-import NoteCardDetail from '../Cards/NoteCardDetail';
 import { Contact, Note } from '../../contexts/ContactContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface NoteGalleryProps {
   notes: Note[];
+  onOpenNoteDetail?: (note: Note) => void;
+  onOpenContactDetail?: (contact: Contact) => void;
 }
 
 // NoteGallery section positioned similarly to provided spec; renders a wrapped grid of NoteCards
-const NoteGallery: React.FC<NoteGalleryProps> = ({ notes }) => {
+const NoteGallery: React.FC<NoteGalleryProps> = ({ notes, onOpenNoteDetail, onOpenContactDetail }) => {
   const items = useMemo(() => (notes || []).filter(n => !n.is_trashed), [notes]);
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => { setIsMounted(true); }, []);
   const isMobile = useIsMobile();
 
   const DesktopLayout = () => (
@@ -27,14 +22,8 @@ const NoteGallery: React.FC<NoteGalleryProps> = ({ notes }) => {
             <NoteCard 
               key={note.id} 
               note={note}
-              onOpenNoteDetail={(n) => {
-                setSelectedNote(n);
-                setSelectedContact(null);
-              }}
-              onOpenContactDetail={(contact) => {
-                setSelectedContact(contact);
-                setSelectedNote(null);
-              }}
+              onOpenNoteDetail={onOpenNoteDetail}
+              onOpenContactDetail={onOpenContactDetail}
             />
           ))
         ) : (
@@ -52,14 +41,8 @@ const NoteGallery: React.FC<NoteGalleryProps> = ({ notes }) => {
             <NoteCard 
               key={note.id} 
               note={note}
-              onOpenNoteDetail={(n) => {
-                setSelectedNote(n);
-                setSelectedContact(null);
-              }}
-              onOpenContactDetail={(contact) => {
-                setSelectedContact(contact);
-                setSelectedNote(null);
-              }}
+              onOpenNoteDetail={onOpenNoteDetail}
+              onOpenContactDetail={onOpenContactDetail}
             />
           ))
         ) : (
@@ -68,47 +51,7 @@ const NoteGallery: React.FC<NoteGalleryProps> = ({ notes }) => {
       </div>
     </div>
   );
-  return (
-    <>
-      {isMobile ? <MobileLayout /> : <DesktopLayout />}
-    {/* Overlays managed at the NoteGallery level */}
-    {isMounted && selectedNote
-      ? createPortal(
-        (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-            <NoteCardDetail 
-              note={selectedNote}
-              onMinimize={() => setSelectedNote(null)}
-              onOpenContactDetail={(contact) => {
-                setSelectedContact(contact);
-                setSelectedNote(null);
-              }}
-            />
-          </div>
-        ),
-        document.body
-      )
-      : null}
-    {isMounted && selectedContact
-      ? createPortal(
-        (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-            <ContactCardDetail 
-              contact={selectedContact}
-              onMinimize={() => setSelectedContact(null)}
-              onOpenContactDetail={(next) => setSelectedContact(next)}
-              onOpenNote={(n) => {
-                setSelectedNote(n);
-                setSelectedContact(null);
-              }}
-            />
-          </div>
-        ),
-        document.body
-      )
-      : null}
-    </>
-  );
+  return isMobile ? <MobileLayout /> : <DesktopLayout />;
 };
 
 export default NoteGallery;

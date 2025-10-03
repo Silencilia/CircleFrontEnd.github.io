@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ContentEditable from 'react-contenteditable';
+import ScrollContainer from 'react-indiana-drag-scroll';
 import { Contact, Subject, Relationship, Note, useContacts } from '../../contexts/ContactContext';
 import { CardIndex, createSourceRecord, CardType, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import { SubjectTag, RelationshipTag } from '../Tag';
@@ -15,6 +16,7 @@ import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/BirthDatePicker';
 import { formatYyyyMmDdToLong } from '../../data/strings';
 import useCardNavigation from '../../hooks/useCardNavigation';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 // (Removed global open-contact tracking)
 
@@ -49,10 +51,6 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     return null;
   }
   // (Removed registration of open contact detail)
-  const notesContainerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [scrollTop, setScrollTop] = useState(0);
   const [isAnyNoteEditing, setIsAnyNoteEditing] = useState(false);
   
   // Get the latest contact data from context state
@@ -136,46 +134,6 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     return 'No birth date';
   };
 
-  // Mouse drag scrolling handlers - simpler approach
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // Check if the target is or contains a contenteditable element
-    const target = e.target as HTMLElement;
-    const isOverEditable = target.closest('[contenteditable="true"]');
-    // Do not start drag when clicking a contact reference or other interactive controls
-    const isOverContactRef = target.closest('[data-contact-ref="true"]');
-    const isOverButtonOrLink = target.closest('button, a, [role="button"], [role="link"]');
-    
-    if (isOverEditable || isOverContactRef || isOverButtonOrLink || !notesContainerRef.current) return;
-    
-    setIsDragging(true);
-    setStartY(e.clientY - notesContainerRef.current.offsetTop);
-    setScrollTop(notesContainerRef.current.scrollTop);
-    e.preventDefault();
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    // Check if the target is or contains a contenteditable element
-    const target = e.target as HTMLElement;
-    const isOverEditable = target.closest('[contenteditable="true"]');
-    
-    if (isOverEditable || !isDragging || !notesContainerRef.current) return;
-    
-    const y = e.clientY - notesContainerRef.current.offsetTop;
-    const walk = (y - startY) * 2;
-    notesContainerRef.current.scrollTop = scrollTop - walk;
-  };
-
-  const handleMouseUp = () => {
-    if (!isAnyNoteEditing) {
-      setIsDragging(false);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isAnyNoteEditing) {
-      setIsDragging(false);
-    }
-  };
 
   // Track editing state for mouse drag functionality
   useEffect(() => {
@@ -487,16 +445,17 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     closeCurrent: onMinimize,
   });
 
-  return (
-    <>
-    <div className="w-[630px] h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-[15px] flex flex-col gap-[40px]">
+  const isMobile = useIsMobile();
+
+  const DesktopLayout = () => (
+    <div className="flex flex-col w-[630px] h-fit max-h-[95vh] min-h-0 overflow-auto bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-md gap-3xl">
       {/* Contact Info Section */}
-      <div className="w-full h-fit flex flex-col gap-[10px]">
-        <div className="w-full h-fit flex flex-col gap-[10px]">
+      <div className="w-full h-fit flex flex-col gap-lg">
+        <div className="w-full h-fit flex flex-col gap-lg">
           {/* Name and Buttons Row */}
           <div className="w-full h-fit flex flex-row justify-between items-center">
             {/* Name */}
-            <div className="w-fit h-[24px] flex items-center gap-2">
+            <div className="w-fit h-fit flex items-center gap-xs">
               {isNameEditing ? (
                 <ContentEditable
                   innerRef={nameContentEditableRef}
@@ -506,7 +465,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   onKeyDownCapture={handleNameKeyDown}
                   onKeyUp={handleNameKeyUp}
                   onBlur={handleNameBlur}
-                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary`}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circletitlemedium text-circle-primary`}
                   style={{
                     minHeight: '20px',
                     wordWrap: 'break-word',
@@ -516,7 +475,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               ) : (
                 <div 
                   onClick={handleNameEditClick}
-                  className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium text-circle-primary"
+                  className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circletitlemedium text-circle-primary"
                   title="Click to edit"
                 >
                   {currentContact.name}
@@ -668,8 +627,8 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         </div>
 
         {/* Birth Date */}
-        <div className="w-fit h-[20px] flex flex-col gap-0">
-          <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
+        <div className="w-fit h-fit flex flex-col gap-0">
+          <div className="w-fit h-fit flex flex-row items-center gap-xs">
             <CalendarIcon width={16} height={16} className="text-circle-primary" />
             <button
               type="button"
@@ -684,7 +643,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
       </div>
 
       {/* Notes Section */}
-      <div className="w-fit h-fit max-h-[580px] flex flex-col gap-[20px]">
+      <div className="w-fit flex-1 flex flex-col gap-lg min-h-0">
         {/* Notes Header */}
         <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
           <NoteIcon width={16} height={16} className="text-circle-primary" />
@@ -693,20 +652,11 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
           </span>
         </div>
 
-        {/* Note Cards Container - Scrollable with mouse drag (disabled during editing) */}
-        <div 
-          ref={notesContainerRef}
-          className={`w-fit h-fit max-h-[540px] overflow-y-auto flex flex-col gap-[15px] select-none scrollbar-hide ${
-            isAnyNoteEditing 
-              ? 'cursor-default' 
-              : isDragging 
-                ? 'cursor-grabbing' 
-                : 'cursor-grab'
-          }`}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
+        {/* Note Cards Container - Scrollable with mouse drag */}
+        <ScrollContainer
+          className="w-fit flex-1 overflow-y-auto flex flex-col gap-[15px] select-none scrollbar-hide cursor-grab active:cursor-grabbing"
+          horizontal={false}
+          vertical={true}
         >
           {notes.length > 0 ? (
             notes.map((note) => (
@@ -737,13 +687,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               No notes recorded.
             </div>
           )}
-        </div>
+        </ScrollContainer>
       </div>
 
       {/* Tags Section */}
-      <div className="w-fit h-fit flex flex-col gap-[5px] overflow-y-auto">
+      <div className="w-fit h-fit flex flex-col gap-sm">
         {/* Relationships */}
-        <div className="w-fit h-fit max-h-[20px] flex flex-row flex-wrap items-start content-start gap-[5px]">
+        <div className="w-fit h-fit flex flex-row flex-wrap items-start content-start gap-sm">
           {relationships.length > 0 ? (
             relationships.map((relationship) => (
               <RelationshipTag
@@ -759,7 +709,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         </div>
 
         {/* Subjects */}
-        <div className="w-fit h-fit max-h-[70px] flex flex-row flex-wrap items-start content-start gap-[5px]">
+        <div className="w-fit h-fit flex flex-row flex-wrap items-start content-start gap-sm">
           {subjects.length > 0 ? (
             subjects.map((subject) => (
               <SubjectTag
@@ -775,55 +725,273 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         </div>
       </div>
     </div>
-    {/* Birth Date Picker Overlay */}
-    {isBirthDatePickerOpen && (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-circle-primary/50"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) handleBirthDateCancel();
-        }}
-      >
-        <div className="mx-4">
-          <DynamicPrecisionDatePicker
-            value={birthDateValue}
-            onChange={setBirthDateValue}
-            label="Birth date picker"
-            onConfirm={handleBirthDateConfirm}
-            onCancel={handleBirthDateCancel}
-          />
-        </div>
-      </div>
-    )}
+  );
 
-    {/* Delete Confirmation Dialog */}
-    <DeleteConfirmationDialog
-      isOpen={showDeleteDialog}
-      onCancel={() => setShowDeleteDialog(false)}
-      onConfirm={handleDeleteContact}
-      itemType="contact"
-      itemName={currentContact.name}
-    />
-    {/* Note Detail Overlay (fallback local manager) */}
-    {typeof window !== 'undefined' && noteDetail && (
-      <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setNoteDetail(null);
-        }}
-      >
-        <div className="mx-4">
-          <NoteCardDetail
-            note={noteDetail}
-            caller={noteDetailCaller}
-            onMinimize={() => setNoteDetail(null)}
-            onOpenContactDetail={() => {
-              // Optional: could integrate to open a nested contact; for now, close note detail
-              setNoteDetail(null);
-            }}
-          />
+  const MobileLayout = () => (
+    <div className="fixed inset-0 flex flex-col items-start p-0 gap-5 bg-white">
+      {/* Main mobile layout container for Contact Detail */}
+      <div className="flex flex-col items-start p-md gap-xl w-full h-full bg-white order-0 self-stretch">
+        
+        {/* Header section: Name, edit controls, and action buttons */}
+        <div className="flex flex-col w-full h-fit gap-md">
+          {/* Row: Name and action buttons */}
+          <div className="w-full h-fit flex flex-row items-start gap-lg p-0">
+            {/* Name and edit controls */}
+            <div className="w-full h-fit flex flex-row justify-between items-start gap-lg p-0 flex-1">
+              {/* Name display or edit */}
+              <div className="w-fit h-fit flex items-center gap-xs">
+                {isNameEditing ? (
+                  <ContentEditable
+                    innerRef={nameContentEditableRef}
+                    html={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={handleNameKeyDown}
+                    onKeyDownCapture={handleNameKeyDown}
+                    onKeyUp={handleNameKeyUp}
+                    onBlur={handleNameBlur}
+                    className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circletitlesmall text-circle-primary`}
+                    style={{ minHeight: '20px', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
+                  />
+                ) : (
+                  <div 
+                    onClick={handleNameEditClick}
+                    className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circletitlesmall text-circle-primary"
+                    title="Click to edit"
+                  >
+                    {currentContact.name}
+                  </div>
+                )}
+                {/* Name edit confirm/cancel controls */}
+                {isNameEditing && (
+                  <div className="flex gap-xs">
+                    <ConfirmButton onClick={handleNameSave} ariaLabel={isNameSaving ? 'Saving...' : 'Save name'} />
+                    <CancelButton onClick={handleNameCancel} ariaLabel="Cancel name edit" />
+                  </div>
+                )}
+              </div>
+              {/* Action buttons: Back, Delete, Minimize */}
+              <div className="w-fit h-fit flex flex-row justify-end items-center gap-xs p-0">
+                <BackButton
+                  onClick={() => handleBack('contactCardDetail', contact.id)}
+                  showIcon={true}
+                  children=""
+                  size="md"
+                />
+                <RecycleButton onClick={() => { setShowDeleteDialog(true); }} ariaLabel="Delete contact" />
+                <MinimizeButton onClick={() => { clearCardIndexArray(); onMinimize?.(); }} ariaLabel="Minimize contact detail" />
+              </div>
+            </div>
+          </div>
+
+          {/* Occupation and Organization section */}
+          <div className="w-fit h-fit flex flex-col gap-0">
+            {/* Occupation row */}
+            <div className="w-fit h-fit flex items-center gap-xs">
+              {isOccupationEditing ? (
+                <ContentEditable
+                  innerRef={occupationContentEditableRef}
+                  html={editOccupation}
+                  onChange={(e) => setEditOccupation(e.target.value)}
+                  onKeyDown={handleOccupationKeyDown}
+                  onKeyDownCapture={handleOccupationKeyDown}
+                  onKeyUp={handleOccupationKeyUp}
+                  onBlur={handleOccupationBlur}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodysmall text-circle-primary`}
+                  style={{ minHeight: '20px', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
+                />
+              ) : (
+                <div 
+                  onClick={handleOccupationEditClick}
+                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodysmall ${
+                    occupation?.title && occupation.title.trim() !== '' ? 'text-circle-primary' : 'text-circle-primary opacity-50 italic'
+                  }`}
+                  title="Click to edit"
+                >
+                  {occupation?.title && occupation.title.trim() !== '' ? occupation.title : 'no occupation'}
+                </div>
+              )}
+              {/* Occupation edit confirm/cancel controls */}
+              {isOccupationEditing && (
+                <div className="flex gap-[2px]">
+                  <ConfirmButton onClick={handleOccupationSave} ariaLabel="Save occupation" />
+                  <CancelButton onClick={handleOccupationCancel} ariaLabel="Cancel occupation edit" />
+                </div>
+              )}
+            </div>
+            {/* Spacer for occupation edit mode */}
+            {isOccupationEditing && <div className="h-[10px]"></div>}
+            {/* Organization row */}
+            <div className="w-fit h-[20px] flex items-center gap-2">
+              {isOrganizationEditing ? (
+                <ContentEditable
+                  innerRef={organizationContentEditableRef}
+                  html={editOrganization}
+                  onChange={(e) => setEditOrganization(e.target.value)}
+                  onKeyDown={handleOrganizationKeyDown}
+                  onKeyDownCapture={handleOrganizationKeyDown}
+                  onKeyUp={handleOrganizationKeyUp}
+                  onBlur={handleOrganizationBlur}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodysmall text-circle-primary`}
+                  style={{ minHeight: '20px', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
+                />
+              ) : (
+                <div 
+                  onClick={handleOrganizationEditClick}
+                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodysmall ${
+                    organization?.name ? 'text-circle-primary' : 'text-circle-primary opacity-50 italic'
+                  }`}
+                  title="Click to edit"
+                >
+                  {organization?.name || 'organization'}
+                </div>
+              )}
+              {/* Organization edit confirm/cancel controls */}
+              {isOrganizationEditing && (
+                <div className="flex gap-[2px]">
+                  <ConfirmButton onClick={handleOrganizationSave} ariaLabel="Save organization" />
+                  <CancelButton onClick={handleOrganizationCancel} ariaLabel="Cancel organization edit" />
+                </div>
+              )}
+            </div>
+          </div>
+
+               {/* Birth date section */}
+        <div className="w-fit h-fit flex flex-col gap-0">
+          <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
+            <CalendarIcon width={16} height={16} className="text-circle-primary" />
+            <button
+              type="button"
+              onClick={openBirthDatePicker}
+              className="font-circlebodysmall text-circle-primary underline decoration-transparent hover:decoration-circle-primary/30 focus:decoration-circle-primary/50 rounded px-1 -mx-1"
+              title="Click to set birth date"
+            >
+              {formatBirthDate(currentContact.birth_date)}
+            </button>
+          </div>
         </div>
+        </div>
+
+   
+
+        {/* Notes section */}
+        <div className="w-full flex-1 flex flex-col gap-md min-h-0">
+          {/* Notes header */}
+          <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
+            <NoteIcon width={16} height={16} className="text-circle-primary" />
+            <span className="font-circlebodysmall text-circle-primary">{notes.length} notes</span>
+          </div>
+          {/* Notes list */}
+          <ScrollContainer
+            className="w-full flex-1 overflow-y-auto flex flex-col gap-[15px] select-none scrollbar-hide cursor-grab active:cursor-grabbing"
+            horizontal={false}
+            vertical={true}
+          >
+            {notes.length > 0 ? (
+              notes.map((note) => (
+                <NoteCard 
+                  key={note.id} 
+                  note={note}
+                  caller={createSourceRecord('contactCardDetail', contact.id)}
+                  isNestedInContactDetail={true}
+                  currentContactId={contact.id}
+                  onOpenNoteDetail={(n, source) => {
+                    const src = source || createSourceRecord('contactCardDetail', contact.id);
+                    navOpenNoteDetail(n, src);
+                    onMinimize?.();
+                  }}
+                  onOpenContactDetail={(nextContact, source) => {
+                    if (onOpenContactDetail) {
+                      onOpenContactDetail(nextContact, source || createSourceRecord('contactCardDetail', contact.id));
+                    } else {
+                      console.log('Nested NoteCard requested opening contact detail for:', nextContact.name);
+                    }
+                  }}
+                />
+              ))
+            ) : (
+              <div className="text-center text-circle-primary/50 italic py-8 font-circlelabelmedium">No notes recorded.</div>
+            )}
+          </ScrollContainer>
+        </div>
+
+        {/* Tags section: Relationships and Subjects */}
+        <div className="w-full h-fit flex flex-col gap-sm overflow-y-auto">
+          {/* Relationships tags row */}
+          <div className="w-full h-fit flex flex-row flex-wrap items-start content-start gap-sm">
+            {relationships.length > 0 ? (
+              relationships.map((relationship) => (
+                <RelationshipTag key={relationship.id} relationship={relationship} contactId={contact.id} editable={false} />
+              ))
+            ) : (
+              <div className="text-circle-primary/50 italic font-circlelabelmedium">No relationships recorded.</div>
+            )}
+          </div>
+          {/* Subjects tags row */}
+          <div className="w-full h-fit flex flex-row flex-wrap items-start content-start gap-sm">
+            {subjects.length > 0 ? (
+              subjects.map((subject) => (
+                <SubjectTag key={subject.id} subject={subject} contactId={contact.id} editable={true} />
+              ))
+            ) : (
+              <div className="text-circle-primary/50 italic font-circlelabelmedium">No subjects recorded.</div>
+            )}
+          </div>
+        </div>
+
       </div>
-    )}
+    </div>
+  );
+
+  return (
+    <>
+      {isMobile ? <MobileLayout /> : <DesktopLayout />}
+
+      {isBirthDatePickerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-circle-primary/50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleBirthDateCancel();
+          }}
+        >
+          <div className="mx-4">
+            <DynamicPrecisionDatePicker
+              value={birthDateValue}
+              onChange={setBirthDateValue}
+              label="Birth date picker"
+              onConfirm={handleBirthDateConfirm}
+              onCancel={handleBirthDateCancel}
+            />
+          </div>
+        </div>
+      )}
+
+      <DeleteConfirmationDialog
+        isOpen={showDeleteDialog}
+        onCancel={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteContact}
+        itemType="contact"
+        itemName={currentContact.name}
+      />
+
+      {typeof window !== 'undefined' && noteDetail && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setNoteDetail(null);
+          }}
+        >
+          <div className="mx-4">
+            <NoteCardDetail
+              note={noteDetail}
+              caller={noteDetailCaller}
+              onMinimize={() => setNoteDetail(null)}
+              onOpenContactDetail={() => {
+                setNoteDetail(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };

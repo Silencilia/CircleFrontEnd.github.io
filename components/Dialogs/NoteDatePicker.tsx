@@ -87,6 +87,9 @@ export const NoteDatePicker: React.FC<NoteDatePickerProps> = ({
         if (!dateObj.month) return `${dateObj.year} (incomplete)`;
         return `${monthName(dateObj.month)} ${dateObj.year}`;
       case 'day':
+        // If month is provided but day is missing, show "Month Year (incomplete)"
+        if (dateObj.month && !dateObj.day) return `${monthName(dateObj.month)} ${dateObj.year} (incomplete)`;
+        // If month itself is missing, fall back to "Year (incomplete)"
         if (!dateObj.month || !dateObj.day) return `${dateObj.year} (incomplete)`;
         return `${monthName(dateObj.month)} ${dateObj.day}, ${dateObj.year}`;
       default:

@@ -111,7 +111,7 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
 
         <div className="flex flex-col items-start p-0 gap-4xl w-full self-stretch">
           <div className="flex flex-row items-center p-0 gap-2xl w-full self-stretch">
-            <div className="flex flex-row items-center p-0 gap-xm">
+            <div className="flex flex-row items-center p-0 gap-sm">
               <TextButton
                 minWidth={0}
                 toggled={value.precision === 'none'}
@@ -205,7 +205,7 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
 
           <div className="flex flex-row justify-between items-center p-0  w-full self-stretch">
             <div className="font-circlelabelsmall text-circle-primary">Current value: {formatDate(value)}</div>
-            <div className="flex flex-row justify-end items-center p-0 gap-xm w- fit">
+            <div className="flex flex-row justify-end items-center p-0 gap-sm w- fit">
               <ConfirmButton
                 onClick={() => { setDatePicked(value); onConfirm?.(value); }}
                 ariaLabel="Confirm"

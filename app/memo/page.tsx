@@ -117,7 +117,17 @@ export default function MemoPage() {
         style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
       >
         <div className="min-h-full flex flex-col justify-end">
-          <NoteGallery notes={filteredNotes} />
+          <NoteGallery 
+            notes={filteredNotes} 
+            onOpenNoteDetail={(n) => {
+              setSelectedNote(n);
+              setSelectedContact(null);
+            }}
+            onOpenContactDetail={(contact) => {
+              setSelectedContact(contact);
+              setSelectedNote(null);
+            }}
+          />
         </div>
       </div>
 
@@ -169,7 +179,17 @@ export default function MemoPage() {
         style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
       >
         <div className="min-h-full flex flex-col justify-end">
-          <NoteGallery notes={filteredNotes} />
+          <NoteGallery 
+            notes={filteredNotes} 
+            onOpenNoteDetail={(n) => {
+              setSelectedNote(n);
+              setSelectedContact(null);
+            }}
+            onOpenContactDetail={(contact) => {
+              setSelectedContact(contact);
+              setSelectedNote(null);
+            }}
+          />
         </div>
       </div>
 

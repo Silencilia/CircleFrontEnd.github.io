@@ -23,7 +23,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   actionButton,
 }) => {
   return (
-    <div className="flex flex-row w-full max-w-[900px] items-center px-xl gap-lg h-[60px] bg-circle-neutral">
+    <div className="flex flex-row w-full max-w-[900px] mx-auto items-center px-xl gap-lg h-[60px] bg-circle-neutral">
       <Search
         value={searchQuery}
         onChange={onSearchChange}

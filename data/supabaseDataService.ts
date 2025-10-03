@@ -13,9 +13,10 @@ function precisionDateToDb(date: PrecisionDate | undefined, prefix: string = 'bi
   };
 }
 
-function dbToPrecisionDate(birth_year: number | null, birth_month: number | null, birth_day: number | null): PrecisionDate | undefined {
-  if (birth_year === null || birth_month === null || birth_day === null) return undefined;
-  return { year: birth_year, month: birth_month, day: birth_day };
+function dbToPrecisionDate(year: number | null, month: number | null, day: number | null): PrecisionDate | undefined {
+  // Return undefined only when all parts are null. Otherwise, allow partial dates.
+  if (year === null && month === null && day === null) return undefined;
+  return { year, month, day };
 }
 
 function timeValueToDb(time: TimeValue | undefined): { time_hour: number | null, time_minute: number | null } {

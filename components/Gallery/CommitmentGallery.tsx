@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import ScrollContainer from 'react-indiana-drag-scroll';
 import CommitmentCard from '../Cards/CommitmentCard';
 import { Commitment } from '../../contexts/ContactContext';
 import DownIcon from '../icons/DownIcon';
@@ -16,14 +17,11 @@ interface CommitmentGalleryProps {
 // Top padding (20) + title line-height (32) + gap under title (30) + card row height (155) + bottom padding (10)
 export let COMMITMENT_GALLERY_TARGET_HEIGHT = 20 + 32 + 30 + 155 + 10; // 247px (mutable for live updates)
 
-// Horizontally scrollable row of CommitmentCard items with drag-to-scroll behavior
+// Horizontally scrollable row of CommitmentCard items
 const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, title = 'Upcoming commitments', isCollapsed = false, onToggle, onHeightChange }) => {
   const isMobile = useIsMobile();
   const rootRef = useRef<HTMLDivElement>(null);
   const cardsContainerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   // Keep last measured expanded heights to compute collapsed target height accurately
   const lastExpandedRootHeightRef = useRef<number>(COMMITMENT_GALLERY_TARGET_HEIGHT);
@@ -45,59 +43,6 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
     COMMITMENT_GALLERY_TARGET_HEIGHT = collapsedHeight;
     if (onHeightChange) onHeightChange(COMMITMENT_GALLERY_TARGET_HEIGHT);
   }, [isCollapsed, onHeightChange]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!cardsContainerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.clientX);
-    setScrollLeft(cardsContainerRef.current.scrollLeft);
-    e.preventDefault();
-  }, []);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || !cardsContainerRef.current) return;
-    const x = e.clientX;
-    const walk = (startX - x) * 1.5;
-    cardsContainerRef.current.scrollLeft = scrollLeft + walk;
-  }, [isDragging, startX, scrollLeft]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  // Touch events for mobile
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!cardsContainerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.touches[0].clientX);
-    setScrollLeft(cardsContainerRef.current.scrollLeft);
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging || !cardsContainerRef.current) return;
-    const x = e.touches[0].clientX;
-    const walk = (startX - x) * 1.5;
-    cardsContainerRef.current.scrollLeft = scrollLeft + walk;
-  }, [isDragging, startX, scrollLeft]);
-
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  // Global listeners for smooth dragging
-  useEffect(() => {
-    if (!isDragging) return;
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Observe size changes of the root and cards container to update the exported target height
   useEffect(() => {
@@ -137,17 +82,10 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
         </div>
 
         {!isCollapsed && (
-          <div
-            ref={cardsContainerRef}
-            className={`flex flex-row items-start gap-lg overflow-x-auto select-none scrollbar-hide ${
-              isDragging ? 'cursor-grabbing' : 'cursor-grab'
-            }`}
-            onMouseDown={handleMouseDown}
-            onMouseLeave={handleMouseLeave}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            style={{ scrollBehavior: isDragging ? 'auto' : 'smooth', userSelect: isDragging ? 'none' : 'auto' }}
+          <ScrollContainer
+            innerRef={cardsContainerRef}
+            className="flex flex-row items-start gap-lg overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing"
+            vertical={false}
           >
             {items.length > 0 ? (
               items.map((commitment) => (
@@ -160,7 +98,7 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
                 No commitments to display
               </div>
             )}
-          </div>
+          </ScrollContainer>
         )}
       </div>
     </div>
@@ -178,17 +116,10 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
         </div>
 
         {!isCollapsed && (
-          <div
-            ref={cardsContainerRef}
-            className={`flex flex-row items-start gap-2xl overflow-x-auto select-none scrollbar-hide ${
-              isDragging ? 'cursor-grabbing' : 'cursor-grab'
-            }`}
-            onMouseDown={handleMouseDown}
-            onMouseLeave={handleMouseLeave}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            style={{ scrollBehavior: isDragging ? 'auto' : 'smooth', userSelect: isDragging ? 'none' : 'auto' }}
+          <ScrollContainer
+            innerRef={cardsContainerRef}
+            className="flex flex-row items-start gap-2xl overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing"
+            vertical={false}
           >
             {items.length > 0 ? (
               items.map((commitment) => (
@@ -201,7 +132,7 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
                 No commitments to display
               </div>
             )}
-          </div>
+          </ScrollContainer>
         )}
       </div>
     </div>

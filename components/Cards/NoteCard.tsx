@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Contact, Note, useContacts } from '../../contexts/ContactContext';
 import { MenuButton, RecycleButton } from '../Button';
@@ -77,275 +77,36 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
     }
   };
 
-  // Check if text overflows and truncate if necessary
-  const checkTextOverflow = (text: string, maxHeight: number = 40) => {
-    const lineHeight = 20; // 20px line height as per design
-    const maxLines = Math.floor(maxHeight / lineHeight); // Should be 2 lines
-    
-    // Calculate approximate characters that can fit in 2 lines
-    // Assuming average word length of 5 characters + 1 space = 6 chars per word
-    // And approximately 15-20 words per line depending on text content
-    const charsPerLine = 80; // Conservative estimate for the card width
-    const maxChars = maxLines * charsPerLine;
-    
-    const hasOverflow = text.length > maxChars;
-    
-    if (!hasOverflow) {
-      return { text: text, hasOverflow: false };
-    }
-    
-    // Find the last complete word that fits within the limit
-    const truncated = text.substring(0, maxChars);
-    const lastSpaceIndex = truncated.lastIndexOf(' ');
-    
-    if (lastSpaceIndex > 0) {
-      // Cut at the last complete word
-      return { text: truncated.substring(0, lastSpaceIndex) + '...', hasOverflow: true };
-    } else {
-      // If no space found, just cut at the character limit
-      return { text: truncated + '...', hasOverflow: true };
-    }
-  };
-
   const { date, time } = formatDateTime(note);
-  const { text: truncatedText, hasOverflow } = checkTextOverflow(note.text);
+  
 
-  // Dynamic title overflow detection (desktop and mobile)
-  const titleContainerRef = useRef<HTMLDivElement | null>(null);
-  const titleTextRef = useRef<HTMLDivElement | null>(null);
-  const [titleOverflow, setTitleOverflow] = useState<boolean>(false);
-  const [displayTitle, setDisplayTitle] = useState<string>(note.title);
-
-  useEffect(() => {
-    const measureAndTruncate = () => {
-      const container = titleContainerRef.current;
-      const textEl = titleTextRef.current || titleContainerRef.current;
-      if (!container || !textEl) {
-        setTitleOverflow(false);
-        setDisplayTitle(note.title);
-        return;
-      }
-
-      const availableWidth = container.clientWidth;
-      if (!availableWidth || availableWidth <= 0) {
-        setTitleOverflow(false);
-        setDisplayTitle(note.title);
-        return;
-      }
-
-      const style = window.getComputedStyle(textEl);
-      const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        setTitleOverflow(false);
-        setDisplayTitle(note.title);
-        return;
-      }
-      ctx.font = font;
-
-      const fullWidth = ctx.measureText(note.title).width;
-      if (fullWidth <= availableWidth) {
-        setTitleOverflow(false);
-        setDisplayTitle(note.title);
-        return;
-      }
-
-      const ellipsis = '...';
-      const ellipsisWidth = ctx.measureText(ellipsis).width;
-      const maxTextWidth = Math.max(0, availableWidth - ellipsisWidth);
-
-      // Binary search to find max substring fitting in maxTextWidth
-      let low = 0;
-      let high = note.title.length;
-      let best = '';
-      while (low <= high) {
-        const mid = (low + high) >> 1;
-        const candidate = note.title.slice(0, mid);
-        const w = ctx.measureText(candidate).width;
-        if (w <= maxTextWidth) {
-          best = candidate;
-          low = mid + 1;
-        } else {
-          high = mid - 1;
-        }
-      }
-
-      // Prefer cutting on word boundary when possible
-      const lastSpace = best.lastIndexOf(' ');
-      const finalText = lastSpace > 0 ? best.slice(0, lastSpace) : best;
-
-      setTitleOverflow(true);
-      setDisplayTitle(finalText);
-    };
-
-    // Slight delay to ensure layout is finalized
-    const t = setTimeout(measureAndTruncate, 0);
-
-    const ro = titleContainerRef.current ? new ResizeObserver(() => {
-      measureAndTruncate();
-    }) : null;
-    if (ro && titleContainerRef.current) ro.observe(titleContainerRef.current);
-
-    const onResize = () => measureAndTruncate();
-    window.addEventListener('resize', onResize);
-
-    return () => {
-      clearTimeout(t);
-      if (ro) ro.disconnect();
-      window.removeEventListener('resize', onResize);
-    };
-  }, [note.title, isMobile]);
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
   };
 
-  // Dynamic multiline overflow detection for description (collapsed, two lines)
-  const bodyContainerRef = useRef<HTMLDivElement | null>(null);
-  const bodyTextRef = useRef<HTMLDivElement | null>(null);
-  const [bodyOverflow, setBodyOverflow] = useState<boolean>(false);
-  const [displayBody, setDisplayBody] = useState<string>(note.text);
-
-  useEffect(() => {
-    if (isExpanded) {
-      setBodyOverflow(false);
-      setDisplayBody(note.text);
-      return;
-    }
-
-    const measureAndTruncateMultiline = () => {
-      const container = bodyContainerRef.current;
-      const textEl = bodyTextRef.current || bodyContainerRef.current;
-      if (!container || !textEl) {
-        setBodyOverflow(false);
-        setDisplayBody(note.text);
-        return;
-      }
-
-      const availableWidth = container.clientWidth;
-      if (!availableWidth || availableWidth <= 0) {
-        setBodyOverflow(false);
-        setDisplayBody(note.text);
-        return;
-      }
-
-      const style = window.getComputedStyle(textEl);
-      const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        setBodyOverflow(false);
-        setDisplayBody(note.text);
-        return;
-      }
-      ctx.font = font;
-
-      const words = (note.text || '').split(/\s+/);
-      const maxLines = 2; // collapsed shows 2 lines
-      const ellipsis = '...';
-      const ellipsisWidth = ctx.measureText(ellipsis).width;
-
-      const lines: string[] = [];
-      let current = '';
-
-      const pushOrWrap = (word: string) => {
-        const candidate = current ? current + ' ' + word : word;
-        const w = ctx.measureText(candidate).width;
-        if (w <= availableWidth) {
-          current = candidate;
-        } else {
-          // wrap to next line
-          lines.push(current);
-          current = word;
-        }
-      };
-
-      for (let i = 0; i < words.length; i += 1) {
-        pushOrWrap(words[i]);
-        if (lines.length === maxLines) {
-          break;
-        }
-      }
-
-      if (lines.length < maxLines && current) {
-        lines.push(current);
-      }
-
-      // Determine if more content remains beyond the first 2 lines
-      const reconstructed = lines.join(' ').trim();
-      const hasMoreContent = reconstructed.length < (note.text || '').trim().length;
-
-      if (lines.length <= maxLines && !hasMoreContent) {
-        setBodyOverflow(false);
-        setDisplayBody(note.text);
-        return;
-      }
-
-      // Ensure last line + ellipsis fits width
-      const safeLines = lines.slice(0, maxLines);
-      let last = safeLines[maxLines - 1] || '';
-      const maxLastWidth = Math.max(0, availableWidth - ellipsisWidth);
-
-      let low = 0;
-      let high = last.length;
-      let best = '';
-      while (low <= high) {
-        const mid = (low + high) >> 1;
-        const candidate = last.slice(0, mid);
-        const w = ctx.measureText(candidate).width;
-        if (w <= maxLastWidth) {
-          best = candidate;
-          low = mid + 1;
-        } else {
-          high = mid - 1;
-        }
-      }
-      // Prefer word boundary near end
-      const lastSpace = best.lastIndexOf(' ');
-      if (lastSpace > 0 && lastSpace > best.length * 0.6) {
-        best = best.slice(0, lastSpace);
-      }
-      safeLines[maxLines - 1] = best;
-
-      setBodyOverflow(true);
-      setDisplayBody(safeLines.join(' ').trim());
-    };
-
-    const t = setTimeout(measureAndTruncateMultiline, 0);
-    const ro = bodyContainerRef.current ? new ResizeObserver(() => {
-      measureAndTruncateMultiline();
-    }) : null;
-    if (ro && bodyContainerRef.current) ro.observe(bodyContainerRef.current);
-    const onResize = () => measureAndTruncateMultiline();
-    window.addEventListener('resize', onResize);
-    return () => {
-      clearTimeout(t);
-      if (ro) ro.disconnect();
-      window.removeEventListener('resize', onResize);
-    };
-  }, [note.text, isExpanded, isMobile]);
+  // Body text is truncated to two lines via CSS (line-clamp-2) when collapsed
 
   // Desktop Layout
   const DesktopLayout = () => (
-    <div className="w-[600px] h-[114px] bg-circle-neutral-variant rounded-sm p-sm flex flex-col gap-lg">
+    <div className="w-[600px] h-fit bg-circle-neutral-variant rounded-sm p-md flex flex-col gap-lg">
       {/* Frame 126 */}
-      <div className="w-[580px] h-[44px] flex flex-col items-start p-0">
+      <div className="w-full h-fit flex flex-col items-start p-0">
         {/* Note info */}
-        <div className="w-[580px] h-[24px] flex flex-row items-start gap-lg p-0">
+        <div className="w-full h-fit flex flex-row items-start gap-lg p-0">
           {/* Frame 69 */}
-          <div className="w-full h-[24px] flex flex-row justify-between items-start p-0 flex-1">
+          <div className="w-full h-fit flex flex-row justify-between items-start p-0 flex-1">
             {/* Title */}
-            <div ref={titleContainerRef} className="h-[24px] flex flex-row items-start p-0 flex-1 min-w-0 overflow-hidden">
-              <div ref={titleTextRef} className="h-[24px] font-circletitlemedium text-circle-primary flex items-center whitespace-nowrap">
-                {displayTitle}{titleOverflow && '...'}
+            <div className="h-fit flex flex-row items-start p-0 flex-1 min-w-0 overflow-hidden">
+              <div className="font-circletitlemedium text-circle-primary line-clamp-1 w-full">
+                {note.title}
               </div>
             </div>
 
             {/* Sentiment */}
-            <div className="h-[20px] flex flex-row justify-end items-center gap-lg p-0">
+            <div className="h-fit flex flex-row justify-end items-center gap-lg p-0">
               {/* Frame 73 */}
-              <div className="w-fit h-[20px] flex flex-row items-center gap-sm p-0">
+              <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">
                 {/* Sentiment tags - show up to 3 sentiments */}
                 {sentimentObjects.slice(0, 3).map((sentiment) => (
                   <SentimentTag
@@ -411,12 +172,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
 
       {/* Note description */}
       <div
-        ref={bodyContainerRef}
-        className={`w-[580px] font-circlebodymedium text-circle-primary text-left ${
+        className={`w-full font-circlebodymedium text-circle-primary text-left ${
           isExpanded ? 'h-fit' : 'h-[40px] overflow-hidden'
         }`}
       >
-        <div ref={bodyTextRef} className={isExpanded ? '' : 'line-clamp-2'}>
+        <div className={isExpanded ? '' : 'line-clamp-2'}>
           {contactReference(
             note.text,
             state.contacts,
@@ -449,7 +209,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
                 setIsDetailOpen(false);
                 setIsContactDetailOpenLocal(true);
               }
-            }
+            },
+            isMobile
           )}
         </div>
       </div>
@@ -466,9 +227,9 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
           {/* Frame 69 */}
           <div className="w-full h-fit flex flex-row justify-between items-center flex-1">
             {/* Title */}
-            <div ref={titleContainerRef} className="h-fit w-full flex flex-row items-start pr-sm flex-1 overflow-hidden">
-              <div ref={titleTextRef} className="h-fit font-circletitlesmall text-circle-primary flex items-center whitespace-nowrap">
-                {displayTitle}{titleOverflow && '...'}
+            <div className="h-fit w-full flex flex-row items-start pr-sm flex-1 overflow-hidden">
+              <div className="font-circletitlesmall text-circle-primary line-clamp-1 w-full">
+                {note.title}
               </div>
             </div>
 
@@ -541,12 +302,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
 
       {/* Note description */}
       <div
-        ref={bodyContainerRef}
         className={`w-full font-circlebodysmall text-circle-primary text-left ${
           isExpanded ? 'h-fit' : 'h-[32px] overflow-hidden'
         }`}
       >
-        <div ref={bodyTextRef} className={isExpanded ? '' : 'line-clamp-2'}>
+        <div className={isExpanded ? '' : 'line-clamp-2'}>
           {contactReference(
             note.text,
             state.contacts,
@@ -579,7 +339,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
                 setIsDetailOpen(false);
                 setIsContactDetailOpenLocal(true);
               }
-            }
+            },
+            isMobile
           )}
         </div>
       </div>

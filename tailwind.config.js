@@ -15,6 +15,7 @@ module.exports = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './data/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
@@ -46,14 +47,15 @@ module.exports = {
         'lg': '25px',   // Large radius
       },
       gap: {
-        'xs': '2px',    // Extra small gap
-        'sm': '4px',    // Small gap
-        'md': '8px',   // Large gap
-        'lg': '12px',   // Extra large gap
-        'xl': '15px',  // 2X large gap
-        '2xl': '20px',  // 3X large gap
-        '3xl': '25px',  // 4X large gap
-        '4xl': '30px',  // 5X large gap
+        'xs': '2px',    // Gap: extra small
+        'sm': '5px',    // Gap: small
+        'md': '10px',   // Gap: medium
+        'lg': '15px',   // Gap: large
+        'xl': '20px',   // Gap: extra large
+        '2xl': '25px',  // Gap: 2x extra large
+        '3xl': '30px',  // Gap: 3x extra large
+        '4xl': '35px',  // Gap: 4x extra large
+        '5xl': '40px',  // Gap: 5x extra large
       },
     },
   },
@@ -183,6 +185,15 @@ module.exports = {
           fontSize: '12px', // Mobile: 0.75rem (same as desktop)
           fontWeight: '400',
           fontStyle: 'italic',
+          lineHeight: '16px', // 1rem
+          letterSpacing: '0.025em', // tracking-wide
+        },
+        '.font-circlebodysmall-draft-highlight': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '12px', // Mobile: 0.75rem (same as desktop)
+          fontWeight: '400',
+          fontStyle: 'italic',
+          textDecoration: 'underline',
           lineHeight: '16px', // 1rem
           letterSpacing: '0.025em', // tracking-wide
         },
