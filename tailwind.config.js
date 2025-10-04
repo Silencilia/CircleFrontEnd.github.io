@@ -646,12 +646,11 @@ module.exports = {
     function({ addUtilities }) {
       const cardUtilities = {
         '.crd-dtl': {
-          width: '100vw',
-          height: 'auto',
-          minHeight: '100dvh',
+          width: '100%',
+          height: '100%',
+        
           overflow: 'hidden',
           'background-color': '#FFFFFF',
-          'border-radius': '0px',
           padding: '15px',
           // Add safe-area awareness so mobile browser UI doesn’t overlap
           'padding-top': 'calc(15px + env(safe-area-inset-top))',

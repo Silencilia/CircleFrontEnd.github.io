@@ -449,7 +449,8 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
 
   return (
     <>
-      <div className="crd-dtl flex flex-col gap-3xl">
+      <div className="crd-dtl">
+        <div className="w-full h-full flex flex-col gap-2xl overflow-hidden">
       {/* Contact Info Section */}
       <div className="w-full h-fit flex flex-col gap-lg">
         <div className="w-full h-fit flex flex-col gap-lg">
@@ -485,7 +486,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               
               {/* Name edit controls - show when editing, positioned to the right */}
               {isNameEditing && (
-                <div className="flex gap-[2px]">
+                <div className="flex gap-xs">
                   <ConfirmButton 
                     onClick={handleNameSave} 
                     ariaLabel={isNameSaving ? 'Saving...' : 'Save name'}
@@ -577,9 +578,9 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
             </div>
             
             {/* Add conditional gap when occupation is editing */}
-            {isOccupationEditing && <div className="h-[10px]"></div>}
+            {isOccupationEditing && <div className="h-fit"></div>}
             
-            <div className="w-fit h-[20px] flex items-center gap-2">
+            <div className="w-fit h-fit flex items-center gap-xs">
               {isOrganizationEditing ? (
                 <ContentEditable
                   innerRef={organizationContentEditableRef}
@@ -628,7 +629,6 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         </div>
 
         {/* Birth Date */}
-        <div className="w-fit h-fit flex flex-col gap-0">
           <div className="w-fit h-fit flex flex-row items-center gap-xs">
             <CalendarIcon width={16} height={16} className="text-circle-primary" />
             <button
@@ -640,13 +640,12 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               {formatBirthDate(currentContact.birth_date)}
             </button>
           </div>
-        </div>
       </div>
 
       {/* Notes Section */}
-      <div className="w-fit flex-1 flex flex-col gap-lg min-h-0">
+      <div className="w-full flex-1 flex flex-col gap-lg min-h-0">
         {/* Notes Header */}
-        <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
+        <div className="w-full h-fit flex flex-row items-center gap-md">
           <NoteIcon width={16} height={16} className="text-circle-primary" />
           <span className="font-circlebodymedium text-circle-primary">
             {notes.length} notes
@@ -725,9 +724,8 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
           )}
         </div>
       </div>
+        </div>
     </div>
-  );
-
 
       {isBirthDatePickerOpen && (
         <div
