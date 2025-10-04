@@ -257,7 +257,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
 
   return (<>
     <div className="crd-dtl">
-      <div className="w-full h-full flex flex-col items-start gap-lg p-0 overflow-hidden">
+      <div className="w-full h-full flex flex-col justify-start items-start gap-lg p-0 overflow-hidden">
         {/* Info */}
         <div className="w-full h-fit flex flex-col items-start gap-lg p-0">
           {/* Note info */}
