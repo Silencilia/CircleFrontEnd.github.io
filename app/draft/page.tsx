@@ -68,7 +68,7 @@ export default function DraftPage() {
           {/* Grey-out overlay - covers everything including header and navigation */}
           <div className="fixed inset-0 bg-circle-primary/50 z-[60] flex items-center justify-center">
             {/* DraftCardDetail - positioned above overlay */}
-            <div className="relative z-[70]">
+            <div className="relative z-[70] w-full h-full sm:w-auto sm:h-auto">
               <DraftCardDetail
                 draft={selectedDraft}
                 onExtract={handleExtractDraft}

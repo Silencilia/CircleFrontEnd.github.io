@@ -13,7 +13,7 @@ import { MinimizeButton } from '../Button';
 import { EDITING_MODE_PADDING } from '../../data/variables';
 import { ConfirmButton, CancelButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
-import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/BirthDatePicker';
+import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
 import { formatYyyyMmDdToLong } from '../../data/strings';
 import useCardNavigation from '../../hooks/useCardNavigation';
 
@@ -100,11 +100,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
 
   const handleBirthDateConfirm = async (value: DynamicPrecisionDateValue) => {
     try {
-      const birth = {
-        year: value.year ?? null,
-        month: value.precision === 'year' ? null : (value.month ?? null),
-        day: value.precision === 'day' ? (value.day ?? null) : null,
-      };
+      const birth = (!value || value.precision === 'none' || !value.year)
+        ? { year: null, month: null, day: null }
+        : {
+            year: value.year ?? null,
+            month: value.precision === 'year' ? null : (value.month ?? null),
+            day: value.precision === 'day' ? (value.day ?? null) : null,
+          };
       await updateContact(currentContact.id, { birth_date: birth });
       setIsBirthDatePickerOpen(false);
     } catch (error) {
@@ -739,10 +741,11 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         }}
       >
         <div className="mx-4">
-          <DynamicPrecisionDatePicker
+          <DatePicker
             value={birthDateValue}
             onChange={setBirthDateValue}
             label="Birth date picker"
+            subtitle="How much do you know about this person's birth date?"
             onConfirm={handleBirthDateConfirm}
             onCancel={handleBirthDateCancel}
           />

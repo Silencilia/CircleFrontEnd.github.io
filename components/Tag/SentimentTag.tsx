@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Sentiment, useContacts } from '../../contexts/ContactContext';
 import { DeleteTagButton } from './index';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
-import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface SentimentTagProps {
   sentiment: Sentiment;
@@ -21,7 +20,6 @@ const SentimentTag: React.FC<SentimentTagProps> = ({
   className = '',
   onClick,
 }) => {
-  const isMobile = useIsMobile();
   const { state, updateNote } = useContacts();
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -55,73 +53,33 @@ const SentimentTag: React.FC<SentimentTagProps> = ({
     }
   };
 
-  // Desktop Layout
-  const DesktopLayout = () => {
-    const baseClasses = 'tg flex items-center flex-shrink-0';
-    const interactiveClasses = 'cursor-pointer transition-all';
-    const combinedClasses = `${baseClasses} ${fillColor} ${interactiveClasses} ${className}`;
-
-    return (
-      <>
-        <div className={combinedClasses}>
-          <span
-            className={`font-circlelabelsmall text-center ${textColor}`}
-            onClick={handleTagClick}
-          >
-            {sentiment.label}
-          </span>
-
-          {/* Delete button - only show when clicked */}
-          {showDeleteButton && (
-            <DeleteTagButton
-              buttonColor="bg-circle-neutral"
-              iconStrokeColor="text-circle-primary"
-              className="hover:opacity-80"
-              onDelete={() => {
-                setShowDeleteConfirm(true);
-              }}
-            />
-          )}
-        </div>
-      </>
-    );
-  };
-
-  // Mobile Layout
-  const MobileLayout = () => {
-    const baseClasses = 'tg flex items-center flex-shrink-0';
-    const interactiveClasses = 'cursor-pointer transition-all';
-    const combinedClasses = `${baseClasses} ${fillColor} ${interactiveClasses} ${className}`;
-
-    return (
-      <>
-        <div className={combinedClasses}>
-          <span
-            className={`font-circlelabelxsmall text-center ${textColor}`}
-            onClick={handleTagClick}
-          >
-            {sentiment.label}
-          </span>
-
-          {/* Delete button - only show when clicked */}
-          {showDeleteButton && (
-            <DeleteTagButton
-              buttonColor="bg-circle-neutral"
-              iconStrokeColor="text-circle-primary"
-              className="hover:opacity-80"
-              onDelete={() => {
-                setShowDeleteConfirm(true);
-              }}
-            />
-          )}
-        </div>
-      </>
-    );
-  };
+  // Combined layout (desktop style)
+  const baseClasses = 'tg flex items-center flex-shrink-0';
+  const interactiveClasses = 'cursor-pointer transition-all';
+  const combinedClasses = `${baseClasses} ${fillColor} ${interactiveClasses} ${className}`;
 
   return (
     <>
-      {isMobile ? <MobileLayout /> : <DesktopLayout />}
+      <div className={combinedClasses}>
+        <span
+          className={`text-center ${textColor}`}
+          onClick={handleTagClick}
+        >
+          {sentiment.label}
+        </span>
+
+        {/* Delete button - only show when clicked */}
+        {showDeleteButton && (
+          <DeleteTagButton
+            buttonColor="bg-circle-neutral"
+            iconStrokeColor="text-circle-primary"
+            className="hover:opacity-80"
+            onDelete={() => {
+              setShowDeleteConfirm(true);
+            }}
+          />
+        )}
+      </div>
 
       {/* Confirmation Dialog */}
       <DeleteConfirmationDialog

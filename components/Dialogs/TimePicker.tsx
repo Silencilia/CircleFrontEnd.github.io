@@ -334,12 +334,19 @@ export const TimePicker: React.FC<TimePickerProps> = ({
     onChange({ hour: effectiveHour ?? 0, minute: clamped });
   };
 
+  
+  
   return (
+    <div className="fixed inset-0 flex flex-col items-center w-full h-full p-md">
     <div
-      className={`flex flex-col items-start p-md gap-4xl w-[450px] bg-circle-white rounded-md ${
+      className={`flex flex-col items-center p-md gap-4xl w-full max-w-[450px] h-fit bg-circle-white rounded-md ${
         disabled ? 'opacity-50 pointer-events-none' : ''
       } ${className}`}
-      style={{ boxShadow: '2px 2px 10px rgba(0,0,0,0.25)' }}
+      style={{
+        boxShadow: '2px 2px 10px rgba(0,0,0,0.25)',
+        marginTop: 'auto',
+        marginBottom: 'auto',
+      }}
     >
       <div className="flex flex-col items-center p-0 gap-4xl w-full">
         <div className="flex flex-col items-start p-0 gap-3xl w-full self-stretch">
@@ -495,6 +502,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

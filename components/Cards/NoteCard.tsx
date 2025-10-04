@@ -220,11 +220,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
   // Mobile Layout
   const MobileLayout = () => (
     <div className="w-full h-fit bg-circle-neutral-variant rounded-sm p-sm flex flex-col gap-lg">
-      {/* Frame 126 */}
+      {/* Note info */}
       <div className="w-full h-fit flex flex-col items-start p-0">
-        {/* Note info */}
+        {/* Note info row */}
         <div className="w-full h-fit flex flex-row items-start gap-lg">
-          {/* Frame 69 */}
+          {/* Note info */}
           <div className="w-full h-fit flex flex-row justify-between items-center flex-1">
             {/* Title */}
             <div className="h-fit w-full flex flex-row items-start pr-sm flex-1 overflow-hidden">
@@ -233,21 +233,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
               </div>
             </div>
 
-            {/* Sentiment */}
+            {/* Action buttons */}
             <div className="h-fit flex flex-row justify-end items-center gap-md p-0">
-              {/* Frame 73 */}
-              <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">
-                {/* Sentiment tags - show up to 3 sentiments */}
-                {sentimentObjects.slice(0, 3).map((sentiment) => (
-                  <SentimentTag
-                    key={sentiment.id}
-                    sentiment={sentiment}
-                    noteId={note.id}
-                    fillColor="bg-circle-neutral"
-                    textColor="text-circle-primary"
-                  />
-                ))}
-              </div>
 
               {/* buttons */}
               <div className="w-fit h-fit flex flex-row items-center">
@@ -281,7 +268,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
           </div>
         </div>
 
-        {/* Frame 125 - Date and Time (non-clickable) */}
+        {/* Date and Time */}
         <div className="w-fit h-fit flex flex-row items-center gap-lg p-0">
           <div
             className={`w-fit h-fit font-circlebodysmall text-circle-primary flex items-center ${
@@ -300,7 +287,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
         </div>
       </div>
 
-      {/* Note description */}
+      {/* Note description & sentiment tags */}
+      <div className="w-full h-fit flex flex-col items-start gap-sm">
       <div
         className={`w-full font-circlebodysmall text-circle-primary text-left ${
           isExpanded ? 'h-fit' : 'h-[32px] overflow-hidden'
@@ -343,6 +331,19 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
             isMobile
           )}
         </div>
+      </div>
+      {/* Sentiment tags - show up to 3 sentiments */}
+      <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">
+                {sentimentObjects.slice(0, 3).map((sentiment) => (
+                  <SentimentTag
+                    key={sentiment.id}
+                    sentiment={sentiment}
+                    noteId={note.id}
+                    fillColor="bg-circle-neutral"
+                    textColor="text-circle-primary"
+                  />
+                ))}
+      </div>
       </div>
     </div>
   );

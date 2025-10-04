@@ -1,0 +1,8 @@
+---
+Any DOM element that holds focus or local state (like a ContentEditable input, a focused button, or an open dropdown) needs to stay mounted in the same position in the React tree. So you need to:
+Hoist stateful/interactive elements outside conditionals branches dependent on state rebuilds, such as {isMobile ? <Mobile /> : <Desktop />} in many components.
+Keep the state variables themselves (like isTitleEditing, editTitle, etc.) at the parent component level.
+Let the conditional layouts only control styling and structure, not stateful elements.
+
+alwaysApply: true
+---

@@ -140,7 +140,7 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            className={`font-circlelabelsmall text-center ${textColor} outline-none flex-1`}
+            className={`text-center ${textColor} outline-none flex-1`}
             style={{
               wordWrap: 'break-word',
               whiteSpace: 'pre-wrap'
@@ -148,7 +148,7 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
           />
         ) : (
           <span 
-            className={`font-circlelabelsmall text-center ${textColor}`}
+            className={`text-center ${textColor}`}
             onClick={handleEditClick}
           >
             {subject.label}

@@ -31,7 +31,7 @@ export default function MemoPage() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [newNote, setNewNote] = useState<Note | null>(null);
-  const [isCommitmentGalleryCollapsed, setIsCommitmentGalleryCollapsed] = useState(false);
+  const [isCommitmentGalleryCollapsed, setIsCommitmentGalleryCollapsed] = useState(true);
 
   const titleHeight = isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP;
   const searchBarHeight = isMobile ? '40px' : '60px';

@@ -13,7 +13,7 @@ import { MinimizeButton } from '../Button';
 import { EDITING_MODE_PADDING } from '../../data/variables';
 import { BackButton, RecycleButton, ConfirmButton, CancelButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
-import DynamicPrecisionDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/BirthDatePicker';
+import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
 import { formatYyyyMmDdToLong } from '../../data/strings';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -97,11 +97,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
 
   const handleBirthDateConfirm = async (value: DynamicPrecisionDateValue) => {
     try {
-      const birth = {
-        year: value.year ?? null,
-        month: value.precision === 'year' ? null : (value.month ?? null),
-        day: value.precision === 'day' ? (value.day ?? null) : null,
-      };
+      const birth = (!value || value.precision === 'none' || !value.year)
+        ? { year: null, month: null, day: null }
+        : {
+            year: value.year ?? null,
+            month: value.precision === 'year' ? null : (value.month ?? null),
+            day: value.precision === 'day' ? (value.day ?? null) : null,
+          };
       await updateContact(currentContact.id, { birth_date: birth });
       setIsBirthDatePickerOpen(false);
     } catch (error) {
@@ -445,10 +447,9 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     closeCurrent: onMinimize,
   });
 
-  const isMobile = useIsMobile();
-
-  const DesktopLayout = () => (
-    <div className="flex flex-col w-[630px] h-fit max-h-[95vh] min-h-0 overflow-auto bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-md gap-3xl">
+  return (
+    <>
+      <div className="crd-dtl flex flex-col gap-3xl">
       {/* Contact Info Section */}
       <div className="w-full h-fit flex flex-col gap-lg">
         <div className="w-full h-fit flex flex-col gap-lg">
@@ -727,224 +728,6 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     </div>
   );
 
-  const MobileLayout = () => (
-    <div className="fixed inset-0 flex flex-col items-start p-0 gap-5 bg-white">
-      {/* Main mobile layout container for Contact Detail */}
-      <div className="flex flex-col items-start p-md gap-xl w-full h-full bg-white order-0 self-stretch">
-        
-        {/* Header section: Name, edit controls, and action buttons */}
-        <div className="flex flex-col w-full h-fit gap-md">
-          {/* Row: Name and action buttons */}
-          <div className="w-full h-fit flex flex-row items-start gap-lg p-0">
-            {/* Name and edit controls */}
-            <div className="w-full h-fit flex flex-row justify-between items-start gap-lg p-0 flex-1">
-              {/* Name display or edit */}
-              <div className="w-fit h-fit flex items-center gap-xs">
-                {isNameEditing ? (
-                  <ContentEditable
-                    innerRef={nameContentEditableRef}
-                    html={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={handleNameKeyDown}
-                    onKeyDownCapture={handleNameKeyDown}
-                    onKeyUp={handleNameKeyUp}
-                    onBlur={handleNameBlur}
-                    className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circletitlesmall text-circle-primary`}
-                    style={{ minHeight: '20px', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
-                  />
-                ) : (
-                  <div 
-                    onClick={handleNameEditClick}
-                    className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circletitlesmall text-circle-primary"
-                    title="Click to edit"
-                  >
-                    {currentContact.name}
-                  </div>
-                )}
-                {/* Name edit confirm/cancel controls */}
-                {isNameEditing && (
-                  <div className="flex gap-xs">
-                    <ConfirmButton onClick={handleNameSave} ariaLabel={isNameSaving ? 'Saving...' : 'Save name'} />
-                    <CancelButton onClick={handleNameCancel} ariaLabel="Cancel name edit" />
-                  </div>
-                )}
-              </div>
-              {/* Action buttons: Back, Delete, Minimize */}
-              <div className="w-fit h-fit flex flex-row justify-end items-center gap-xs p-0">
-                <BackButton
-                  onClick={() => handleBack('contactCardDetail', contact.id)}
-                  showIcon={true}
-                  children=""
-                  size="md"
-                />
-                <RecycleButton onClick={() => { setShowDeleteDialog(true); }} ariaLabel="Delete contact" />
-                <MinimizeButton onClick={() => { clearCardIndexArray(); onMinimize?.(); }} ariaLabel="Minimize contact detail" />
-              </div>
-            </div>
-          </div>
-
-          {/* Occupation and Organization section */}
-          <div className="w-fit h-fit flex flex-col gap-0">
-            {/* Occupation row */}
-            <div className="w-fit h-fit flex items-center gap-xs">
-              {isOccupationEditing ? (
-                <ContentEditable
-                  innerRef={occupationContentEditableRef}
-                  html={editOccupation}
-                  onChange={(e) => setEditOccupation(e.target.value)}
-                  onKeyDown={handleOccupationKeyDown}
-                  onKeyDownCapture={handleOccupationKeyDown}
-                  onKeyUp={handleOccupationKeyUp}
-                  onBlur={handleOccupationBlur}
-                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodysmall text-circle-primary`}
-                  style={{ minHeight: '20px', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
-                />
-              ) : (
-                <div 
-                  onClick={handleOccupationEditClick}
-                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodysmall ${
-                    occupation?.title && occupation.title.trim() !== '' ? 'text-circle-primary' : 'text-circle-primary opacity-50 italic'
-                  }`}
-                  title="Click to edit"
-                >
-                  {occupation?.title && occupation.title.trim() !== '' ? occupation.title : 'no occupation'}
-                </div>
-              )}
-              {/* Occupation edit confirm/cancel controls */}
-              {isOccupationEditing && (
-                <div className="flex gap-[2px]">
-                  <ConfirmButton onClick={handleOccupationSave} ariaLabel="Save occupation" />
-                  <CancelButton onClick={handleOccupationCancel} ariaLabel="Cancel occupation edit" />
-                </div>
-              )}
-            </div>
-            {/* Spacer for occupation edit mode */}
-            {isOccupationEditing && <div className="h-[10px]"></div>}
-            {/* Organization row */}
-            <div className="w-fit h-[20px] flex items-center gap-2">
-              {isOrganizationEditing ? (
-                <ContentEditable
-                  innerRef={organizationContentEditableRef}
-                  html={editOrganization}
-                  onChange={(e) => setEditOrganization(e.target.value)}
-                  onKeyDown={handleOrganizationKeyDown}
-                  onKeyDownCapture={handleOrganizationKeyDown}
-                  onKeyUp={handleOrganizationKeyUp}
-                  onBlur={handleOrganizationBlur}
-                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodysmall text-circle-primary`}
-                  style={{ minHeight: '20px', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
-                />
-              ) : (
-                <div 
-                  onClick={handleOrganizationEditClick}
-                  className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodysmall ${
-                    organization?.name ? 'text-circle-primary' : 'text-circle-primary opacity-50 italic'
-                  }`}
-                  title="Click to edit"
-                >
-                  {organization?.name || 'organization'}
-                </div>
-              )}
-              {/* Organization edit confirm/cancel controls */}
-              {isOrganizationEditing && (
-                <div className="flex gap-[2px]">
-                  <ConfirmButton onClick={handleOrganizationSave} ariaLabel="Save organization" />
-                  <CancelButton onClick={handleOrganizationCancel} ariaLabel="Cancel organization edit" />
-                </div>
-              )}
-            </div>
-          </div>
-
-               {/* Birth date section */}
-        <div className="w-fit h-fit flex flex-col gap-0">
-          <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
-            <CalendarIcon width={16} height={16} className="text-circle-primary" />
-            <button
-              type="button"
-              onClick={openBirthDatePicker}
-              className="font-circlebodysmall text-circle-primary underline decoration-transparent hover:decoration-circle-primary/30 focus:decoration-circle-primary/50 rounded px-1 -mx-1"
-              title="Click to set birth date"
-            >
-              {formatBirthDate(currentContact.birth_date)}
-            </button>
-          </div>
-        </div>
-        </div>
-
-   
-
-        {/* Notes section */}
-        <div className="w-full flex-1 flex flex-col gap-md min-h-0">
-          {/* Notes header */}
-          <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
-            <NoteIcon width={16} height={16} className="text-circle-primary" />
-            <span className="font-circlebodysmall text-circle-primary">{notes.length} notes</span>
-          </div>
-          {/* Notes list */}
-          <ScrollContainer
-            className="w-full flex-1 overflow-y-auto flex flex-col gap-[15px] select-none scrollbar-hide cursor-grab active:cursor-grabbing"
-            horizontal={false}
-            vertical={true}
-          >
-            {notes.length > 0 ? (
-              notes.map((note) => (
-                <NoteCard 
-                  key={note.id} 
-                  note={note}
-                  caller={createSourceRecord('contactCardDetail', contact.id)}
-                  isNestedInContactDetail={true}
-                  currentContactId={contact.id}
-                  onOpenNoteDetail={(n, source) => {
-                    const src = source || createSourceRecord('contactCardDetail', contact.id);
-                    navOpenNoteDetail(n, src);
-                    onMinimize?.();
-                  }}
-                  onOpenContactDetail={(nextContact, source) => {
-                    if (onOpenContactDetail) {
-                      onOpenContactDetail(nextContact, source || createSourceRecord('contactCardDetail', contact.id));
-                    } else {
-                      console.log('Nested NoteCard requested opening contact detail for:', nextContact.name);
-                    }
-                  }}
-                />
-              ))
-            ) : (
-              <div className="text-center text-circle-primary/50 italic py-8 font-circlelabelmedium">No notes recorded.</div>
-            )}
-          </ScrollContainer>
-        </div>
-
-        {/* Tags section: Relationships and Subjects */}
-        <div className="w-full h-fit flex flex-col gap-sm overflow-y-auto">
-          {/* Relationships tags row */}
-          <div className="w-full h-fit flex flex-row flex-wrap items-start content-start gap-sm">
-            {relationships.length > 0 ? (
-              relationships.map((relationship) => (
-                <RelationshipTag key={relationship.id} relationship={relationship} contactId={contact.id} editable={false} />
-              ))
-            ) : (
-              <div className="text-circle-primary/50 italic font-circlelabelmedium">No relationships recorded.</div>
-            )}
-          </div>
-          {/* Subjects tags row */}
-          <div className="w-full h-fit flex flex-row flex-wrap items-start content-start gap-sm">
-            {subjects.length > 0 ? (
-              subjects.map((subject) => (
-                <SubjectTag key={subject.id} subject={subject} contactId={contact.id} editable={true} />
-              ))
-            ) : (
-              <div className="text-circle-primary/50 italic font-circlelabelmedium">No subjects recorded.</div>
-            )}
-          </div>
-        </div>
-
-      </div>
-    </div>
-  );
-
-  return (
-    <>
-      {isMobile ? <MobileLayout /> : <DesktopLayout />}
 
       {isBirthDatePickerOpen && (
         <div
@@ -954,10 +737,11 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
           }}
         >
           <div className="mx-4">
-            <DynamicPrecisionDatePicker
+            <DatePicker
               value={birthDateValue}
               onChange={setBirthDateValue}
               label="Birth date picker"
+              subtitle="How much do you know about this person's birth date?"
               onConfirm={handleBirthDateConfirm}
               onCancel={handleBirthDateCancel}
             />

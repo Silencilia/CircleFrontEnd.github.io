@@ -31,7 +31,7 @@ export function contactReference(
     parts.push(
       <span
         key={`contact-${contactId}-${match.index}`}
-        className={`${isMobile ? 'font-circlebodysmall-draft-highlight' : 'font-circlebodymedium-highlight'} text-circle-primary cursor-pointer rounded-sm`}
+        className={`${isMobile ? 'font-circlebodysmall-highlight' : 'font-circlebodymedium-highlight'} text-circle-primary cursor-pointer rounded-sm`}
         data-contact-ref="true"
         role="button"
         tabIndex={0}

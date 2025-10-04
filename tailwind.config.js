@@ -151,27 +151,42 @@ module.exports = {
         },
         '.font-circlebodymedium': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '14px', // Mobile: 0.875rem (same as desktop)
+          fontSize: '12px', // Mobile: 0.75rem (matches circlebodysmall)
           fontWeight: '400',
-          lineHeight: '20px', // 1.25rem
+          lineHeight: '16px', // 1rem (matches circlebodysmall)
           letterSpacing: '0.025em', // tracking-wide
+          // Desktop styles at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '14px', // 0.875rem
+            lineHeight: '20px', // 1.25rem
+          },
         },
         '.font-circlebodymedium-draft': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '14px', // Mobile: 0.875rem (same as desktop)
+          fontSize: '12px', // Mobile: 0.75rem (matches bodysmall-draft)
           fontWeight: '400',
           fontStyle: 'italic',
-          lineHeight: '20px', // 1.25rem
+          lineHeight: '16px', // 1rem (matches bodysmall-draft)
           letterSpacing: '0.025em', // tracking-wide
+          // Desktop styles at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '14px', // 0.875rem
+            lineHeight: '20px', // 1.25rem
+          },
         },
         '.font-circlebodymedium-highlight': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '14px', // Mobile: 0.875rem (same as desktop)
+          fontSize: '12px', // Mobile: 0.75rem (matches bodysmall-highlight)
           fontWeight: '400',
           fontStyle: 'italic',
           textDecoration: 'underline',
-          lineHeight: '20px', // 1.25rem
+          lineHeight: '16px', // 1rem (matches bodysmall-highlight)
           letterSpacing: '0.025em', // tracking-wide
+          // Desktop styles at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '14px', // 0.875rem
+            lineHeight: '20px', // 1.25rem
+          },
         },
         '.font-circlebodysmall': {
           fontFamily: 'Inter, sans-serif',
@@ -188,7 +203,7 @@ module.exports = {
           lineHeight: '16px', // 1rem
           letterSpacing: '0.025em', // tracking-wide
         },
-        '.font-circlebodysmall-draft-highlight': {
+        '.font-circlebodysmall-highlight': {
           fontFamily: 'Inter, sans-serif',
           fontSize: '12px', // Mobile: 0.75rem (same as desktop)
           fontWeight: '400',
@@ -215,11 +230,15 @@ module.exports = {
         },
         '.font-circlelabelsmall': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '12px', // Mobile: 0.75rem (same as desktop)
+          fontSize: '10px', // Mobile: 0.625rem (matches labelxs)
           fontWeight: '500', // medium
-          lineHeight: '16px', // 1rem
+          lineHeight: '12px', // 0.75rem (matches labelxs)
           letterSpacing: '0.05em', // tracking-wider
-          
+          // Desktop styles at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '12px', // 0.75rem
+            lineHeight: '16px', // 1rem
+          },
         },
         '.font-circlelabelxsmall': {
           fontFamily: 'Inter, sans-serif',
@@ -255,11 +274,19 @@ module.exports = {
         },
         '.font-circletitlemedium': {
           fontFamily: 'Inter, sans-serif',
-          fontSize: '16px', // Mobile: 1rem (same as desktop)
+          fontSize: '14px', // Mobile: 0.9375rem
           fontWeight: '500', // medium
-          lineHeight: '24px', // 1.5rem
+          lineHeight: '20px', // 1.375rem
           letterSpacing: '0', // tracking-normal
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            fontSize: '16px', // 1rem
+            lineHeight: '24px', // 1.5rem
+          },
         },
+
+
+        
         '.font-circletitlesmall': {
           fontFamily: 'Inter, sans-serif',
           fontSize: '14px', // Mobile: 0.875rem (same as desktop)
@@ -279,6 +306,11 @@ module.exports = {
           padding: '0px 5px',
           gap: '5px',
           borderRadius: '6px',
+          // Inherit label typography from utilities
+          '@apply font-circlelabelxsmall': {},
+          [`@media (min-width: 640px)`]: {
+            '@apply font-circlelabelsmall': {},
+          },
         },
       };
 
@@ -610,6 +642,30 @@ module.exports = {
       };
 
       addUtilities(clampUtilities);
+    },
+    function({ addUtilities }) {
+      const cardUtilities = {
+        '.crd-dtl': {
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden',
+          'background-color': '#FFFFFF',
+          'border-radius': '0px',
+          padding: '15px',
+          display: 'flex',
+          'flex-direction': 'column',
+          // Desktop styles at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '630px',
+            height: 'fit-content',
+            'max-height': '90vh',
+            'border-radius': '15px',
+            'box-shadow': '2px 2px 10px rgba(0,0,0,0.25)',
+          },
+        },
+      };
+
+      addUtilities(cardUtilities);
     },
   ],
 }

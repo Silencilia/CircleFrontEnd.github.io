@@ -1,11 +1,10 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import ScrollContainer from 'react-indiana-drag-scroll';
 import ExtractButton from '../Button/ExtractButton';
 import RecycleButton from '../Button/RecycleButton';
 import MinimizeButton from '../Button/MinimizeButton';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import { Draft } from '../../contexts/ContactContext';
-import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface DraftCardDetailProps {
   draft: Draft;
@@ -20,7 +19,6 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
   onDelete,
   onMinimize
 }) => {
-  const isMobile = useIsMobile();
   const textContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -155,199 +153,87 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
     return `${hours}:${minutes}`;
   };
 
-  // Desktop Layout
-  const DesktopLayout = () => (
-    <div className="flex flex-col items-start p-0 gap-5 w-[630px] h-fit bg-white rounded-[12px]">
-      {/* Main container */}
-      <div className="flex flex-col items-start p-[15px] gap-5 w-[630px] h-fit bg-white rounded-[12px] flex-none order-0 self-stretch flex-grow-0">
-
-        {/* Note info row */}
-        <div className="flex flex-row justify-between items-center p-0 gap-[10px] w-[600px] h-6 flex-none order-0 self-stretch flex-grow-0">
-
-          {/* Timestamp */}
-          <div className="flex flex-row items-center p-0 gap-[10px] w-fit h-5 flex-none order-0 flex-grow-0">
-            <div className="flex flex-col items-start p-0 w-fit h-5 flex-none order-0 flex-grow-0">
-              <div className="flex flex-row items-center pr-[10px] gap-[10px] w-fit h-5 flex-none order-0 flex-grow-0">
-
-                {/* Date */}
-                <div className="w-fit h-5 font-circlebodymedium-draft text-circle-primary opacity-50 flex-none order-0 flex-grow-0">
-                  {formatDate(draft.date)}
-                </div>
-
-                {/* Time */}
-                <div className="w-fit h-5 font-circlebodymedium-draft text-circle-primary opacity-50 flex-none order-1 flex-grow-0">
-                  {formatTime(draft.time)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Buttons Container */}
-          <div className="flex flex-row items-center gap-[10px] w-fit h-fit p-0 flex-none order-1 flex-grow-0">
-            {/* Extract Button */}
-            <div className="flex flex-row items-center gap-[2px] w-fit h-fit flex-none order-1 flex-grow-0">
-              <ExtractButton onClick={handleExtractClick} />
-            </div>
-
-            {/* Delete and Minimize Buttons */}
-            <div className="flex flex-row items-center gap-[2px] w-fit h-fit flex-none order-2 flex-grow-0">
-              {/* Delete Button */}
-              <RecycleButton
-                onClick={handleDeleteClick}
-                ariaLabel="Delete draft"
-              />
-
-              {/* Minimize Button */}
-              <button
-                onClick={handleMinimizeClick}
-                className="btn-sm hover:bg-circle-neutral-variant transition-colors"
-                aria-label="Minimize draft"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="text-circle-primary"
-                >
-                  <path
-                    d="M2.66667 9.33333H6.66667M6.66667 9.33333V13.3333M6.66667 9.33333L2 14M13.3333 6.66667H9.33333M9.33333 6.66667V2.66667M9.33333 6.66667L14 2"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Text container */}
-        <div
-          ref={textContainerRef}
-          className="flex flex-col justify-start items-start p-[10px] w-[600px] h-fit max-h-[720px] bg-circle-neutral-variant rounded-[12px] flex-none order-1 flex-grow-0 overflow-y-auto"
-          onWheel={handleWheel}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            userSelect: isDragging ? 'none' : 'auto',
-          }}
-        >
-          {/* Hide scrollbar for webkit browsers */}
-          <style jsx>{`
-            div::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
-
-          {/* Draft text */}
-          <div className="w-[580px] h-fit font-circlebodymedium-draft text-left text-circle-primary opacity-50">
-            {draft.text}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Mobile Layout
-  const MobileLayout = () => (
-    <div className="fixed inset-0 flex flex-col items-start p-0 gap-5 bg-white">
-      {/* Main container */}
-      <div className="flex flex-col items-start p-md gap-xl w-full h-full bg-white order-0 self-stretch">
-
-        {/* Title: Draft detail */}
-        <div className="w-full h-fit font-circletitlemedium text-circle-primary flex items-center">
-          Draft detail
-        </div>
-
-        {/* Note info row */}
-        <div className="flex flex-row justify-between items-center gap-md w-full h-fit flex-none order-0 self-stretch flex-grow-0">
-
-          {/* Timestamp */}
-          <div className="flex flex-row items-center p-0 gap-md w-fit h-5 flex-none order-0 flex-grow-0">
-            <div className="flex flex-col items-start p-0 w-fit h-5 flex-none order-0 flex-grow-0">
-              <div className="flex flex-row items-center pr-md gap-md w-fit h-5 flex-none order-0 flex-grow-0">
-
-                {/* Date */}
-                <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex-none order-0 flex-grow-0">
-                  {formatDate(draft.date)}
-                </div>
-
-                {/* Time */}
-                <div className="w-fit h-fit font-circlebodysmall-draft text-circle-primary opacity-50 flex-none order-1 flex-grow-0">
-                  {formatTime(draft.time)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Buttons Container */}
-          <div className="flex flex-row items-center gap-md w-fit h-fit p-0 flex-none order-1 flex-grow-0">
-
-            {/* Extract Button */}
-            <div className="flex flex-row items-center w-fit h-fit flex-none order-1 flex-grow-0">
-              <ExtractButton onClick={handleExtractClick} />
-            </div>
-
-            {/* Delete and Minimize Buttons */}
-            <div className="flex flex-row items-center w-fit h-fit flex-none order-2 flex-grow-0">
-              {/* Delete Button */}
-              <RecycleButton
-                onClick={handleDeleteClick}
-                ariaLabel="Delete draft"
-              />
-
-              {/* Minimize Button */}
-              <MinimizeButton
-                onClick={handleMinimizeClick}
-                ariaLabel="Minimize draft"
-              />
-
-            </div>
-          </div>
-        </div>
-
-        {/* Text container */}
-        <div
-          ref={textContainerRef}
-          className="flex flex-col justify-start items-start w-full flex-1 bg-circle-neutral-variant rounded-md order-1 overflow-y-auto"
-          onWheel={handleWheel}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            userSelect: isDragging ? 'none' : 'auto',
-          }}
-        >
-          {/* Hide scrollbar for webkit browsers */}
-          <style jsx>{`
-            div::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
-
-          {/* Inner padded wrapper to preserve padding while scrolling */}
-          <div className="w-full min-h-full p-md">
-            {/* Draft text */}
-            <div className="w-full h-fit font-circlebodymedium-draft text-left text-circle-primary opacity-50">
-              {draft.text}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <>
-      {isMobile ? <MobileLayout /> : <DesktopLayout />}
+      <div className="crd-dtl">
+        {/* Main container */}
+        <div className="flex flex-col w-full h-full gap-lg overflow-hidden">
+
+          {/* Note info row */}
+          <div className="flex flex-row justify-between items-center p-0 gap-md w-full h-fit flex-none order-0 self-stretch flex-grow-0">
+
+            {/* Timestamp */}
+            <div className="flex flex-row items-center p-0 gap-md w-fit h-5 flex-none order-0 flex-grow-0">
+              <div className="flex flex-col items-start p-0 w-fit h-5 flex-none order-0 flex-grow-0">
+                <div className="flex flex-row items-center pr-md gap-md w-fit h-5 flex-none order-0 flex-grow-0">
+
+                  {/* Date */}
+                  <div className="w-fit h-5 font-circlebodymedium-draft text-circle-primary opacity-50 flex-none order-0 flex-grow-0">
+                    {formatDate(draft.date)}
+                  </div>
+
+                  {/* Time */}
+                  <div className="w-fit h-5 font-circlebodymedium-draft text-circle-primary opacity-50 flex-none order-1 flex-grow-0">
+                    {formatTime(draft.time)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons Container */}
+            <div className="flex flex-row items-center gap-md w-fit h-fit p-0 flex-none order-1 flex-grow-0">
+              {/* Extract Button */}
+              <div className="flex flex-row items-center gap-xs w-fit h-fit flex-none order-1 flex-grow-0">
+                <ExtractButton onClick={handleExtractClick} />
+              </div>
+
+              {/* Delete and Minimize Buttons */}
+              <div className="flex flex-row items-center gap-xs w-fit h-fit flex-none order-2 flex-grow-0">
+                {/* Delete Button */}
+                <RecycleButton
+                  onClick={handleDeleteClick}
+                  ariaLabel="Delete draft"
+                />
+
+                {/* Minimize Button */}
+                <button
+                  onClick={handleMinimizeClick}
+                  className="btn-sm hover:bg-circle-neutral-variant transition-colors"
+                  aria-label="Minimize draft"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="text-circle-primary"
+                  >
+                    <path
+                      d="M2.66667 9.33333H6.66667M6.66667 9.33333V13.3333M6.66667 9.33333L2 14M13.3333 6.66667H9.33333M9.33333 6.66667V2.66667M9.33333 6.66667L14 2"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Text container */}
+          <ScrollContainer
+            className="w-full h-fit min-h-0 max-h-full bg-circle-neutral-variant rounded-sm p-md flex flex-row justify-start items-start overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing"
+            horizontal={false}
+            vertical={true}
+          >
+            <div className="w-fit font-circlebodymedium-draft text-circle-primary text-left opacity-50">
+              {draft.text}
+            </div>
+          </ScrollContainer>
+        </div>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       {isMounted && (

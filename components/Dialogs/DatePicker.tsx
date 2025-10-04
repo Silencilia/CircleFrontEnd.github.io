@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { TextButton } from '../Button';
 import { ConfirmButton, CancelButton } from '../Button';
 import { DownIcon } from '../icons';
@@ -14,7 +14,7 @@ export interface DynamicPrecisionDateValue {
   day: number | null; // 1-31
 }
 
-interface DynamicPrecisionDatePickerProps {
+interface DatePickerProps {
   value: DynamicPrecisionDateValue;
   onChange: (value: DynamicPrecisionDateValue) => void;
   label?: string;
@@ -42,17 +42,16 @@ const monthOptions = [
 
 const getDaysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
 
-export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProps> = ({
+export const DatePicker: React.FC<DatePickerProps> = ({
   value = { precision: 'none', year: null, month: null, day: null },
   onChange = () => {},
-  label = 'Birth date picker',
+  label = 'Date picker',
   className = '',
   disabled = false,
-  subtitle = 'How much do you know about this person\'s birth date?',
+  subtitle = 'Select a date',
   onConfirm,
   onCancel,
 }) => {
-  const [datePicked, setDatePicked] = useState<DynamicPrecisionDateValue | null>(null);
   const currentYear = new Date().getFullYear();
   const years = useMemo(() => Array.from({ length: 100 }, (_, i) => currentYear - 50 + i), [currentYear]);
 
@@ -87,6 +86,9 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
         if (!dateObj.month) return `${dateObj.year} (incomplete)`;
         return `${monthName(dateObj.month)} ${dateObj.year}`;
       case 'day':
+        // If month is provided but day is missing, show "Month Year (incomplete)"
+        if (dateObj.month && !dateObj.day) return `${monthName(dateObj.month)} ${dateObj.year} (incomplete)`;
+        // If month itself is missing, fall back to "Year (incomplete)"
         if (!dateObj.month || !dateObj.day) return `${dateObj.year} (incomplete)`;
         return `${monthName(dateObj.month)} ${dateObj.day}, ${dateObj.year}`;
       default:
@@ -94,14 +96,16 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
     }
   };
 
+  // Adaptive Layout
   return (
+    <div className="fixed inset-0 flex flex-col items-center w-full h-full p-md">
     <div
-      className={`flex flex-col items-start p-md gap-4xl w-[450px] bg-circle-white rounded-sm ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}
-      style={{ boxShadow: '2px 2px 10px rgba(0,0,0,0.25)' }}
+      className={`flex flex-col items-center p-md gap-4xl w-full max-w-[450px] h-fit bg-circle-white rounded-md ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}
+      style={{ boxShadow: '2px 2px 10px rgba(0,0,0,0.25)', marginTop: 'auto', marginBottom: 'auto' }}
     >
       <div className="flex flex-col items-center gap-4xl w-full">
-        <div className="flex flex-col items-start gap-3xl w-full self-stretch">
-          <div className="w-[450px] h-6 font-circletitlemedium text-circle-primary flex items-center">
+        <div className="flex flex-col items-center gap-3xl w-full self-stretch">
+          <div className="w-full h-6 font-circletitlemedium text-circle-primary flex items-center">
             {label}
           </div>
           <div className="w-full h-5 font-circlebodymedium text-circle-primary flex items-center">
@@ -109,13 +113,13 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
           </div>
         </div>
 
-        <div className="flex flex-col items-start p-0 gap-4xl w-full self-stretch">
-          <div className="flex flex-row items-center p-0 gap-2xl w-full self-stretch">
-            <div className="flex flex-row items-center p-0 gap-sm">
+        <div className="flex flex-col items-start  gap-4xl w-full self-stretch">
+          <div className="flex flex-row items-center gap-xl w-full self-stretch">
+            <div className="flex flex-row items-center gap-sm">
               <TextButton
                 minWidth={0}
                 toggled={value.precision === 'none'}
-                onClick={() => { setDatePicked(null); handlePrecisionChange('none'); }}
+                onClick={() => { handlePrecisionChange('none'); }}
               >
                 Clear
               </TextButton>
@@ -143,14 +147,14 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
             </div>
           </div>
 
-          <div className="flex flex-col items-start p-0 gap-lg w-full self-stretch">
+          <div className="flex flex-col items-start gap-lg w-full self-stretch">
             {/* Year pill */}
             <div className="relative w-full h-[25px]">
               <select
                 value={value.year ?? ''}
                 onChange={(e) => handleFieldChange('year', e.target.value)}
                 disabled={disabled}
-                className="appearance-none w-full h-[25px] rounded-md bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
+                className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
               >
                 <option value="">Select year</option>
                 {years.map((year) => (
@@ -169,7 +173,7 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
                   value={value.month ?? ''}
                   onChange={(e) => handleFieldChange('month', e.target.value)}
                   disabled={disabled || !value.year}
-                  className="appearance-none w-full h-[25px] rounded-md bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
+                  className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
                 >
                   <option value="">Select month</option>
                   {monthOptions.map((m) => (
@@ -189,7 +193,7 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
                   value={value.day ?? ''}
                   onChange={(e) => handleFieldChange('day', e.target.value)}
                   disabled={disabled || !value.year || !value.month}
-                  className="appearance-none w-full h-[25px] rounded-md bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
+                  className="appearance-none w-full h-[25px] rounded-[15px] bg-circle-neutral border border-circle-neutral-variant pl-[12.5px] pr-8 font-circlelabelsmall text-circle-primary disabled:cursor-not-allowed"
                 >
                   <option value="">Select day</option>
                   {value.year && value.month && Array.from({ length: getDaysInMonth(value.year, value.month) }, (_, i) => i + 1).map((d) => (
@@ -203,11 +207,11 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
             )}
           </div>
 
-          <div className="flex flex-row justify-between items-center p-0  w-full self-stretch">
+          <div className="flex flex-row justify-between items-center w-full self-stretch">
             <div className="font-circlelabelsmall text-circle-primary">Current value: {formatDate(value)}</div>
-            <div className="flex flex-row justify-end items-center p-0 gap-sm w- fit">
+            <div className="flex flex-row justify-end items-center p-0 gap-xs w-fit">
               <ConfirmButton
-                onClick={() => { setDatePicked(value); onConfirm?.(value); }}
+                onClick={() => { onConfirm?.(value); }}
                 ariaLabel="Confirm"
               />
               <CancelButton
@@ -219,7 +223,11 @@ export const DynamicPrecisionDatePicker: React.FC<DynamicPrecisionDatePickerProp
         </div>
       </div>
     </div>
+    </div>
   );
+
+ 
 };
 
-export default DynamicPrecisionDatePicker;
+export default DatePicker;
+

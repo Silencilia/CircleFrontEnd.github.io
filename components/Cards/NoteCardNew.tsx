@@ -6,11 +6,12 @@ import { CalendarIcon } from '../icons';
 import { ConfirmButton, CancelButton, NewTagButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import { contactReference } from '../../data/referenceParsing';
-import NoteDatePicker, { DynamicPrecisionDateValue } from '../Dialogs/NoteDatePicker';
+import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
 import TimePicker from '../Dialogs/TimePicker';
 import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import { EDITING_MODE_PADDING } from '../../data/variables';
 import useCardNavigation from '../../hooks/useCardNavigation';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 const Type: CardType = 'noteCardDetail';
 
@@ -22,6 +23,7 @@ interface NoteCardDetailProps {
 }
 
 const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, caller, onOpenContactDetail }) => {
+  const isMobile = useIsMobile();
   const { state, updateNote } = useContacts();
   // Always render with the latest note from context in case it was updated
   const currentNote = state.notes.find(n => n.id === note.id) || note;
@@ -266,9 +268,9 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
     }, 100);
   };
 
-  return (
-    <>
-      <div className="w-fit h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-[12px] p-[15px] flex flex-col gap-[20px]">
+  // Desktop Layout
+  const DesktopLayout = () => (
+    <div className="w-fit h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-[12px] p-[15px] flex flex-col gap-[20px]">
         {/* Frame 124 */}
         <div className="w-fit h-fit flex flex-col items-start gap-[20px] p-0">
           {/* Info */}
@@ -448,7 +450,8 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                         if (onOpenContactDetail) {
                           onOpenContactDetail(contact, createSourceRecord('noteCardDetail', currentNote.id));
                         }
-                      }
+                      },
+                      false // isMobile = false for desktop layout
                     )
                   ) : (
                     <span className="italic opacity-50">
@@ -492,12 +495,225 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           </div>
         </div>
       </div>
+  );
+
+  // Mobile Layout
+  const MobileLayout = () => (
+    <div className="fixed inset-0 flex flex-col items-start p-0 gap-5 bg-white">
+      {/* Main container */}
+      <div className="flex flex-col items-start p-md gap-xl w-full h-full bg-white order-0 self-stretch">
+        
+        {/* Title: New note */}
+        <div className="w-full h-fit font-circletitlemedium text-circle-primary flex items-center">
+          New note
+        </div>
+
+        {/* Note info */}
+        <div className="w-full h-fit flex flex-row items-start gap-lg p-0">
+          {/* Frame 69 */}
+          <div className="w-full h-fit flex flex-row justify-between items-start gap-lg p-0 flex-1">
+            {/* Title */}
+            <div className="w-fit h-fit flex flex-col items-start p-0">
+              <div className="w-fit h-fit flex items-center gap-sm">
+                {isTitleEditing ? (
+                  <ContentEditable
+                    innerRef={titleContentEditableRef}
+                    html={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={handleTitleKeyDown}
+                    onKeyDownCapture={handleTitleKeyDown}
+                    onKeyUp={handleTitleKeyUp}
+                    onBlur={handleTitleBlur}
+                    className={`rounded-sm px-sm py-0 focus:ring-1 focus:ring-inset focus:ring-circle-primary font-circletitlemedium text-circle-primary`}
+                    style={{ wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}
+                  />
+                ) : (
+                  <div 
+                    onClick={handleTitleEditClick}
+                    className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circletitlemedium text-circle-primary"
+                    title="Click to edit"
+                  >
+                    {currentNote.title || (
+                      <span className="italic opacity-50">
+                        New Note
+                      </span>
+                    )}
+                  </div>
+                )}
+                {/* Title edit confirm/cancel controls */}
+                {isTitleEditing && (
+                  <div className="flex gap-xs">
+                    <ConfirmButton onClick={handleTitleSave} ariaLabel={isTitleSaving ? 'Saving...' : 'Save title'} />
+                    <CancelButton onClick={handleTitleCancel} ariaLabel="Cancel title edit" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="w-fit h-fit flex flex-row justify-end items-center gap-xs p-0">
+              {/* Confirm button */}
+              <ConfirmButton
+                onClick={() => { handleBack('noteCardDetail', currentNote.id); }}
+                ariaLabel="Confirm note"
+              />
+              
+              {/* Cancel button */}
+              <CancelButton
+                onClick={() => setShowDeleteDialog(true)}
+                ariaLabel="Cancel note"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Date and Time */}
+        <div className="w-full h-fit flex flex-col items-start gap-sm p-0">
+          {/* Date row */}
+          <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
+            {/* Calendar */}
+            <CalendarIcon width={16} height={16} className="text-circle-primary" />
+            {/* Date (clickable) */}
+            <button
+              type="button"
+              onClick={() => {
+                const yearOnly = /^(\d{4})$/;
+                const yearMonth = /^(\d{4})-(\d{2})$/;
+                const fullDate = /^(\d{4})-(\d{2})-(\d{2})$/;
+                let init: DynamicPrecisionDateValue = { precision: 'none', year: null, month: null, day: null };
+                if (currentNote.date && currentNote.date.year) {
+                  if (currentNote.date.year && currentNote.date.month && currentNote.date.day) init = { precision: 'day', year: currentNote.date.year, month: currentNote.date.month, day: currentNote.date.day };
+                  else if (currentNote.date.year && currentNote.date.month) init = { precision: 'month', year: currentNote.date.year, month: currentNote.date.month, day: null };
+                  else if (currentNote.date.year) init = { precision: 'year', year: currentNote.date.year, month: null, day: null };
+                }
+                setDateValue(init);
+                setIsDatePickerOpen(true);
+              }}
+              className={`w-fit h-[20px] font-circlebodysmall text-circle-primary flex items-center ${
+                date === 'no date' ? 'italic opacity-50' : ''
+              }`}
+              title="Click to edit note date"
+            >
+              {date}
+            </button>
+          </div>
+          {/* Time row */}
+          <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (currentNote.time_value && currentNote.time_value.hour !== null && currentNote.time_value.minute !== null) {
+                  setTimeValue({ hour: currentNote.time_value.hour, minute: currentNote.time_value.minute });
+                } else {
+                  const currentTime = parseTimeToTimeValue(new Date());
+                  setTimeValue(currentTime);
+                }
+                setIsTimePickerOpen(true);
+              }}
+              className={`w-fit h-[20px] font-circlebodysmall text-circle-primary flex items-center ${
+                !hasTime ? 'italic opacity-50' : ''
+              }`}
+              title="Click to edit note time"
+            >
+              {time || '--:--'}
+            </button>
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="w-full h-fit bg-circle-neutral-variant rounded-sm p-lg flex flex-col gap-2">
+          <div className="w-fit h-fit flex items-start gap-2">
+            {isTextEditing ? (
+              <ContentEditable
+                innerRef={textContentEditableRef}
+                html={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={handleTextKeyDown}
+                onKeyDownCapture={handleTextKeyDown}
+                onKeyUp={handleTextKeyUp}
+                onBlur={handleTextBlur}
+                className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodysmall text-circle-primary flex-1`}
+                style={{
+                  minHeight: '20px',
+                  wordWrap: 'break-word',
+                  whiteSpace: 'pre-wrap'
+                }}
+              />
+            ) : (
+              <div
+                onClick={handleTextEditClick}
+                className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodysmall text-circle-primary flex-1"
+                title="Click to edit"
+              >
+                {currentNote.text ? (
+                  contactReference(
+                    currentNote.text,
+                    state.contacts,
+                    (contact) => {
+                      if (!contact) return;
+                      // Add CardIndex to global array - represents the current NoteCardDetail
+                      const cardIndex = createSourceRecord('noteCardDetail', currentNote.id);
+                      addToCardIndexArray(cardIndex);
+                      
+                      if (onOpenContactDetail) {
+                        onOpenContactDetail(contact, createSourceRecord('noteCardDetail', currentNote.id));
+                      }
+                    },
+                    true // isMobile = true for mobile layout
+                  )
+                ) : (
+                  <span className="italic opacity-50">
+                    Enter note description here.
+                  </span>
+                )}
+              </div>
+            )}
+            
+            {/* Text edit controls - show when editing */}
+            {isTextEditing && (
+              <div className="flex gap-xs flex-shrink-0">
+                <ConfirmButton 
+                  onClick={handleTextSave} 
+                  ariaLabel={isTextSaving ? 'Saving...' : 'Save text'}
+                />
+                <CancelButton 
+                  onClick={handleTextCancel} 
+                  ariaLabel="Cancel text edit"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sentiment Tags */}
+        <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">
+          {sentimentLabels.map((label, index) => (
+            <div key={index} className="w-fit h-[20px] bg-circle-neutral rounded-xs p-[2px_5px] flex flex-row justify-center items-center">
+              <div className="w-fit h-[16px] font-circlelabelsmall text-circle-primary flex items-center text-center">
+                {label}
+              </div>
+            </div>
+          ))}
+          
+          {/* New Tag Button */}
+          <NewTagButton
+            onClick={() => console.log('Add new tag')}
+            aria-label="Add new tag"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {isMobile ? <MobileLayout /> : <DesktopLayout />}
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         isOpen={showDeleteDialog}
         onCancel={() => setShowDeleteDialog(false)}
-        onConfirm={handleDelete}
+        onConfirm={handleDelete}  
         itemType="note"
         itemName={note.title}
       />
@@ -515,22 +731,28 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 }}
               >
                 <div className="mx-4">
-                  <NoteDatePicker
+                  <DatePicker
                     value={dateValue}
                     onChange={setDateValue}
                     label="Note date"
                     subtitle="When did this happen?"
                     onConfirm={async (value) => {
                       try {
-                        if (!value || !value.year) { setIsDatePickerOpen(false); return; }
-                        const updated = {
-                          date: {
-                            year: value.year ?? null,
-                            month: value.precision === 'year' ? null : (value.month ?? null),
-                            day: value.precision === 'day' ? (value.day ?? null) : null,
-                          }
-                        } as Partial<Note>;
-                        await updateNote(note.id, updated);
+                        if (!value || value.precision === 'none' || !value.year) {
+                          const updated = {
+                            date: { year: null, month: null, day: null }
+                          } as Partial<Note>;
+                          await updateNote(note.id, updated);
+                        } else {
+                          const updated = {
+                            date: {
+                              year: value.year ?? null,
+                              month: value.precision === 'year' ? null : (value.month ?? null),
+                              day: value.precision === 'day' ? (value.day ?? null) : null,
+                            }
+                          } as Partial<Note>;
+                          await updateNote(note.id, updated);
+                        }
                       } catch (err) {
                         console.error('Failed to update note date', err);
                       } finally {
