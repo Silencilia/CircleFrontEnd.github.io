@@ -12,7 +12,6 @@ import NoteGallery from '../../components/Gallery/NoteGallery';
 import NoteCardDetail from '../../components/Cards/NoteCardDetail';
 import NoteCardNew from '../../components/Cards/NoteCardNew';
 import ContactCardDetail from '../../components/Cards/ContactCardDetail';
-import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   NAV_BAR_HEIGHT_MOBILE,
   NAV_BAR_HEIGHT_DESKTOP,
@@ -28,12 +27,24 @@ import {
 
 export default function MemoPage() {
   const { state, createNewNote } = useContacts();
-  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [newNote, setNewNote] = useState<Note | null>(null);
   const [isCommitmentGalleryCollapsed, setIsCommitmentGalleryCollapsed] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect screen size on mount and resize
+  React.useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const titleHeight = isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP;
   const searchBarHeight = isMobile ? MEMO_PAGE_SEARCH_BAR_HEIGHT_MOBILE : MEMO_PAGE_SEARCH_BAR_HEIGHT_DESKTOP;
@@ -85,133 +96,66 @@ export default function MemoPage() {
     }
   }, [isCommitmentGalleryCollapsed, isMobile]);
 
-  // Desktop Layout
-  const DesktopLayout = () => (
-    <div className="relative w-full min-h-screen bg-circle-neutral">
-      {/* Title and SearchBar - fixed at top */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="w-full bg-circle-neutral flex flex-col">
-          {/* Title - Above */}
-          <Title title="Memo" />
-
-          {/* Desktop Search Bar */}
-          <div className="flex flex-row w-full justify-center">
-            <div className="flex flex-row w-full max-w-[900px] items-center px-xl gap-lg bg-circle-neutral" style={{ height: searchBarHeight }}>
-              {/* Search */}
-              <Search
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search notes..."
-                autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
-              />
-
-              <div className="flex-shrink-0">
-                <NewNoteButton onClick={handleNewNote} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content between header and navbar minus CommitmentGallery target height */}
-      <div
-        className="fixed left-0 right-0 z-40"
-        style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
-      >
-        <div className="min-h-full flex flex-col justify-end">
-          <NoteGallery 
-            notes={filteredNotes} 
-            onOpenNoteDetail={(n) => {
-              setSelectedNote(n);
-              setSelectedContact(null);
-            }}
-            onOpenContactDetail={(contact) => {
-              setSelectedContact(contact);
-              setSelectedNote(null);
-            }}
-          />
-        </div>
-      </div>
-
-      {/* CommitmentGallery fixed above navigation bar - height fits content */}
-      <div className="fixed left-0 right-0 z-40" style={{ bottom: navBarHeight }}>
-        <CommitmentGallery
-          commitments={state.commitments}
-          isCollapsed={isCommitmentGalleryCollapsed}
-          onToggle={() => setIsCommitmentGalleryCollapsed(prev => !prev)}
-        />
-      </div>
-
-      {/* NavigationBar - positioned at very bottom */}
-      <NavigationBar currentPage="memo" />
-    </div>
-  );
-
-  // Mobile Layout
-  const MobileLayout = () => (
-    <div className="relative w-full min-h-screen bg-circle-neutral">
-      {/* Title and SearchBar - fixed at top */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="w-full bg-circle-neutral flex flex-col">
-          {/* Title - Above */}
-          <Title title="Memo" />
-
-          {/* Mobile Search Bar */}
-          <div className="flex flex-row w-full justify-center">
-            <div className="flex flex-row w-full max-w-[900px] items-center px-lg gap-md bg-circle-neutral" style={{ height: MEMO_PAGE_SEARCH_BAR_HEIGHT_MOBILE }}>
-              {/* Search */}
-              <Search
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search notes..."
-                autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
-              />
-
-              <div className="flex-shrink-0">
-                <NewNoteButton onClick={handleNewNote} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content between header and navbar minus CommitmentGallery target height */}
-      <div
-        className="fixed left-0 right-0 z-40"
-        style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
-      >
-        <div className="min-h-full flex flex-col justify-end">
-          <NoteGallery 
-            notes={filteredNotes} 
-            onOpenNoteDetail={(n) => {
-              setSelectedNote(n);
-              setSelectedContact(null);
-            }}
-            onOpenContactDetail={(contact) => {
-              setSelectedContact(contact);
-              setSelectedNote(null);
-            }}
-          />
-        </div>
-      </div>
-
-      {/* CommitmentGallery fixed above navigation bar - height fits content */}
-      <div className="fixed left-0 right-0 z-40" style={{ bottom: navBarHeight }}>
-        <CommitmentGallery
-          commitments={state.commitments}
-          isCollapsed={isCommitmentGalleryCollapsed}
-          onToggle={() => setIsCommitmentGalleryCollapsed(prev => !prev)}
-        />
-      </div>
-
-      {/* NavigationBar - positioned at very bottom */}
-      <NavigationBar currentPage="memo" />
-    </div>
-  );
-
   return (
     <>
-      {isMobile ? <MobileLayout /> : <DesktopLayout />}
+      <div className="relative w-full min-h-screen bg-circle-neutral">
+        {/* Title and SearchBar - fixed at top */}
+        <div className="fixed top-0 left-0 right-0 z-50">
+          <div className="w-full bg-circle-neutral flex flex-col">
+            {/* Title - Above */}
+            <Title title="Memo" />
+
+            {/* Search Bar */}
+            <div className="flex flex-row w-full justify-center">
+              <div className={`flex flex-row w-full max-w-[900px] items-center bg-circle-neutral ${isMobile ? 'px-lg gap-md' : 'px-xl gap-lg'}`} style={{ height: searchBarHeight }}>
+                {/* Search */}
+                <Search
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search notes..."
+                  autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
+                />
+
+                <div className="flex-shrink-0">
+                  <NewNoteButton onClick={handleNewNote} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content between header and navbar minus CommitmentGallery target height */}
+        <div
+          className="fixed left-0 right-0 z-40"
+          style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
+        >
+          <div className="min-h-full flex flex-col justify-end">
+            <NoteGallery 
+              notes={filteredNotes} 
+              onOpenNoteDetail={(n) => {
+                setSelectedNote(n);
+                setSelectedContact(null);
+              }}
+              onOpenContactDetail={(contact) => {
+                setSelectedContact(contact);
+                setSelectedNote(null);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* CommitmentGallery fixed above navigation bar - height fits content */}
+        <div className="fixed left-0 right-0 z-40" style={{ bottom: navBarHeight }}>
+          <CommitmentGallery
+            commitments={state.commitments}
+            isCollapsed={isCommitmentGalleryCollapsed}
+            onToggle={() => setIsCommitmentGalleryCollapsed(prev => !prev)}
+          />
+        </div>
+
+        {/* NavigationBar - positioned at very bottom */}
+        <NavigationBar currentPage="memo" />
+      </div>
 
       {/* Overlays for new/opened items */}
       {typeof window !== 'undefined' && selectedNote
