@@ -58,7 +58,6 @@ export default function ContactsPage() {
           <SearchBar
             onSearchChange={handleSearchChange}
             searchQuery={searchQuery}
-            showRelationshipFilter={true}
             relationships={state.relationships}
             selectedRelationshipIds={relationshipFilterIds}
             onRelationshipFilterChange={handleRelationshipFilterChange}
