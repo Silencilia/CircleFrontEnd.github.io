@@ -337,7 +337,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   
   
   return (
-    <div className="fixed inset-0 flex flex-col items-center w-full h-full p-md">
+    <div className="dlg">
     <div
       className={`flex flex-col items-center p-md gap-4xl w-full max-w-[450px] h-fit bg-circle-white rounded-md ${
         disabled ? 'opacity-50 pointer-events-none' : ''

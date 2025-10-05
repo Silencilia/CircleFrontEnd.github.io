@@ -257,7 +257,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
 
   return (<>
     <div className="crd-dtl">
-      <div className="w-full h-full flex flex-col justify-start items-start gap-lg p-0 overflow-hidden">
+      <div className="w-full h-full flex flex-col justify-centercenter items-start gap-lg p-0 overflow-hidden">
         {/* Info */}
         <div className="w-full h-fit flex flex-col items-start gap-lg p-0">
           {/* Note info */}
@@ -478,13 +478,29 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
         itemName={note.title}
       />
 
-      {/* New Sentiment Dialog */}
-      <NewSentiment
-        isOpen={isSentimentDialogOpen}
-        onClose={() => setIsSentimentDialogOpen(false)}
-        onSelect={handleSentimentSelect}
-        noteId={currentNote.id}
-      />
+      {/* New Sentiment Dialog (portal) */}
+      {typeof window !== 'undefined' && isSentimentDialogOpen
+        ? createPortal(
+            (
+              <div
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setIsSentimentDialogOpen(false);
+                }}
+              >
+                <div className="mx-4">
+                  <NewSentiment
+                    isOpen={isSentimentDialogOpen}
+                    onClose={() => setIsSentimentDialogOpen(false)}
+                    onSelect={handleSentimentSelect}
+                    noteId={currentNote.id}
+                  />
+                </div>
+              </div>
+            ),
+            document.body
+          )
+        : null}
 
       {/* Maximum Sentiment Dialog */}
       <MaximumSentimentDialog
@@ -504,7 +520,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                   if (e.target === e.currentTarget) setIsDatePickerOpen(false);
                 }}
               >
-                <div className="mx-4">
+                <div>
                   <DatePicker
                     value={dateValue}
                     onChange={setDateValue}

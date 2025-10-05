@@ -8,7 +8,7 @@ import { contactReference } from '../../data/referenceParsing';
 import ContactCardDetail from './ContactCardDetail';
 import NoteCardDetail from './NoteCardDetail';
 import { CardIndex, createSourceRecord, addToCardIndexArray } from '../../data/sourceRecord';
-import { useIsMobile } from '../../hooks/useIsMobile';
+ 
 
 interface NoteCardProps {
   note: Note;
@@ -21,7 +21,6 @@ interface NoteCardProps {
 }
 
 const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, onOpenNoteDetail, onOpenContactDetail, isNestedInContactDetail = false, currentContactId }) => {
-  const isMobile = useIsMobile();
   const { state, updateNote } = useContacts();
   if (note.is_trashed) {
     return null;
@@ -87,270 +86,138 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
 
   // Body text is truncated to two lines via CSS (line-clamp-2) when collapsed
 
-  // Desktop Layout
-  const DesktopLayout = () => (
-    <div className="w-[600px] h-fit bg-circle-neutral-variant rounded-sm p-md flex flex-col gap-lg">
-      {/* Frame 126 */}
-      <div className="w-full h-fit flex flex-col items-start p-0">
-        {/* Note info */}
-        <div className="w-full h-fit flex flex-row items-start gap-lg p-0">
-          {/* Frame 69 */}
-          <div className="w-full h-fit flex flex-row justify-between items-start p-0 flex-1">
-            {/* Title */}
-            <div className="h-fit flex flex-row items-start p-0 flex-1 min-w-0 overflow-hidden">
-              <div className="font-circletitlemedium text-circle-primary line-clamp-1 w-full">
-                {note.title}
-              </div>
-            </div>
-
-            {/* Sentiment */}
-            <div className="h-fit flex flex-row justify-end items-center gap-lg p-0">
-              {/* Frame 73 */}
-              <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">
-                {/* Sentiment tags - show up to 3 sentiments */}
-                {sentimentObjects.slice(0, 3).map((sentiment) => (
-                  <SentimentTag
-                    key={sentiment.id}
-                    sentiment={sentiment}
-                    noteId={note.id}
-                    fillColor="bg-circle-neutral"
-                    textColor="text-circle-primary"
-                  />
-                ))}
-              </div>
-
-              {/* Frame 105 */}
-              <div className="w-fit h-fit flex flex-row items-center gap-xs p-0">
-                {/* Recycle button */}
-                <RecycleButton
-                  onClick={() => setShowDeleteDialog(true)}
-                  ariaLabel="Delete note"
-                  hoverVariant="neutral"
-                />
-
-                {/* Menu icon button */}
-                <MenuButton
-                  onClick={() => {
-                    // If nested inside a ContactCardDetail, push that contact onto the back stack
-                    if (isNestedInContactDetail && typeof currentContactId === 'string') {
-                      addToCardIndexArray(createSourceRecord('contactCardDetail', currentContactId));
-                    }
-                    if (onOpenNoteDetail) {
-                      onOpenNoteDetail(note, propCaller);
-                    } else {
-                      setCaller(null);
-                      setActiveNoteForDetail(note);
-                      setIsDetailOpen(true);
-                    }
-                  }}
-                  ariaLabel="Open note detail"
-                  className="hover:!bg-circle-neutral"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Frame 125 - Date and Time (non-clickable) */}
-        <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
-          <div
-            className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
-              date === 'no date' ? 'italic opacity-50' : ''
-            }`}
-          >
-            {date}
-          </div>
-          <div
-            className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
-              time ? '' : 'italic opacity-50'
-            }`}
-          >
-            {time || '--:--'}
-          </div>
-        </div>
-      </div>
-
-      {/* Note description */}
-      <div
-        className={`w-full font-circlebodymedium text-circle-primary text-left ${
-          isExpanded ? 'h-fit' : 'h-[40px] overflow-hidden'
-        }`}
-      >
-        <div className={isExpanded ? '' : 'line-clamp-2'}>
-          {contactReference(
-            note.text,
-            state.contacts,
-            (contact) => {
-              if (!contact) return;
-              // Nested inside ContactCardDetail
-              if (isNestedInContactDetail && typeof currentContactId === 'string') {
-                // If clicking the same contact as the current detail, do nothing
-                if (contact.id === currentContactId) {
-                  return;
-                }
-                // Push previous contact into global stack and switch contact
-                addToCardIndexArray(createSourceRecord('contactCardDetail', currentContactId));
-                if (onOpenContactDetail) {
-                  onOpenContactDetail(contact, createSourceRecord('noteCardDetail', note.id));
-                } else {
-                  setCaller(createSourceRecord('noteCardDetail', note.id));
-                  setSelectedContactForDetail(contact);
-                  setIsDetailOpen(false);
-                  setIsContactDetailOpenLocal(true);
-                }
-                return;
-              }
-              // Default (e.g., in NoteBook): just open contact detail
-              if (onOpenContactDetail) {
-                onOpenContactDetail(contact, createSourceRecord('noteCardDetail', note.id));
-              } else {
-                setCaller(createSourceRecord('noteCardDetail', note.id));
-                setSelectedContactForDetail(contact);
-                setIsDetailOpen(false);
-                setIsContactDetailOpenLocal(true);
-              }
-            },
-            isMobile
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Mobile Layout
-  const MobileLayout = () => (
-    <div className="w-full h-fit bg-circle-neutral-variant rounded-sm p-sm flex flex-col gap-lg">
-      {/* Note info */}
-      <div className="w-full h-fit flex flex-col items-start p-0">
-        {/* Note info row */}
-        <div className="w-full h-fit flex flex-row items-start gap-lg">
-          {/* Note info */}
-          <div className="w-full h-fit flex flex-row justify-between items-center flex-1">
-            {/* Title */}
-            <div className="h-fit w-full flex flex-row items-start pr-sm flex-1 overflow-hidden">
-              <div className="font-circletitlesmall text-circle-primary line-clamp-1 w-full">
-                {note.title}
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="h-fit flex flex-row justify-end items-center gap-md p-0">
-
-              {/* buttons */}
-              <div className="w-fit h-fit flex flex-row items-center">
-                {/* Recycle button */}
-                <RecycleButton
-                  onClick={() => setShowDeleteDialog(true)}
-                  ariaLabel="Delete note"
-                  hoverVariant="neutral"
-                />
-
-                {/* Menu icon button */}
-                <MenuButton
-                  onClick={() => {
-                    // If nested inside a ContactCardDetail, push that contact onto the back stack
-                    if (isNestedInContactDetail && typeof currentContactId === 'string') {
-                      addToCardIndexArray(createSourceRecord('contactCardDetail', currentContactId));
-                    }
-                    if (onOpenNoteDetail) {
-                      onOpenNoteDetail(note, propCaller);
-                    } else {
-                      setCaller(null);
-                      setActiveNoteForDetail(note);
-                      setIsDetailOpen(true);
-                    }
-                  }}
-                  ariaLabel="Open note detail"
-                  className="hover:!bg-circle-neutral"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Date and Time */}
-        <div className="w-fit h-fit flex flex-row items-center gap-lg p-0">
-          <div
-            className={`w-fit h-fit font-circlebodysmall text-circle-primary flex items-center ${
-              date === 'no date' ? 'italic opacity-50' : ''
-            }`}
-          >
-            {date}
-          </div>
-          <div
-            className={`w-fit h-fit font-circlebodysmall text-circle-primary flex items-center ${
-              time ? '' : 'italic opacity-50'
-            }`}
-          >
-            {time || '--:--'}
-          </div>
-        </div>
-      </div>
-
-      {/* Note description & sentiment tags */}
-      <div className="w-full h-fit flex flex-col items-start gap-sm">
-      <div
-        className={`w-full font-circlebodysmall text-circle-primary text-left ${
-          isExpanded ? 'h-fit' : 'h-[32px] overflow-hidden'
-        }`}
-      >
-        <div className={isExpanded ? '' : 'line-clamp-2'}>
-          {contactReference(
-            note.text,
-            state.contacts,
-            (contact) => {
-              if (!contact) return;
-              // Nested inside ContactCardDetail
-              if (isNestedInContactDetail && typeof currentContactId === 'string') {
-                // If clicking the same contact as the current detail, do nothing
-                if (contact.id === currentContactId) {
-                  return;
-                }
-                // Push previous contact into global stack and switch contact
-                addToCardIndexArray(createSourceRecord('contactCardDetail', currentContactId));
-                if (onOpenContactDetail) {
-                  onOpenContactDetail(contact, createSourceRecord('noteCardDetail', note.id));
-                } else {
-                  setCaller(createSourceRecord('noteCardDetail', note.id));
-                  setSelectedContactForDetail(contact);
-                  setIsDetailOpen(false);
-                  setIsContactDetailOpenLocal(true);
-                }
-                return;
-              }
-              // Default (e.g., in NoteBook): just open contact detail
-              if (onOpenContactDetail) {
-                onOpenContactDetail(contact, createSourceRecord('noteCardDetail', note.id));
-              } else {
-                setCaller(createSourceRecord('noteCardDetail', note.id));
-                setSelectedContactForDetail(contact);
-                setIsDetailOpen(false);
-                setIsContactDetailOpenLocal(true);
-              }
-            },
-            isMobile
-          )}
-        </div>
-      </div>
-      {/* Sentiment tags - show up to 3 sentiments */}
-      <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">
-                {sentimentObjects.slice(0, 3).map((sentiment) => (
-                  <SentimentTag
-                    key={sentiment.id}
-                    sentiment={sentiment}
-                    noteId={note.id}
-                    fillColor="bg-circle-neutral"
-                    textColor="text-circle-primary"
-                  />
-                ))}
-      </div>
-      </div>
-    </div>
-  );
-
   return (
     <>
-      {isMobile ? <MobileLayout /> : <DesktopLayout />}
+      <div className="crd-nt bg-circle-neutral-variant gap-lg shrink-0">
+        {/* Frame 126 */}
+        
+          {/* Note info */}
+          <div className="w-full h-fit flex flex-col items-start p-0">
+            {/* Title and buttons */}
+            <div className="w-full h-fit flex flex-row justify-between items-start p-0 flex-1">
+              {/* Title */}
+              <div className="h-fit flex flex-row items-start p-0 flex-1 min-w-0 overflow-hidden">
+                <div className="font-circletitlemedium text-circle-primary line-clamp-1 w-full">
+                  {note.title}
+                </div>
+              </div>
+
+              {/* Sentiment */}
+              <div className="h-fit flex flex-row justify-end items-center gap-lg p-0">
+                {/* Frame 73 */}
+             
+
+                {/* Frame 105 */}
+                <div className="w-fit h-fit flex flex-row items-center gap-xs p-0">
+                  {/* Recycle button */}
+                  <RecycleButton
+                    onClick={() => setShowDeleteDialog(true)}
+                    ariaLabel="Delete note"
+                    hoverVariant="neutral"
+                  />
+
+                  {/* Menu icon button */}
+                  <MenuButton
+                    onClick={() => {
+                      // If nested inside a ContactCardDetail, push that contact onto the back stack
+                      if (isNestedInContactDetail && typeof currentContactId === 'string') {
+                        addToCardIndexArray(createSourceRecord('contactCardDetail', currentContactId));
+                      }
+                      if (onOpenNoteDetail) {
+                        onOpenNoteDetail(note, propCaller);
+                      } else {
+                        setCaller(null);
+                        setActiveNoteForDetail(note);
+                        setIsDetailOpen(true);
+                      }
+                    }}
+                    ariaLabel="Open note detail"
+                    className="hover:!bg-circle-neutral"
+                  />
+                </div>
+              </div>
+            </div>
+            {/* Date and Time (non-clickable) */}
+          <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
+            <div
+              className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
+                date === 'no date' ? 'italic opacity-50' : ''
+              }`}
+            >
+              {date}
+            </div>
+            <div
+              className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${
+                time ? '' : 'italic opacity-50'
+              }`}
+            >
+              {time || '--:--'}
+            </div>
+          </div>
+          </div>
+
+          
+
+        <div className="w-full h-fit flex flex-col gap-sm">
+          {/* Note description */}
+          <div
+          className={`w-full font-circlebodymedium text-circle-primary text-left h-fit overflow-hidden'
+          }`}
+        >
+          <div className={isExpanded ? '' : 'line-clamp-2'}>
+            {contactReference(
+              note.text,
+              state.contacts,
+              (contact) => {
+                if (!contact) return;
+                // Nested inside ContactCardDetail
+                if (isNestedInContactDetail && typeof currentContactId === 'string') {
+                  // If clicking the same contact as the current detail, do nothing
+                  if (contact.id === currentContactId) {
+                    return;
+                  }
+                  // Push previous contact into global stack and switch contact
+                  addToCardIndexArray(createSourceRecord('contactCardDetail', currentContactId));
+                  if (onOpenContactDetail) {
+                    onOpenContactDetail(contact, createSourceRecord('noteCardDetail', note.id));
+                  } else {
+                    setCaller(createSourceRecord('noteCardDetail', note.id));
+                    setSelectedContactForDetail(contact);
+                    setIsDetailOpen(false);
+                    setIsContactDetailOpenLocal(true);
+                  }
+                  return;
+                }
+                // Default (e.g., in NoteBook): just open contact detail
+                if (onOpenContactDetail) {
+                  onOpenContactDetail(contact, createSourceRecord('noteCardDetail', note.id));
+                } else {
+                  setCaller(createSourceRecord('noteCardDetail', note.id));
+                  setSelectedContactForDetail(contact);
+                  setIsDetailOpen(false);
+                  setIsContactDetailOpenLocal(true);
+                }
+              }
+            )}
+          </div>
+          </div>
+        
+          {/* Sentiment tags section: displays up to 3 sentiment tags for the note */}
+          <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">
+          {/* Render up to 3 SentimentTag components, one for each sentiment in sentimentObjects */}
+          {sentimentObjects.slice(0, 3).map((sentiment) => (
+            <SentimentTag
+              key={sentiment.id} // Unique key for each sentiment tag
+              sentiment={sentiment} // Sentiment data passed to the tag
+              noteId={note.id} // The ID of the note this sentiment belongs to
+              fillColor="bg-circle-neutral" // Background color for the tag
+              textColor="text-circle-primary" // Text color for the tag
+            />
+          ))}
+          </div>
+        </div>
+
+      </div>
       {/* Overlay for ContactCardDetail via portal to escape parent stacking contexts */}
       <DeleteConfirmationDialog
         isOpen={showDeleteDialog}

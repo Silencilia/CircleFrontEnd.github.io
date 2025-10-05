@@ -1,6 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-
-import { createPortal } from 'react-dom';
 import { useContacts, Sentiment } from '../../contexts/ContactContext';
 import { STRINGS } from '../../data/strings';
 import SentimentTag from '../Tag/SentimentTag';
@@ -127,12 +125,12 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
 
   if (!isOpen) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
-        <div
-          className="bg-white rounded-lg shadow-xl max-w-md w-[450px] max-h-[80vh] px-md py-md flex flex-col gap-5xl overflow-visible"
-          onKeyDown={handleKeyDown}
-        >
+  return (
+    <div className="dlg">
+      <div
+        className="bg-white rounded-md shadow-xl w-full max-w-[450px] h-fit  px-md py-md flex flex-col gap-4xl overflow-visible"
+        onKeyDown={handleKeyDown}
+      >
         {/* Header */}
         <div className="flex flex-col gap-3xl">
           <h2 className="font-circletitlemedium text-circle-primary">Select Sentiment</h2>
@@ -140,9 +138,9 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
         </div>
 
        
-       <div className="flex flex-col h-fit gap-5xl">
+       <div className="flex flex-col h-fit gap-2xl">
         {/* Content */}
-        <div className="flex flex-col h-fit gap-5xl">
+        <div className="flex flex-col h-fit gap-2xl">
           {/* Existing Sentiments - Scrollable Column */}
           <div>
   
@@ -202,25 +200,25 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
 
           {/* New Sentiment Form */}
           {isCreatingNew && (
-            <div className="px-md rounded-sm gap-lg bg-circle-neutral-variant text-circle-primary">
+            <div className="w-full h-fit p-md rounded-sm bg-circle-neutral-variant text-circle-primary">
 
               
 
               {/* input zone */}
-              <div className="flex flex-col gap-4xl">
+              <div className="flex flex-col gap-lg">
              
 
                  {/* Column 1: new sentiment and input field */}  
-                 <div className="flex flex-col gap-lg">
-                   <h3 className="font-circlelabelmedium text-circle-primary/50">new sentiment</h3>
-                   <div className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-lg w-full h-[30px] px-1.5">
+                 <div className="flex flex-col gap-sm">
+                   <h3 className="font-circlelabelmedium text-circle-primary">new sentiment</h3>
+                   <div className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-lg w-full h-[30px] px-sm">
                      <div className="flex flex-row items-center gap-4 flex-1">
                        <input
                          type="text"
                          value={newSentimentLabel}
                          onChange={(e) => setNewSentimentLabel(e.target.value)}
                          placeholder="Enter sentiment label..."
-                         className={`h-5 text-left pl-1.5 pr-2.5 flex-1 focus:outline-none ${
+                         className={`h-5 text-left flex-1 focus:outline-none ${
                            newSentimentLabel.trim() 
                              ? 'font-circlebodymedium text-circle-primary' 
                              : 'font-circlebodymedium-draft text-circle-primary/50'
@@ -232,8 +230,8 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
                  </div>
 
                  {/* Column 2: category and dropdown menu*/}  
-                 <div className="flex flex-col gap-lg">
-                   <h3 className="font-circlelabelmedium text-circle-primary/50">category</h3>
+                 <div className="flex flex-col gap-sm">
+                   <h3 className="font-circlelabelmedium text-circle-primary">category</h3>
                    <div className="relative">
                      <div 
                        className="flex flex-row justify-between items-center bg-white border border-circle-neutral-variant rounded-lg w-full h-[30px] px-1.5 cursor-pointer hover:bg-circle-neutral transition-colors"
@@ -284,7 +282,7 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
                      disabled={!newSentimentLabel.trim() || isLoading}
                      className="flex-1"
                      minWidth={80}
-                     inactiveClass="bg-circle-neutral-variant text-circle-primary hover:bg-circle-primary hover:text-white"
+                     inactiveClass="bg-circle-neutral text-circle-primary hover:bg-circle-primary hover:text-white"
                    >
                      {isLoading ? 'Creating...' : 'Create'}
                    </TextButton>
@@ -295,7 +293,7 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
                      }}
                      className="flex-1"
                      minWidth={80}
-                     inactiveClass="bg-circle-neutral-variant text-circle-primary hover:bg-circle-primary hover:text-white"
+                     inactiveClass="bg-circle-neutral text-circle-primary hover:bg-circle-primary hover:text-white"
                    >
                      Cancel
                    </TextButton>
@@ -322,10 +320,9 @@ const NewSentiment: React.FC<NewSentimentProps> = ({
             </div>
           </div>
         </div>
-        </div>
       </div>
-    </div>,
-    document.body
+    </div>
+  </div>
   );
 };
 

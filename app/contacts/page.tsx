@@ -7,16 +7,30 @@ import { NewContactButton } from '../../components/Button';
 import ContactGallery from '../../components/Gallery/ContactGallery';
 import NavigationBar from '../../components/NavigationBar';
 import { useContacts } from '../../contexts/ContactContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import {
+  TITLE_HEIGHT_MOBILE,
+  TITLE_HEIGHT_DESKTOP,
+  CONTACTS_PAGE_SEARCH_BAR_HEIGHT_MOBILE,
+  CONTACTS_PAGE_SEARCH_BAR_HEIGHT_DESKTOP,
+  NAV_BAR_HEIGHT_MOBILE,
+  NAV_BAR_HEIGHT_DESKTOP
+} from '../../utils/designConstants';
 
 export default function ContactsPage() {
   const { state } = useContacts();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [relationshipFilterIds, setRelationshipFilterIds] = useState<string[]>([]);
+
+  const titleHeight = isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP;
+  const searchBarHeight = isMobile ? CONTACTS_PAGE_SEARCH_BAR_HEIGHT_MOBILE : CONTACTS_PAGE_SEARCH_BAR_HEIGHT_DESKTOP;
+  const navBarHeight = isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP;
 
   // Loading state
   if (state.isLoading || state.contacts.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#FBF7F3]">
+      <div className="flex items-center justify-center min-h-screen bg-circle-neutral">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading contacts...</p>
@@ -52,10 +66,10 @@ export default function ContactsPage() {
           />
       </div>
       
-      {/* ContactGallery fixed between header (190px) and navbar (80px) with its own scroll area */}
+      {/* ContactGallery fixed between header and navbar with its own scroll area */}
       <div
         className="fixed left-0 right-0 z-40"
-        style={{ top: 190, bottom: 80, overflowY: 'auto' }}
+        style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + 'px', overflowY: 'auto' }}
       >
         <div className="max-w-7xl mx-auto">
           <ContactGallery 
@@ -66,7 +80,7 @@ export default function ContactsPage() {
         </div>
       </div>
       
-      {/* NavigationBar - positioned at very bottom (80px height) */}
+      {/* NavigationBar - positioned at very bottom */}
       <NavigationBar currentPage="contacts" />
     </div>
   );

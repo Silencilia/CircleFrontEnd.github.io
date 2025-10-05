@@ -654,7 +654,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
 
         {/* Note Cards Container - Scrollable with mouse drag */}
         <ScrollContainer
-          className="w-fit flex-1 overflow-y-auto flex flex-col gap-[15px] select-none scrollbar-hide cursor-grab active:cursor-grabbing"
+         className="w-full flex-1 min-h-0 overflow-y-auto flex flex-col justify-start gap-lg select-none scrollbar-hide cursor-grab active:cursor-grabbing"
           horizontal={false}
           vertical={true}
         >

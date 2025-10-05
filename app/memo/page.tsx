@@ -22,6 +22,8 @@ import {
   COMMITMENT_GALLERY_HEIGHT_COLLAPSED_DESKTOP,
   TITLE_HEIGHT_MOBILE,
   TITLE_HEIGHT_DESKTOP,
+  MEMO_PAGE_SEARCH_BAR_HEIGHT_MOBILE,
+  MEMO_PAGE_SEARCH_BAR_HEIGHT_DESKTOP,
 } from '../../utils/designConstants';
 
 export default function MemoPage() {
@@ -34,7 +36,7 @@ export default function MemoPage() {
   const [isCommitmentGalleryCollapsed, setIsCommitmentGalleryCollapsed] = useState(true);
 
   const titleHeight = isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP;
-  const searchBarHeight = isMobile ? '40px' : '60px';
+  const searchBarHeight = isMobile ? MEMO_PAGE_SEARCH_BAR_HEIGHT_MOBILE : MEMO_PAGE_SEARCH_BAR_HEIGHT_DESKTOP;
   const navBarHeight = isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP;
 
   // Avoid conditional hook usage: render loading state inside return instead of early return
@@ -156,7 +158,7 @@ export default function MemoPage() {
 
           {/* Mobile Search Bar */}
           <div className="flex flex-row w-full justify-center">
-            <div className="flex flex-row w-full max-w-[900px] items-center px-lg gap-md h-[40px] bg-circle-neutral">
+            <div className="flex flex-row w-full max-w-[900px] items-center px-lg gap-md bg-circle-neutral" style={{ height: MEMO_PAGE_SEARCH_BAR_HEIGHT_MOBILE }}>
               {/* Search */}
               <Search
                 value={searchQuery}

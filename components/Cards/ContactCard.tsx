@@ -146,14 +146,15 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
   }, [subjects]);
 
   return (
-    <div className="w-80 h-fit bg-circle-neutral-variant rounded-xl p-3 flex flex-col gap-[20px]">
-              {/* Top Section - Contact Info and Menu */}
-        <div className="flex flex-col gap-[10px] w-full">
+    <div className="crd-ctct bg-circle-neutral-variant">
+      <div className="w-full h-full flex flex-col gap-md">
+      {/* Top Section - Contact Info and Menu */}
+      <div className="flex flex-col gap-md w-full">
         {/* Row with contact info and menu button */}
         <div className="flex flex-row justify-between items-start w-full">
           {/* Contact Info Column */}
           <div className="flex flex-col gap-0 h-fit ">
-            <div className="font-circlebodymedium text-circle-primary">
+            <div className="font-circletitlemedium text-circle-primary">
               {contact.name}
             </div>
             <div className={`font-circlebodymedium h-[20px] ${
@@ -205,7 +206,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
       </div>
 
       {/* Bottom Section - Relationship and Subjects */}
-      <div className="flex flex-col gap-[5px] w-full">
+      <div className="flex flex-col gap-sm w-full">
         {/* Relationship Tag */}
         {primaryRelationship && (
           <div className="flex flex-row flex-wrap items-start content-start gap-0 w-full">
@@ -254,6 +255,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

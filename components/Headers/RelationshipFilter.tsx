@@ -140,13 +140,19 @@ const RelationshipFilter: React.FC<RelationshipFilterProps> = ({
     return overflowCount > 0 ? (base ? `${base} +${overflowCount}` : `+${overflowCount}`) : base;
   };
 
+  // Render the relationship filter dropdown and button
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Dropdown Button */}
-      <div className="bg-white border border-circle-neutral-variant rounded-[25px] ctn-fltr px-1.5">
-        <span ref={textRef} className="font-circlebodymedium text-left text-circle-primary/35 pl-1.5 pr-2.5 flex-1 whitespace-nowrap overflow-hidden">
+    <div className="relative w-full" ref={dropdownRef}>
+      {/* Dropdown Button Container */}
+      <div className="bg-white border items-center border-circle-neutral-variant rounded-lg ctn-fltr">
+        {/* Display selected relationships or "All relationships" */}
+        <span
+          ref={textRef}
+          className="font-circlebodymedium text-left text-circle-primary/35 px-xs flex-1 whitespace-nowrap overflow-hidden flex items-center"
+        >
           {getDisplayText()}
         </span>
+        {/* Button to toggle dropdown open/close */}
         <ToggleButton
           isOpen={isOpen}
           onClick={handleToggleDropdown}
@@ -160,7 +166,7 @@ const RelationshipFilter: React.FC<RelationshipFilterProps> = ({
           {/* Select All Option */}
           <button
             onClick={handleSelectAll}
-            className={`w-full px-sm py-sm text-left text-sm hover:bg-circle-neutral transition-colors ${
+            className={`w-full px-sm py-sm text-left text-sm items-center hover:bg-circle-neutral transition-colors ${
               selectedRelationshipIds.length === 0 ? 'bg-circle-neutral font-circlebodymedium' : ''
             }`}
           >

@@ -96,9 +96,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
   };
 
-  // Adaptive Layout
+  // Layout
   return (
-    <div className="fixed inset-0 flex flex-col items-center w-full h-full p-md">
+    <div className="dlg">
     <div
       className={`flex flex-col items-center p-md gap-4xl w-full max-w-[450px] h-fit bg-circle-white rounded-md ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`}
       style={{ boxShadow: '2px 2px 10px rgba(0,0,0,0.25)', marginTop: 'auto', marginBottom: 'auto' }}

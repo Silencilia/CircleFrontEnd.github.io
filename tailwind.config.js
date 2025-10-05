@@ -493,7 +493,7 @@ module.exports = {
         },
 
         '.ctn-fltr': {
-          width: '150px',
+          width: '100%',
           height: '24px', // Mobile height
           padding: '0 5px',
           gap: '5px',
@@ -645,10 +645,43 @@ module.exports = {
     },
     function({ addUtilities }) {
       const cardUtilities = {
+        '.crd-ctct': {
+          width: '100%',
+          height: 'fit-content',
+          overflow: 'hidden',
+          'border-radius': '12px',
+          padding: '15px',
+          // Add safe-area awareness so mobile browser UI doesn’t overlap
+          'padding-top': 'calc(15px + env(safe-area-inset-top))',
+          'padding-bottom': 'calc(15px + env(safe-area-inset-bottom))',
+          display: 'flex',
+          'flex-direction': 'column',
+          // Desktop styles at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '330px',
+          },
+        },
+
+        '.crd-nt': {
+          width: '100%',
+          height: 'fit-content',
+          overflow: 'hidden',
+          'border-radius': '12px',
+          padding: '15px',
+          // Add safe-area awareness so mobile browser UI doesn’t overlap
+          'padding-top': 'calc(15px + env(safe-area-inset-top))',
+          'padding-bottom': 'calc(15px + env(safe-area-inset-bottom))',
+          display: 'flex',
+          'flex-direction': 'column',
+          // Desktop styles at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '600px',
+          },
+        },
+       
         '.crd-dtl': {
           width: '100%',
           height: '100%',
-        
           overflow: 'hidden',
           'background-color': '#FFFFFF',
           padding: '15px',
@@ -662,13 +695,33 @@ module.exports = {
             width: '630px',
             height: 'fit-content',
             'max-height': '90vh',
-            'border-radius': '15px',
+            'border-radius': '12px',
             'box-shadow': '2px 2px 10px rgba(0,0,0,0.25)',
           },
         },
       };
 
       addUtilities(cardUtilities);
+    },
+    function({ addUtilities }) {
+      const dialogUtilities = {
+        '.dlg': {
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden',
+          padding: '15px',
+          justifyContent: 'center',
+          alignItems: 'center',
+          // Add safe-area awareness so mobile browser UI doesn’t overlap
+          'padding-top': 'calc(15px + env(safe-area-inset-top))',
+          'padding-bottom': 'calc(15px + env(safe-area-inset-bottom))',
+          display: 'flex',
+          'flex-direction': 'column',
+          'border-radius': '12px'
+        },
+      };
+
+      addUtilities(dialogUtilities);
     },
   ],
 }
