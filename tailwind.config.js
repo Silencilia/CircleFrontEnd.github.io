@@ -33,7 +33,7 @@ module.exports = {
         'inter': ['Inter', 'sans-serif'],
       },
       spacing: {
-        '2xs': '2px',    // Extra extra small spacing
+        '2xs': '3px',    // Extra extra small spacing
         'xs': '5px',    // Extra small spacing
         'sm': '10px',   // Small spacing
         'md': '15px',   // Medium spacing

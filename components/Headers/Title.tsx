@@ -27,15 +27,15 @@ const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePag
         </div>
 
         {/* Right actions: AccountButton, positioned absolutely with horizontal padding */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-fit h-fit flex flex-row items-center px-lg gap-md">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-fit h-fit flex flex-row items-center px-lg gap-sm">
           <AccountButton active={isAccountPage} disabled={isAccountPage} />
         </div>
 
         {/* Left actions: SpeedSwitch and label, only if on Circle page */}
         {isCirclePage && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-fit h-fit flex flex-row items-center px-xl gap-md">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-fit h-fit flex flex-row items-center px-lg gap-sm">
             <SpeedSwitch isSpeedMode={isSpeedMode} onToggle={toggleSpeedMode} />
-            <span className="font-circlelabelsmall text-circle-primary">{isSpeedMode ? 'speed mode on' : 'speed mode off'}</span>
+            <span className="font-circlelabelsmall text-circle-primary">{isSpeedMode ? 'speed mode' : 'talk mode'}</span>
           </div>
         )}
       </div>
@@ -51,7 +51,7 @@ const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePag
           {isCirclePage && (
             <>
               <SpeedSwitch isSpeedMode={isSpeedMode} onToggle={toggleSpeedMode} />
-              <span className="font-circlelabelmedium text-circle-primary">{isSpeedMode ? 'speed mode on' : 'speed mode off'}</span>
+              <span className="font-circlelabelmedium text-circle-primary">{isSpeedMode ? 'speed mode' : 'talk mode'}</span>
             </>
           )}
         </div>
