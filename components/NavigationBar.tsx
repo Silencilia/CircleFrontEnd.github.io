@@ -21,12 +21,12 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) =
           isActive={currentPage === 'note'}
         />
         
-        <NavigationButton
+        {/* <NavigationButton
           href="/draft"
           icon={<DraftIcon/>}
           label="Draft"
           isActive={currentPage === 'draft'}
-        />
+        /> */}
         
         <NavigationButton
           href="/memo"
@@ -42,11 +42,11 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ currentPage = 'note' }) =
           isActive={currentPage === 'contacts'}
         />
         
-        <NavigationButton
+        {/* <NavigationButton
           href="/developer"
           icon={<DevIcon/>}
           label="Dev"
-        />
+        /> */}
       </div>
     </div>
   );

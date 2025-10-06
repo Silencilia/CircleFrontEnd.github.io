@@ -32,7 +32,26 @@ export default function MemoPage() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [newNote, setNewNote] = useState<Note | null>(null);
   const [isCommitmentGalleryCollapsed, setIsCommitmentGalleryCollapsed] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Handle hydration and restore state from localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('memo-commitment-gallery-collapsed');
+      if (saved !== null) {
+        setIsCommitmentGalleryCollapsed(JSON.parse(saved));
+      }
+      setIsHydrated(true);
+    }
+  }, []);
+
+  // Save commitment gallery collapsed state to localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && isHydrated) {
+      localStorage.setItem('memo-commitment-gallery-collapsed', JSON.stringify(isCommitmentGalleryCollapsed));
+    }
+  }, [isCommitmentGalleryCollapsed, isHydrated]);
 
   // Detect screen size on mount and resize
   React.useEffect(() => {
