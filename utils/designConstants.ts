@@ -23,3 +23,6 @@ export const COMMITMENT_GALLERY_HEIGHT_EXPANDED_DESKTOP = '187px'; // Desktop (�
 export const COMMITMENT_GALLERY_HEIGHT_COLLAPSED_MOBILE = '45px';  // Mobile (< 640px)
 export const COMMITMENT_GALLERY_HEIGHT_COLLAPSED_DESKTOP = '39px'; // Desktop (≥ 640px)
 
+// Audio Gallery
+export const AUDIO_GALLERY_HEIGHT_MOBILE = '150px';  // Mobile (< 640px)
+export const AUDIO_GALLERY_HEIGHT_DESKTOP = '160px'; // Desktop (≥ 640px)

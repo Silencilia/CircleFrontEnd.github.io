@@ -2,6 +2,7 @@ import React from 'react';
 import { AccountButton } from '../Button';
 import { SpeedSwitch } from '../Switch';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useSpeedMode } from '../../hooks/useSpeedMode';
 
 interface TitleProps {
   title: string;
@@ -11,8 +12,7 @@ interface TitleProps {
 
 const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePage = false }) => {
   const isMobile = useIsMobile();
-  const [isSpeedMode, setIsSpeedMode] = React.useState(false);
-  const toggleSpeedMode = React.useCallback(() => setIsSpeedMode(v => !v), []);
+  const { isSpeedMode, toggleSpeedMode } = useSpeedMode();
 
   // Render the title bar differently for mobile and desktop
   return isMobile ? (
@@ -44,10 +44,10 @@ const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePag
     // Desktop layout: left SpeedSwitch (if Circle page), center title, right AccountButton
     <div className="flex justify-center">
       <div
-        className="title w-full bg-circle-neutral flex items-center justify-between px-xl"
+        className="title w-full bg-circle-neutral flex items-center justify-center relative"
       >
         {/* Left side: SpeedSwitch and label, only if on Circle page */}
-        <div className="flex flex-row items-center gap-md">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 flex flex-row items-center px-xl gap-md">
           {isCirclePage && (
             <>
               <SpeedSwitch isSpeedMode={isSpeedMode} onToggle={toggleSpeedMode} />
@@ -56,13 +56,13 @@ const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePag
           )}
         </div>
 
-        {/* Center: title text, flex-1 to center */}
-        <div className="font-circledisplaysmall text-center text-circle-primary flex-1">
+        {/* Center: title text */}
+        <div className="font-circledisplaysmall text-center text-circle-primary">
           {title}
         </div>
 
-        {/* Right side: AccountButton */}
-        <div className="flex flex-row items-center">
+        {/* Right side: AccountButton, positioned absolutely with horizontal padding */}
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex flex-row items-center px-xl">
           <AccountButton active={isAccountPage} disabled={isAccountPage} />
         </div>
       </div>
