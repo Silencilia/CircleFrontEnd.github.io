@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { ExtractButton, RecycleButton, MenuButton, PlayButton } from '../Button';
 import useAudioPlayer from '../../hooks/useAudioPlayer';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { requestPersistentStorage, cleanUpStaleDrafts } from '../../utils/audioStorage';
 
 interface DateLike {
@@ -78,6 +79,7 @@ const AudioCard: React.FC<AudioCardProps> = ({
   onMenu,
   className = '',
 }) => {
+  const isMobile = useIsMobile();
   const dateStr = formatDate(date);
   const timeStr = formatTime(time);
   const durationStr = formatDuration(durationSeconds);
@@ -101,13 +103,13 @@ const AudioCard: React.FC<AudioCardProps> = ({
   };
 
   return (
-    <div className={`w-[360px] h-fit bg-white rounded-sm p-md flex flex-col gap-md ${className}`}>
+    <div className={`${isMobile ? 'w-[300px]' : 'w-[360px]'} h-fit bg-white rounded-sm p-md flex flex-col gap-md ${className}`}>
       {/* Header */}
       <div className="w-full h-fit flex flex-col justify-center items-start">
         {/* Note info */}
         <div className="w-full h-fit flex flex-row justify-between items-center gap-md">
           {/* Date and Time */}
-          <div className="flex flex-row items-center pr-md gap-md w-fit h-fit">
+          <div className="flex flex-row items-center pr-sm gap-md w-fit h-fit">
             <div className={`w-fit h-fit font-circlebodymedium-draft text-circle-primary flex items-center ${dateStr === 'no date' ? 'italic opacity-50' : 'opacity-50'}`}>
               {dateStr}
             </div>
