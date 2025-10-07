@@ -22,6 +22,10 @@ export interface UseAudioRecorderReturn extends RecordingState {
 }
 
 function pickSupportedMimeType(prefer?: string[]): string {
+  // SSR guard: on the server, return a safe default
+  if (typeof window === 'undefined') {
+    return 'audio/webm';
+  }
   const candidates = prefer && prefer.length ? prefer : [
     'audio/webm;codecs=opus',
     'audio/webm',
@@ -52,7 +56,9 @@ export function useAudioRecorder(options?: UseAudioRecorderOptions): UseAudioRec
     durationSeconds: 0,
   }));
 
-  const preferredType = useMemo(() => pickSupportedMimeType(options?.preferMimeTypes), [options?.preferMimeTypes]);
+  const preferredType = useMemo(() => {
+    return pickSupportedMimeType(options?.preferMimeTypes);
+  }, [options?.preferMimeTypes]);
 
   useEffect(() => {
     setState((s) => ({ ...s, mimeType: preferredType }));
