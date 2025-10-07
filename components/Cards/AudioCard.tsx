@@ -103,7 +103,7 @@ const AudioCard: React.FC<AudioCardProps> = ({
   };
 
   return (
-    <div className={`${isMobile ? 'w-[300px]' : 'w-[360px]'} h-fit bg-white rounded-sm p-md flex flex-col gap-md ${className}`}>
+    <div className={`${isMobile ? 'w-[320px]' : 'w-[360px]'} h-fit bg-white rounded-sm p-md flex flex-col gap-md ${className}`}>
       {/* Header */}
       <div className="w-full h-fit flex flex-col justify-center items-start">
         {/* Note info */}
