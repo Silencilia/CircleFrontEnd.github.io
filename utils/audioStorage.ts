@@ -17,6 +17,9 @@ const DB_NAME = 'circle-audio-db';
 const STORE_NAME = 'audio-drafts';
 
 function openDb(): Promise<IDBDatabase> {
+  if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
+    return Promise.reject(new Error('IndexedDB not available'));
+  }
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1);
     request.onupgradeneeded = () => {

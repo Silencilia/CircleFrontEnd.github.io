@@ -29,6 +29,7 @@ function getServerSnapshot(): PlayerState {
 }
 
 async function playInternal(id: string) {
+  if (typeof window === 'undefined') return;
   if (playerState.currentId === id && playerState.isPlaying) return;
   // Stop any existing
   stopInternal();
@@ -51,6 +52,8 @@ async function playInternal(id: string) {
 }
 
 function stopInternal() {
+  if (typeof window === 'undefined') return;
+  
   if (audioEl) {
     try {
       audioEl.pause();
@@ -82,6 +85,8 @@ export function useAudioPlayer() {
 
   // Cleanup on unmount of last subscriber is unnecessary for singleton, but stop on visibility hidden
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    
     const onVisibility = () => {
       if (document.hidden) stopInternal();
     };
