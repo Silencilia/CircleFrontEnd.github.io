@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Title from '../components/Headers/Title';
 import TalkToCircle from '../components/TalkToCircle';
+import ChatWindow from '../components/Chat/ChatWindow';
+import { ChatProvider } from '../contexts/ChatContext';
+import { GREETINGS } from '../data/strings';
 // ContactPreview moved to Draft page
 import NavigationBar from '../components/NavigationBar';
 import AudioGallery from '../components/Gallery/AudioGallery';
@@ -11,6 +14,7 @@ import { VoiceButtonLg } from '../components/Button';
 import { useContacts } from '../contexts/ContactContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useSpeedMode } from '../hooks/useSpeedMode';
+import { useInitialInput } from '../hooks/useInitialInput';
 import {
   TITLE_HEIGHT_MOBILE,
   TITLE_HEIGHT_DESKTOP,
@@ -25,10 +29,16 @@ export default function NotePage() {
   const isMobile = useIsMobile();
   const { isSpeedMode } = useSpeedMode();
   const recorder = useAudioRecorder();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const chatRef = useRef<HTMLDivElement>(null);
-  const [chatboxY, setChatboxY] = useState(0);
   const [audioRefreshKey, setAudioRefreshKey] = useState(0);
+  const { isInitialInput, markAsInputted, resetInitialInput } = useInitialInput();
+  
+  // Deterministic initial greeting for SSR; randomize after mount on client only
+  const [greeting, setGreeting] = useState<string>(GREETINGS[0]);
+
+  useEffect(() => {
+    // Randomize greeting after hydration to avoid SSR/client mismatch
+    setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+  }, []);
 
   const handleVoiceClick = async () => {
     if (recorder.isRecording) {
@@ -39,61 +49,8 @@ export default function NotePage() {
     }
   };
 
-  // Calculate vertical offset so the chatbox appears vertically centered initially
-  const calculateChatboxOffset = () => {
-    const container = containerRef.current;
-    const chat = chatRef.current;
-    if (!container || !chat) return;
-
-    // 1) Available screen height inside the container
-    const AvailableScreenHeight = container.getBoundingClientRect().height;
-
-    // 2) Initial TalkToCircle height (minus greeting + gap)
-    const initialTalkHeight = chat.getBoundingClientRect().height;
-    const ChatboxYAdjustment = initialTalkHeight 
-
-    // 3) Centering offset
-    const ChatboxY = AvailableScreenHeight / 2 - 0.5 * ChatboxYAdjustment - 62; // 32 (greeting) + 30 (gap);
-
-    // 4) Apply (clamp to >= 0)
-    setChatboxY(Math.max(0, Math.floor(ChatboxY)));
-  };
-
-  useEffect(() => {
-    // Multiple attempts to ensure TalkToCircle is fully rendered and positioned
-    const calculateWithRetries = () => {
-      let attempts = 0;
-      const maxAttempts = 5;
-      
-      const tryCalculate = () => {
-        attempts++;
-        calculateChatboxOffset();
-        
-        // Keep trying until we get a valid position or max attempts reached
-        if (attempts < maxAttempts && chatboxY === 0) {
-          setTimeout(tryCalculate, 100);
-        }
-      };
-      
-      // Start immediately
-      tryCalculate();
-    };
-    
-    // Initial calculation with retries
-    calculateWithRetries();
-    
-    // Also recalculate after a longer delay to catch any late renders
-    const fallbackTimeout = setTimeout(calculateChatboxOffset, 500);
-    
-    window.addEventListener('resize', calculateChatboxOffset);
-    return () => {
-      clearTimeout(fallbackTimeout);
-      window.removeEventListener('resize', calculateChatboxOffset);
-    };
-  }, []);
-
-  // Loading state
-  if (state.isLoading || state.contacts.length === 0) {
+  // Loading state: do not block on empty data; only while actively loading
+  if (state.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-circle-neutral">
         <div className="text-center">
@@ -114,23 +71,55 @@ export default function NotePage() {
       {/* Talk mode content area - with top padding for header and bottom padding for navbar */}
       {!isSpeedMode && (
         <div 
-          className="flex-1 flex flex-col" 
+          className="relative flex-1 flex flex-col w-full h-full" 
           style={{ 
             paddingTop: isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP,
             paddingBottom: isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP,
           }}
         >
-          {/* Input Section - horizontally centered; vertical offset applied to chat */}
-          <div ref={containerRef} className="flex-1 flex items-start justify-center p-0">
-            <div ref={chatRef} style={{ transform: `translateY(${chatboxY}px)` }}>
-              <TalkToCircle />
+          {/* Input Section / Chat Area */}
+          {/* 
+            Conditional rendering for chat area:
+            - If user has not yet started input (isInitialInput),
+              show a centered greeting and initial input box.
+            - Otherwise, show the main chat interface provided by ChatProvider.
+          */}
+          {isInitialInput ? (
+            <div
+              className="absolute inset-x-0 top-1/2 flex justify-center"
+              // Center the greeting area vertically, offset according to device type:
+              style={{ transform: isMobile ? 'translateY(-50px)' : 'translateY(-52.5px)' }}
+            >
+              <div className="flex flex-col gap-xl items-center">
+                <div className="text-center">
+                  {/* Personalized greeting shown before first user input */}
+                  <h2 className="font-circleheadlinemedium text-circle-primary">
+                    {greeting}
+                  </h2>
+                </div>
+                {/* TalkToCircle input for initial message; mark inputted on send */}
+                <TalkToCircle onSend={markAsInputted} isInitialInput={isInitialInput} />
+              </div>
             </div>
-          </div>
+          ) : (
+            // Main chat window, enabled after initial input
+            <ChatProvider chatId="default-chat">
+              <div className="flex flex-col flex-1">
+                <ChatWindow /> {/* Main chat conversation UI */}
+                <div className="flex justify-center">
+                  <div className="w-[85vw] max-w-[900px]">
+                    {/* TalkToCircle input for ongoing chat */}
+                    <TalkToCircle isInitialInput={false} />
+                  </div>
+                </div>
+              </div>
+            </ChatProvider>
+          )}
         
         </div>
       )}
 
-{isSpeedMode && (
+      {isSpeedMode && (
         <div 
           className="relative flex-1" 
           style={{ 

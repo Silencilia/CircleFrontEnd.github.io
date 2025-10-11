@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+- Be very concise.
+- Never write or modify code without: analysis → discussion → user confirmation

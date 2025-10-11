@@ -27,8 +27,9 @@ export default function ContactsPage() {
   const searchBarHeight = isMobile ? CONTACTS_PAGE_SEARCH_BAR_HEIGHT_MOBILE : CONTACTS_PAGE_SEARCH_BAR_HEIGHT_DESKTOP;
   const navBarHeight = isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP;
 
-  // Loading state
-  if (state.isLoading || state.contacts.length === 0) {
+  // Loading state: only show spinner while actively loading,
+  // not when there are simply zero contacts
+  if (state.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-circle-neutral">
         <div className="text-center">

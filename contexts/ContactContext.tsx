@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { dataService } from '../data/dataService';
+import { supabase } from '../lib/supabase';
 
 // Data interfaces
 
@@ -295,11 +296,32 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     loadData();
   }, []);
 
+  // Reload when auth state changes (sign in/out)
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event) => {
+      loadData();
+    });
+    return () => { sub.subscription.unsubscribe(); };
+  }, []);
+
   const loadData = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
+      // If not signed in, clear to empty data and stop
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        dispatch({
+          type: 'SET_DATA',
+          payload: {
+            contacts: [], subjects: [], organizations: [], occupations: [],
+            relationships: [], sentiments: [], notes: [], commitments: [], drafts: [],
+          },
+        });
+        return;
+      }
+
       const data = await dataService.getAllData();
       dispatch({ type: 'SET_DATA', payload: data });
     } catch (error) {

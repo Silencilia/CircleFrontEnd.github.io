@@ -29,7 +29,7 @@ export const STRINGS = {
     SEARCH: 'Search contacts...',
     NO_RESULTS: 'No contacts found',
     NO_DATA: 'No data available',
-    TALK_TO_CIRCLE: 'Record anything...',
+    TALK_TO_CIRCLE: 'Record events, ask questions, make plans...',
   },
   
   // Error messages

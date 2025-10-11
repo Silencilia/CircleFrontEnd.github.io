@@ -66,13 +66,17 @@ export class SupabaseDataService implements DataService {
     const { birth_date, subject_ids, relationship_ids, note_ids, ...contactData } = contact;
     const { birth_year, birth_month, birth_day } = precisionDateToDb(birth_date);
 
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { data, error } = await supabase
       .from('contacts')
       .insert({
         ...contactData,
         birth_year,
         birth_month,
-        birth_day
+        birth_day,
+        user_id: userRes.user.id,
       })
       .select()
       .single();
@@ -111,9 +115,12 @@ export class SupabaseDataService implements DataService {
   }
 
   async addSubject(subject: Omit<Subject, 'id'>): Promise<Subject> {
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { data, error } = await supabase
       .from('subjects')
-      .insert(subject)
+      .insert({ ...subject, user_id: userRes.user.id })
       .select()
       .single();
 
@@ -122,9 +129,12 @@ export class SupabaseDataService implements DataService {
   }
 
   async addOrganization(organization: Omit<Organization, 'id'>): Promise<Organization> {
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { data, error } = await supabase
       .from('organizations')
-      .insert(organization)
+      .insert({ ...organization, user_id: userRes.user.id })
       .select()
       .single();
 
@@ -133,9 +143,12 @@ export class SupabaseDataService implements DataService {
   }
 
   async addOccupation(occupation: Omit<Occupation, 'id'>): Promise<Occupation> {
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { data, error } = await supabase
       .from('occupations')
-      .insert(occupation)
+      .insert({ ...occupation, user_id: userRes.user.id })
       .select()
       .single();
 
@@ -144,9 +157,12 @@ export class SupabaseDataService implements DataService {
   }
 
   async addRelationship(relationship: Omit<Relationship, 'id'>): Promise<Relationship> {
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { data, error } = await supabase
       .from('relationships')
-      .insert(relationship)
+      .insert({ ...relationship, user_id: userRes.user.id })
       .select()
       .single();
 
@@ -155,9 +171,12 @@ export class SupabaseDataService implements DataService {
   }
 
   async addSentiment(sentiment: Omit<Sentiment, 'id'>): Promise<Sentiment> {
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { data, error } = await supabase
       .from('sentiments')
-      .insert(sentiment)
+      .insert({ ...sentiment, user_id: userRes.user.id })
       .select()
       .single();
 
@@ -182,13 +201,17 @@ export class SupabaseDataService implements DataService {
     const noteDateFields = precisionDateToDb(date, 'note');
     const { time_hour, time_minute } = timeValueToDb(time_value);
 
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { data, error } = await supabase
       .from('notes')
       .insert({
         ...noteData,
         ...noteDateFields,
         time_hour,
-        time_minute
+        time_minute,
+        user_id: userRes.user.id,
       })
       .select()
       .single();
@@ -285,9 +308,12 @@ export class SupabaseDataService implements DataService {
   async addCommitment(commitment: Omit<Commitment, 'id'>): Promise<Commitment> {
     const { contact_ids, ...commitmentData } = commitment;
 
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { data, error } = await supabase
       .from('commitments')
-      .insert(commitmentData)
+      .insert({ ...commitmentData, user_id: userRes.user.id })
       .select()
       .single();
 

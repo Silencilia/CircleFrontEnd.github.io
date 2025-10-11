@@ -142,7 +142,16 @@ module.exports = {
           lineHeight: '24px', // 1.75rem
           },
 
-        // Body styles - Inter
+         // Body styles - Chat
+          '.font-circlechatmedium': {
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '14px', // Mobile: 0.75rem (matches circlechatmedium)
+          fontWeight: '400',
+          lineHeight: '20px', // 1rem (matches circlechatmedium)
+          letterSpacing: '0.025em', // tracking-wide
+          }, 
+       
+          // Body styles - Inter
         '.font-circlebodylarge': {
           fontFamily: 'Inter, sans-serif',
           fontSize: '16px', // Mobile: 1rem (same as desktop)

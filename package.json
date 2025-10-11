@@ -24,6 +24,7 @@
     "react-contenteditable": "^3.3.7",
     "react-dom": "^18",
     "react-indiana-drag-scroll": "2.2.1",
+    "react-textarea-autosize": "^8.5.9",
     "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {

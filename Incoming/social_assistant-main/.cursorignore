@@ -1,0 +1,46 @@
+# Cache folders
+**/cache/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.coverage
+**/.cache/
+
+# Backup files
+**/*.py.backup
+**/*.backup
+**/*.bak
+
+# files for human
+**/*.md
+**/*.txt
+**/*.pdf
+**/*.docx
+**/*.doc
+**/*.xls
+**/*.xlsx
+
+# Specific folders to ignore
+maintain/
+
+
+# Additional common cache/ignore patterns
+**/node_modules/
+**/venv/
+**/env/
+# **/.env
+**/.venv
+**/dist/
+**/build/
+**/*.egg-info/
+**/.DS_Store
+**/Thumbs.db
+
+# JetBrains IDE files (selective ignore)
+.idea/workspace.xml
+.idea/dataSources/
+.idea/shelf/
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/httpRequests/

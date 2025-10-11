@@ -1,0 +1,12 @@
+venv/
+*.pyc
+__pycache__/
+.env
+data.db
+*.db-journal
+.DS_Store
+*.log
+.idea/
+.vscode/
+chroma_db/
+sqlite_backup/
