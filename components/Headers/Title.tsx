@@ -1,5 +1,5 @@
 import React from 'react';
-import { AccountButton } from '../Button';
+import { AccountButton, NewChatButton } from '../Button';
 import { SpeedSwitch } from '../Switch';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSpeedMode } from '../../hooks/useSpeedMode';
@@ -8,9 +8,11 @@ interface TitleProps {
   title: string;
   isAccountPage?: boolean;
   isCirclePage?: boolean;
+  onNewChat?: () => void;
+  hasActiveChat?: boolean;
 }
 
-const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePage = false }) => {
+const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePage = false, onNewChat, hasActiveChat = false }) => {
   const isMobile = useIsMobile();
   const { isSpeedMode, toggleSpeedMode } = useSpeedMode();
 
@@ -26,8 +28,23 @@ const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePag
           {title}
         </div>
 
-        {/* Right actions: AccountButton, positioned absolutely with horizontal padding */}
+        {/* Right actions: NewChatButton (Circle only) and AccountButton */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-fit h-fit flex flex-row items-center px-lg gap-sm">
+          {isCirclePage && hasActiveChat && (
+            <NewChatButton
+              aria-label="Start new chat"
+              onClick={() => {
+                if (onNewChat) {
+                  onNewChat();
+                } else {
+                  try { localStorage.removeItem('currentChatId'); } catch {}
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('circle:new-chat'));
+                  }
+                }
+              }}
+            />
+          )}
           <AccountButton active={isAccountPage} disabled={isAccountPage} />
         </div>
 
@@ -61,8 +78,23 @@ const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, isCirclePag
           {title}
         </div>
 
-        {/* Right side: AccountButton, positioned absolutely with horizontal padding */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex flex-row items-center px-xl">
+        {/* Right side: NewChatButton (Circle only) and AccountButton */}
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex flex-row items-center px-xl gap-sm">
+          {isCirclePage && hasActiveChat && (
+            <NewChatButton
+              aria-label="Start new chat"
+              onClick={() => {
+                if (onNewChat) {
+                  onNewChat();
+                } else {
+                  try { localStorage.removeItem('currentChatId'); } catch {}
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('circle:new-chat'));
+                  }
+                }
+              }}
+            />
+          )}
           <AccountButton active={isAccountPage} disabled={isAccountPage} />
         </div>
       </div>

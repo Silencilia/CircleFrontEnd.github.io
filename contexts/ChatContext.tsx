@@ -14,7 +14,7 @@ interface ChatContextValue {
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
 
 interface ChatProviderProps {
-  chatId: string;
+  chatId: string | null;
   children: React.ReactNode;
 }
 
@@ -41,7 +41,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
   // Upon chatId or remote status changing, load all chat messages from remote, else do nothing
   useEffect(() => {
     let isMounted = true;
-    if (!remoteEnabled) return;
+    if (!remoteEnabled || !chatId) return;
     (async () => {
       // Query chat_messages in Supabase for this chatId, in creation order
       const { data, error } = await supabase
@@ -68,7 +68,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
 
   // Subscribe to real-time update events for this chat's messages unless in local-only mode
   useEffect(() => {
-    if (!remoteEnabled) return;
+    if (!remoteEnabled || !chatId) return;
     // Subscribe to all postgres_changes for chat_messages, filtering by this chat's ID
     const channel = supabase
       .channel(`chat:${chatId}`)
@@ -98,6 +98,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
   // Insert any type of message (user, system, or tool role), directly or optimistically, depending on remote/local mode
   const insertMessage = useCallback(
     async (role: 'user'|'system'|'tool', text?: string, parts?: ChatMessagePart[]) => {
+      if (!chatId) return; // Skip if no active chat
       if (remoteEnabled) {
         // Attempt to insert into Supabase, then pick up new message from real-time,
         // or pessimistically add ourselves if for any reason real-time lags
@@ -112,7 +113,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
           // Can add an error reporting/tracking here
           console.error('Failed to insert message', error);
         } else {
-          // Safeguard/optimistic for cases where real-time doesn’t fire
+          // Safeguard/optimistic for cases where real-time doesn't fire
           setEntries((prev) => [...prev, {
             id: data.id,
             role,
@@ -131,7 +132,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
           createdAt: new Date().toISOString(),
         }]);
       }
-    }, [remoteEnabled]
+    }, [remoteEnabled, chatId]
   );
 
   // Insert a user message (as text)

@@ -148,7 +148,7 @@ export default function MemoPage() {
           className="fixed left-0 right-0 z-40"
           style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
         >
-          <div className="min-h-full flex flex-col justify-end">
+          <div className="min-h-full flex flex-col justify-start">
             <NoteGallery 
               notes={filteredNotes} 
               onOpenNoteDetail={(n) => {

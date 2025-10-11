@@ -24,3 +24,4 @@ export { default as NewTagButton } from './NewTagButton';
 export { default as ToggleButton } from './ToggleButton';
 export { default as VoiceButtonLg } from './VoiceButtonLg';
 export { default as PlayButton } from './PlayButton';
+export { default as NewChatButton } from './NewChatButton';

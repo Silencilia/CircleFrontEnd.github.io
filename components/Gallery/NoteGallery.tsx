@@ -16,7 +16,7 @@ const NoteGallery: React.FC<NoteGalleryProps> = ({ notes, onOpenNoteDetail, onOp
 
   const DesktopLayout = () => (
     <div className="w-full px-xxl pt-xl pb-0 flex flex-row items-center gap-2xl">
-      <div className="w-full flex flex-row flex-wrap justify-center items-start content-center gap-[20px]">
+      <div className="w-full flex flex-col justify-start items-center gap-[20px]">
         {items.length > 0 ? (
           items.map((note) => (
             <NoteCard 
@@ -35,7 +35,7 @@ const NoteGallery: React.FC<NoteGalleryProps> = ({ notes, onOpenNoteDetail, onOp
 
   const MobileLayout = () => (
     <div className="w-full px-lg pt-md pb-0 flex flex-row items-center gap-xl">
-      <div className="w-full flex flex-row flex-wrap justify-center items-start content-center gap-lg">
+      <div className="w-full flex flex-col justify-start items-center gap-lg">
         {items.length > 0 ? (
           items.map((note) => (
             <NoteCard 

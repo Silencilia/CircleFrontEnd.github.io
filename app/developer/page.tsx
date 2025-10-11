@@ -20,7 +20,7 @@ export default function DeveloperPage() {
             <ChatWindow />
             <div className="flex justify-center">
               <div className="w-[85vw] max-w-[900px]">
-                <TalkToCircle isInitialInput={false} />
+                <TalkToCircle />
               </div>
             </div>
           </div>

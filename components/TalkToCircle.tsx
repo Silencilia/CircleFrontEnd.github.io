@@ -6,17 +6,18 @@ import { UploadButton, VoiceButton, SendButton } from './Button';
 import NameConfirm from './Dialogs/NameConfirm';
 import { detectNamesInText } from '../utils/talkToCircleHelpers';
 import { useChat } from '../contexts/ChatContext';
+import { supabase } from '../lib/supabase';
 
 interface TalkToCircleProps {
   // For demos/testing: force a specific layout. If undefined, auto-detect.
   forceWrapped?: boolean;
   // Callback when user sends a message
   onSend?: () => void;
-  // When false, limit the textarea max height to 240px
-  isInitialInput?: boolean;
+  // Callback when a new chat is created on first message
+  onNewChatCreated?: (chatId: string) => void;
 }
 
-const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, isInitialInput }) => {
+const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNewChatCreated }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chat = (() => {
     try { return useChat(); } catch { return null; }
@@ -77,8 +78,43 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, isIni
     onSend?.();
     // Clear the textarea immediately after sending
     setValue('');
-    // Add user message to chat if provider is present
-    if (chat) {
+    // If no chat context is available (initial input before provider),
+    // create a new chat and insert the first message directly.
+    if (!chat) {
+      try {
+        const { data: userRes } = await supabase.auth.getUser();
+        const userId = userRes.user?.id;
+        if (!userId) {
+          setIsDetecting(false);
+          return;
+        }
+
+        const { data: createdChat, error: chatError } = await supabase
+          .from('chats')
+          .insert({ user_id: userId, title: null, metadata: {} })
+          .select('id')
+          .single();
+        if (chatError || !createdChat?.id) {
+          setIsDetecting(false);
+          return;
+        }
+
+        const newChatId = createdChat.id as string;
+        // Insert the first user message for this chat BEFORE switching views
+        await supabase.from('chat_messages').insert({
+          chat_id: newChatId,
+          role: 'user',
+          text,
+          parts: null,
+          status: 'final',
+        });
+        // Inform parent so it can mount ChatProvider with this chatId after message exists
+        onNewChatCreated?.(newChatId);
+      } catch {
+        // Silent fail for now; could surface UI error later
+      }
+    } else {
+      // Otherwise, add via chat context
       await chat.addUserMessage(text);
     }
     
@@ -126,7 +162,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, isIni
                   placeholder={STRINGS.PLACEHOLDERS.TALK_TO_CIRCLE}
                   minRows={1}
                   className={`font-circlechatmedium w-full resize-none overflow-y-auto bg-transparent focus:outline-none text-circle-primary placeholder-circle-primary/35 ${
-                    isInitialInput === false ? 'max-h-[180px]' : ''
+                    chat ? 'max-h-[180px]' : ''
                   } ${
                     (forceWrapped ?? isWrapped) ? 'textarea-wrapped' : 'textarea-unwrapped'
                   }`}

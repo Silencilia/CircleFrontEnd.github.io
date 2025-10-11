@@ -14,7 +14,6 @@ import { VoiceButtonLg } from '../components/Button';
 import { useContacts } from '../contexts/ContactContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useSpeedMode } from '../hooks/useSpeedMode';
-import { useInitialInput } from '../hooks/useInitialInput';
 import {
   TITLE_HEIGHT_MOBILE,
   TITLE_HEIGHT_DESKTOP,
@@ -30,7 +29,10 @@ export default function NotePage() {
   const { isSpeedMode } = useSpeedMode();
   const recorder = useAudioRecorder();
   const [audioRefreshKey, setAudioRefreshKey] = useState(0);
-  const { isInitialInput, markAsInputted, resetInitialInput } = useInitialInput();
+  // Removed isInitialInput; currentChatId is the source of truth
+  
+  // Current chat ID state with localStorage persistence
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   
   // Deterministic initial greeting for SSR; randomize after mount on client only
   const [greeting, setGreeting] = useState<string>(GREETINGS[0]);
@@ -39,6 +41,30 @@ export default function NotePage() {
     // Randomize greeting after hydration to avoid SSR/client mismatch
     setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
   }, []);
+
+  // Load currentChatId from localStorage on mount
+  useEffect(() => {
+    const savedChatId = localStorage.getItem('currentChatId');
+    if (savedChatId) {
+      setCurrentChatId(savedChatId);
+    }
+  }, []);
+
+  // Save currentChatId to localStorage whenever it changes
+  useEffect(() => {
+    if (currentChatId) {
+      localStorage.setItem('currentChatId', currentChatId);
+    } else {
+      localStorage.removeItem('currentChatId');
+    }
+  }, [currentChatId]);
+
+  // Initial input UI is now controlled solely by currentChatId
+
+  // Handle new chat creation from initial input
+  const handleNewChatCreated = (chatId: string) => {
+    setCurrentChatId(chatId);
+  };
 
   const handleVoiceClick = async () => {
     if (recorder.isRecording) {
@@ -65,7 +91,12 @@ export default function NotePage() {
     <div className="flex flex-col min-h-screen bg-circle-neutral">
       {/* Title - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <Title title="Circle" isCirclePage={true} />
+        <Title
+          title="Circle"
+          isCirclePage={true}
+          hasActiveChat={!!currentChatId}
+          onNewChat={() => setCurrentChatId(null)}
+        />
       </div>
       
       {/* Talk mode content area - with top padding for header and bottom padding for navbar */}
@@ -78,13 +109,8 @@ export default function NotePage() {
           }}
         >
           {/* Input Section / Chat Area */}
-          {/* 
-            Conditional rendering for chat area:
-            - If user has not yet started input (isInitialInput),
-              show a centered greeting and initial input box.
-            - Otherwise, show the main chat interface provided by ChatProvider.
-          */}
-          {isInitialInput ? (
+          {/* Render greeting and initial input only when no chat is active */}
+          {!currentChatId ? (
             <div
               className="absolute inset-x-0 top-1/2 flex justify-center"
               // Center the greeting area vertically, offset according to device type:
@@ -97,19 +123,19 @@ export default function NotePage() {
                     {greeting}
                   </h2>
                 </div>
-                {/* TalkToCircle input for initial message; mark inputted on send */}
-                <TalkToCircle onSend={markAsInputted} isInitialInput={isInitialInput} />
+                {/* TalkToCircle input for initial message */}
+                <TalkToCircle onNewChatCreated={handleNewChatCreated} />
               </div>
             </div>
           ) : (
-            // Main chat window, enabled after initial input
-            <ChatProvider chatId="default-chat">
+            // Main chat window when a chat is active
+            <ChatProvider chatId={currentChatId}>
               <div className="flex flex-col flex-1">
                 <ChatWindow /> {/* Main chat conversation UI */}
                 <div className="flex justify-center">
                   <div className="w-[85vw] max-w-[900px]">
                     {/* TalkToCircle input for ongoing chat */}
-                    <TalkToCircle isInitialInput={false} />
+                    <TalkToCircle />
                   </div>
                 </div>
               </div>
