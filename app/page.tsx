@@ -101,7 +101,7 @@ export default function NotePage() {
       {/* Talk mode content area - with top padding for header (plus safe area) and bottom padding for navbar */}
       {!isSpeedMode && (
         <div 
-          className="relative flex-1 flex flex-col w-full h-full" 
+          className="position-fixed flex-1 flex flex-col w-full h-full" 
           style={{ 
             paddingTop: `calc(${isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP} + env(safe-area-inset-top))`,
             paddingBottom: isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP,
