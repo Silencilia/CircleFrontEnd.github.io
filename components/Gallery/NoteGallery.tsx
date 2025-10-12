@@ -14,44 +14,26 @@ const NoteGallery: React.FC<NoteGalleryProps> = ({ notes, onOpenNoteDetail, onOp
   const items = useMemo(() => (notes || []).filter(n => !n.is_trashed), [notes]);
   const isMobile = useIsMobile();
 
-  const DesktopLayout = () => (
-    <div className="w-full px-xxl pt-xl pb-0 flex flex-row items-center gap-2xl">
-      <div className="w-full flex flex-col justify-start items-center gap-[20px]">
+  return (
+    <div className={`w-full ${isMobile ? 'px-lg pt-md gap-xl' : 'px-xxl pt-xl gap-2xl'} pb-0 flex flex-row items-center`}>
+      <div className={`w-full flex flex-col justify-start items-center ${isMobile ? 'gap-lg' : 'gap-xl'}`}>
         {items.length > 0 ? (
           items.map((note) => (
-            <NoteCard 
-              key={note.id} 
+            <NoteCard
+              key={note.id}
               note={note}
               onOpenNoteDetail={onOpenNoteDetail}
               onOpenContactDetail={onOpenContactDetail}
             />
           ))
         ) : (
-          <div className="text-center text-circle-primary/60 font-circlebodymedium w-full">No notes to display</div>
+          <div className={`text-center text-circle-primary/60 ${isMobile ? 'font-circlebodysmall' : 'font-circlebodymedium'} w-full`}>
+            No notes to display
+          </div>
         )}
       </div>
     </div>
   );
-
-  const MobileLayout = () => (
-    <div className="w-full px-lg pt-md pb-0 flex flex-row items-center gap-xl">
-      <div className="w-full flex flex-col justify-start items-center gap-lg">
-        {items.length > 0 ? (
-          items.map((note) => (
-            <NoteCard 
-              key={note.id} 
-              note={note}
-              onOpenNoteDetail={onOpenNoteDetail}
-              onOpenContactDetail={onOpenContactDetail}
-            />
-          ))
-        ) : (
-          <div className="text-center text-circle-primary/60 font-circlebodysmall w-full">No notes to display</div>
-        )}
-      </div>
-    </div>
-  );
-  return isMobile ? <MobileLayout /> : <DesktopLayout />;
 };
 
 export default NoteGallery;

@@ -7,6 +7,7 @@ import NameConfirm from './Dialogs/NameConfirm';
 import { detectNamesInText } from '../utils/talkToCircleHelpers';
 import { useChat } from '../contexts/ChatContext';
 import { supabase } from '../lib/supabase';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface TalkToCircleProps {
   // For demos/testing: force a specific layout. If undefined, auto-detect.
@@ -26,6 +27,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
   const [isWrapped, setIsWrapped] = useState<boolean>(false);
   const [isDetecting, setIsDetecting] = useState<boolean>(false);
   const [detectedNames, setDetectedNames] = useState<string[] | null>(null);
+  const isMobile = useIsMobile();
 
   // Minimal wrap detection: based on explicit newlines or measured height vs single-line
   const updateWrapState = (nextValue: string) => {
@@ -59,15 +61,15 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
     }
   };
 
-  // On mount: focus on desktop
+  // On mount or breakpoint change: focus on desktop
   useEffect(() => {
     const el = textareaRef.current;
-    if (el && typeof window !== 'undefined' && window.innerWidth >= 768) {
+    if (el && typeof window !== 'undefined' && !isMobile) {
       setTimeout(() => {
         el.focus();
       }, 100);
     }
-  }, []);
+  }, [isMobile]);
 
   const handleSend = async () => {
     const text = value.trim();
@@ -132,7 +134,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
       {/* Container that switches layout via CSS Grid */}
       <div className="w-full flex justify-center h-fit">
             <div
-              className={`bg-circle-white border border-inset border-circle-neutral-variant rounded-lg self-start w-[85vw] max-w-[900px] ${
+              className={`bg-circle-white border border-inset border-circle-neutral-variant rounded-lg self-start w-[95vw] max-w-[900px] ${
                (forceWrapped ?? isWrapped)
                 ? "grid grid-rows-btn-layout grid-cols-1 items-center"
                 : "grid grid-cols-btn-layout items-center gap-x-md"

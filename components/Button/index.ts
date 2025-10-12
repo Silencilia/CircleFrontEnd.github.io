@@ -25,3 +25,5 @@ export { default as ToggleButton } from './ToggleButton';
 export { default as VoiceButtonLg } from './VoiceButtonLg';
 export { default as PlayButton } from './PlayButton';
 export { default as NewChatButton } from './NewChatButton';
+export { default as ChatsButton } from './ChatsButton';
+export { default as BackToCircleButton } from './BackToCircleButton';

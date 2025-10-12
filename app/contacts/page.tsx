@@ -69,7 +69,7 @@ export default function ContactsPage() {
       {/* ContactGallery fixed between header and navbar with its own scroll area */}
       <div
         className="fixed left-0 right-0 z-40"
-        style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + 'px', overflowY: 'auto' }}
+        style={{ top: `calc(${parseInt(titleHeight)}px + ${parseInt(searchBarHeight)}px + env(safe-area-inset-top))`, bottom: parseInt(navBarHeight) + 'px', overflowY: 'auto' }}
       >
         <div className="max-w-7xl mx-auto">
           <ContactGallery 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Title from '../components/Headers/Title';
+import TitleCircle from '../components/Headers/TitleCircle';
 import TalkToCircle from '../components/TalkToCircle';
 import ChatWindow from '../components/Chat/ChatWindow';
 import { ChatProvider } from '../contexts/ChatContext';
@@ -91,20 +91,19 @@ export default function NotePage() {
     <div className="flex flex-col min-h-screen bg-circle-neutral">
       {/* Title - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <Title
+        <TitleCircle
           title="Circle"
-          isCirclePage={true}
           hasActiveChat={!!currentChatId}
           onNewChat={() => setCurrentChatId(null)}
         />
       </div>
       
-      {/* Talk mode content area - with top padding for header and bottom padding for navbar */}
+      {/* Talk mode content area - with top padding for header (plus safe area) and bottom padding for navbar */}
       {!isSpeedMode && (
         <div 
           className="relative flex-1 flex flex-col w-full h-full" 
           style={{ 
-            paddingTop: isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP,
+            paddingTop: `calc(${isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP} + env(safe-area-inset-top))`,
             paddingBottom: isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP,
           }}
         >
@@ -149,7 +148,7 @@ export default function NotePage() {
         <div 
           className="relative flex-1" 
           style={{ 
-            paddingTop: isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP,
+            paddingTop: `calc(${isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP} + env(safe-area-inset-top))`,
             paddingBottom: isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP,
           }}
         >

@@ -23,3 +23,4 @@ export { default as SpeakerIcon } from './SpeakerIcon';
 export { default as UpIcon } from './UpIcon';
 export { default as BackIcon } from './BackIcon';
 export { default as ZapIcon } from './ZapIcon';
+export { default as RightIcon } from './RightIcon';

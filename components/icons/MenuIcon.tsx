@@ -18,7 +18,7 @@ const MenuIcon: React.FC<MenuIconProps> = ({ width = 16, height = 16, className 
     >
       <path 
         d="M3 8H13M3 4H13M3 12H13" 
-        stroke="#1E1E1E" 
+        stroke="currentColor" 
         strokeWidth="1.5" 
         strokeLinecap="round" 
         strokeLinejoin="round"

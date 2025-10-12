@@ -361,6 +361,28 @@ module.exports = {
             },
           },
         },
+        '.btn-md': {
+          width: '24px', // Mobile width
+          height: '24px', // Mobile height
+          borderRadius: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          '& svg': {
+            width: '16px', // Mobile icon size
+            height: '16px', // Mobile icon size
+          },
+          // Desktop sizes at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '30px',
+            height: '30px',
+            '& svg': {
+              width: '20px',
+              height: '20px',
+            },
+          },
+        },
+
         '.btn-sm-txt': {
           width: 'fit-content',
           height: '20px', // Mobile height
@@ -436,7 +458,7 @@ module.exports = {
             },
           },
         },
-        '.btn-account': {
+        '.btn-nav-rd': {
           width: '48px',  // Mobile default
           height: '48px', // Mobile default
           borderRadius: '10px', // Slightly smaller radius for mobile
@@ -629,11 +651,12 @@ module.exports = {
           left: '0',
           right: '0',
           zIndex: '30',
-          top: TITLE_HEIGHT_MOBILE,  // Default mobile top offset
-          bottom: NAV_BAR_HEIGHT_MOBILE,  // Default mobile bottom offset
+          // Include safe-area insets so mobile browser UI doesn’t overlap
+          top: `calc(${TITLE_HEIGHT_MOBILE} + env(safe-area-inset-top))`,
+          bottom: NAV_BAR_HEIGHT_MOBILE,  // Bottom already sits above navbar
           // Automatically switch to desktop offsets at 640px+
           [`@media (min-width: 640px)`]: {
-            top: TITLE_HEIGHT_DESKTOP,
+            top: `calc(${TITLE_HEIGHT_DESKTOP} + env(safe-area-inset-top))`,
             bottom: NAV_BAR_HEIGHT_DESKTOP,
           },
         },

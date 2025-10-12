@@ -10,7 +10,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 
 export default function DeveloperPage() {
   const isMobile = useIsMobile();
-  const paddingTop = isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP;
+  const paddingTop = `calc(${isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP} + env(safe-area-inset-top))`;
   const paddingBottom = isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP;
   return (
     <div className="flex flex-col min-h-screen bg-[#FBF7F3]">

@@ -12,6 +12,7 @@ import NoteGallery from '../../components/Gallery/NoteGallery';
 import NoteCardDetail from '../../components/Cards/NoteCardDetail';
 import NoteCardNew from '../../components/Cards/NoteCardNew';
 import ContactCardDetail from '../../components/Cards/ContactCardDetail';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   NAV_BAR_HEIGHT_MOBILE,
   NAV_BAR_HEIGHT_DESKTOP,
@@ -33,7 +34,7 @@ export default function MemoPage() {
   const [newNote, setNewNote] = useState<Note | null>(null);
   const [isCommitmentGalleryCollapsed, setIsCommitmentGalleryCollapsed] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
 
   // Handle hydration and restore state from localStorage
   React.useEffect(() => {
@@ -53,17 +54,7 @@ export default function MemoPage() {
     }
   }, [isCommitmentGalleryCollapsed, isHydrated]);
 
-  // Detect screen size on mount and resize
-  React.useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  // Screen size handled by useIsMobile hook
 
   const titleHeight = isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP;
   const searchBarHeight = isMobile ? MEMO_PAGE_SEARCH_BAR_HEIGHT_MOBILE : MEMO_PAGE_SEARCH_BAR_HEIGHT_DESKTOP;
@@ -132,7 +123,7 @@ export default function MemoPage() {
                   value={searchQuery}
                   onChange={handleSearchChange}
                   placeholder="Search notes..."
-                  autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
+                  autoFocus={typeof window !== 'undefined' && !isMobile}
                 />
 
                 <div className="flex-shrink-0">
@@ -146,7 +137,7 @@ export default function MemoPage() {
         {/* Content between header and navbar minus CommitmentGallery target height */}
         <div
           className="fixed left-0 right-0 z-40"
-          style={{ top: parseInt(titleHeight) + parseInt(searchBarHeight) + 'px', bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
+          style={{ top: `calc(${parseInt(titleHeight)}px + ${parseInt(searchBarHeight)}px + env(safe-area-inset-top))`, bottom: parseInt(navBarHeight) + commitmentGalleryHeight + 'px', overflowY: 'auto' }}
         >
           <div className="min-h-full flex flex-col justify-start">
             <NoteGallery 
