@@ -3,8 +3,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { STRINGS } from '../data/strings';
 import { UploadButton, VoiceButton, SendButton } from './Button';
-import NameConfirm from './Dialogs/NameConfirm';
-import { detectNamesInText } from '../utils/talkToCircleHelpers';
+ 
 import { useChat } from '../contexts/ChatContext';
 import { supabase } from '../lib/supabase';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -25,8 +24,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
   })();
   const [value, setValue] = useState('');
   const [isWrapped, setIsWrapped] = useState<boolean>(false);
-  const [isDetecting, setIsDetecting] = useState<boolean>(false);
-  const [detectedNames, setDetectedNames] = useState<string[] | null>(null);
+ 
   const isMobile = useIsMobile();
 
   // Minimal wrap detection: based on explicit newlines or measured height vs single-line
@@ -73,9 +71,8 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
 
   const handleSend = async () => {
     const text = value.trim();
-    if (!text || isDetecting) return;
-    setIsDetecting(true);
-    
+    if (!text) return;
+
     // Call the onSend callback to mark that user has made initial input
     onSend?.();
     // Clear the textarea immediately after sending
@@ -87,7 +84,6 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
         const { data: userRes } = await supabase.auth.getUser();
         const userId = userRes.user?.id;
         if (!userId) {
-          setIsDetecting(false);
           return;
         }
 
@@ -97,7 +93,6 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
           .select('id')
           .single();
         if (chatError || !createdChat?.id) {
-          setIsDetecting(false);
           return;
         }
 
@@ -119,14 +114,6 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
       // Otherwise, add via chat context
       await chat.addUserMessage(text);
     }
-    
-    const names = await detectNamesInText(text);
-    setDetectedNames(names);
-    setIsDetecting(false);
-  };
-
-  const handleDialogClose = () => {
-    setDetectedNames(null);
   };
 
   return (
@@ -134,7 +121,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
       {/* Container that switches layout via CSS Grid */}
       <div className="w-full flex justify-center h-fit">
             <div
-              className={`bg-circle-white border border-inset border-circle-neutral-variant rounded-lg self-start w-[95vw] max-w-[900px] ${
+              className={`bg-circle-white border border-inset border-circle-neutral-variant rounded-lg self-start w-full max-w-[900px] ${
                (forceWrapped ?? isWrapped)
                 ? "grid grid-rows-btn-layout grid-cols-1 items-center"
                 : "grid grid-cols-btn-layout items-center gap-x-md"
@@ -174,19 +161,13 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
               {/* Right button: bottom-right when wrapped; right column when single-line */}
               <div style={{ gridRow: (forceWrapped ?? isWrapped) ? '2' : '1', gridColumn: (forceWrapped ?? isWrapped) ? '1' : '3', justifySelf: (forceWrapped ?? isWrapped) ? 'end' : undefined }}>
                 {value.trim() ? (
-                  <SendButton onClick={handleSend} className={isDetecting ? 'opacity-60 pointer-events-none' : ''} />
+                  <SendButton onClick={handleSend} />
                 ) : (
                   <VoiceButton />
                 )}
               </div>
             </div>
           </div>
-      {Array.isArray(detectedNames) && (
-        <NameConfirm
-          names={detectedNames}
-          onClose={handleDialogClose}
-        />
-      )}
     </>
   );
 };

@@ -13,6 +13,7 @@ Rules:
 - Exclude organizations, places, dates, product names
 - Exclude titles unless they are part of the written name (e.g., "Dr. Brown" → "Brown" is acceptable, prefer the name without the title)
 - Do not infer names that are not explicitly present
+- If no likely names are present, return an empty array
 
 Text:
 """

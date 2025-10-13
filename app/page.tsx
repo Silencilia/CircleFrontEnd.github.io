@@ -125,11 +125,9 @@ export default function NotePage() {
               <ChatProvider chatId={currentChatId}>
                 <div className="h-full flex flex-col">
                   <ChatWindow /> {/* Main chat conversation UI */}
-                  <div className="flex justify-center">
-                    <div className="w-[85vw] max-w-[900px]">
-                      {/* TalkToCircle input for ongoing chat */}
-                      <TalkToCircle />
-                    </div>
+                  <div className="w-full px-lg max-w-[900px] mx-auto">
+                    {/* TalkToCircle input for ongoing chat */}
+                    <TalkToCircle />
                   </div>
                 </div>
               </ChatProvider>
