@@ -88,7 +88,7 @@ export default function NotePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-circle-neutral">
+    <div className="position-fixedflex flex-col min-h-screen bg-circle-neutral">
       {/* Title - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <TitleCircle
@@ -101,7 +101,7 @@ export default function NotePage() {
       {/* Talk mode content area - with top padding for header (plus safe area) and bottom padding for navbar */}
       {!isSpeedMode && (
         <div 
-          className="position-fixed flex-1 flex flex-col w-full h-full" 
+          className="relative flex-1 flex flex-col w-full h-full min-h-screen" 
           style={{ 
             paddingTop: `calc(${isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP} + env(safe-area-inset-top))`,
             paddingBottom: isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP,
