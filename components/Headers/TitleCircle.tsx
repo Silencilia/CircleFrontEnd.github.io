@@ -25,10 +25,7 @@ const TitleCircle: React.FC<TitleCircleProps> = ({ title, isAccountPage = false,
       <div
         className="title w-full bg-circle-neutral flex items-center justify-center relative"
       >
-        {/* Centered title text */}
-        <div className="font-circledisplayxsmall text-center text-circle-primary">
-          {title}
-        </div>
+     
 
         {/* Right actions: NewChatButton and AccountButton */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-fit h-fit flex flex-row items-center px-lg gap-sm">
