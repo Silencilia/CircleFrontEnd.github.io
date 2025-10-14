@@ -2,7 +2,7 @@ import React from 'react';
 import { RecycleIcon } from '../icons';
 
 interface RecycleButtonProps {
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   className?: string;
   ariaLabel?: string;
   hoverVariant?: 'neutral' | 'neutral-variant';
