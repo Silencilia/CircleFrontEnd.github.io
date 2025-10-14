@@ -108,8 +108,8 @@ export default function NotePage() {
           <div className="h-full flex flex-col">
             {/* Render greeting and initial input only when no chat is active */}
             {!currentChatId ? (
-              <div className="h-full flex items-center justify-center">
-                <div className="flex flex-col gap-xl items-center">
+              <div className="h-full flex items-center justify-center px-lg">
+                <div className="flex flex-col w-full gap-xl items-center">
                   <div className="text-center">
                     {/* Personalized greeting shown before first user input */}
                     <h2 className="font-circleheadlinemedium text-circle-primary">

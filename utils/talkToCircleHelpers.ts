@@ -7,23 +7,21 @@
  * @param text - The text to analyze for names
  * @returns Array of detected names, or empty array on error
  */
-export async function detectNamesInText(text: string): Promise<string[]> {
+export async function identifyRequest(chatId: string, messageId: string): Promise<{ ok: boolean } | { ok: false; error: string }> {
   try {
-    const res = await fetch('/api/detect-names', {
+    const res = await fetch('/api/intents/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ chatId, messageId }),
     });
-    
     if (!res.ok) {
-      return [];
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, error: err?.error || 'Request failed' } as const;
     }
-    
-    const data = await res.json();
-    const names: string[] = Array.isArray(data?.names) ? data.names : [];
-    return names;
-  } catch {
-    return [];
+    const data = await res.json().catch(() => ({}));
+    return { ok: !!data?.ok } as const;
+  } catch (e: any) {
+    return { ok: false, error: e?.message || 'Unknown error' } as const;
   }
 }
 

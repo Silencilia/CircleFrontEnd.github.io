@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { renderComponent } from './registry';
 import UserMessageCard from './UserMessageCard';
+import SystemMessageCard from './SystemMessageCard';
 
 const ChatWindow: React.FC = () => {
   const { entries } = useChat();
@@ -21,15 +22,13 @@ const ChatWindow: React.FC = () => {
           const bubble = isUser ? (
             <UserMessageCard text={e.text ?? ''} />
           ) : (
-            <div className="rounded-lg px-3 py-2 bg-white border whitespace-pre-wrap break-words">
-              {e.text}
-            </div>
+            <SystemMessageCard text={e.text ?? ''} />
           );
           const parts = (e.parts || []).map((p, idx) => {
             if (p.type === 'text') {
               return (
-                <div key={idx} className="rounded-lg px-3 py-2 bg-white border whitespace-pre-wrap break-words">
-                  {p.text}
+                <div key={idx} className="w-full">
+                  <SystemMessageCard text={p.text} />
                 </div>
               );
             }

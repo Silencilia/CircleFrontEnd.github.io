@@ -6,6 +6,7 @@ import { UploadButton, VoiceButton, SendButton } from './Button';
  
 import { useChat } from '../contexts/ChatContext';
 import { supabase } from '../lib/supabase';
+import { identifyRequest } from '../utils/talkToCircleHelpers';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 interface TalkToCircleProps {
@@ -98,21 +99,30 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
 
         const newChatId = createdChat.id as string;
         // Insert the first user message for this chat BEFORE switching views
-        await supabase.from('chat_messages').insert({
+        const { data: inserted, error: insertErr } = await supabase.from('chat_messages').insert({
           chat_id: newChatId,
           role: 'user',
           text,
           parts: null,
           status: 'final',
-        });
+        }).select('id').single();
+        if (insertErr || !inserted?.id) {
+          onNewChatCreated?.(newChatId);
+          return;
+        }
         // Inform parent so it can mount ChatProvider with this chatId after message exists
         onNewChatCreated?.(newChatId);
+        // Fire-and-forget intent processing
+        identifyRequest(newChatId, inserted.id);
       } catch {
         // Silent fail for now; could surface UI error later
       }
     } else {
-      // Otherwise, add via chat context
-      await chat.addUserMessage(text);
+      // Otherwise, add via chat context and trigger identify
+      const messageId = await chat.addUserMessage(text);
+      if (chat.chatId && messageId) {
+        identifyRequest(chat.chatId, messageId);
+      }
     }
   };
 

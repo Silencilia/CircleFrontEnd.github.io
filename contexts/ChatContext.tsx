@@ -6,9 +6,10 @@ import { ChatEntry, ChatMessagePart, ComponentKind } from '../types/chat';
 
 interface ChatContextValue {
   entries: ChatEntry[];
-  addUserMessage: (text: string) => Promise<void>;
+  addUserMessage: (text: string) => Promise<string>;
   addSystemText: (text: string) => Promise<void>;
   addSystemComponent: (kind: ComponentKind, props: unknown) => Promise<void>;
+  chatId: string | null;
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
@@ -97,11 +98,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
 
   // Insert any type of message (user, system, or tool role), directly or optimistically, depending on remote/local mode
   const insertMessage = useCallback(
-    async (role: 'user'|'system'|'tool', text?: string, parts?: ChatMessagePart[]) => {
-      if (!chatId) return; // Skip if no active chat
+    async (role: 'user'|'system'|'tool', text?: string, parts?: ChatMessagePart[]): Promise<string> => {
+      if (!chatIdRef.current) throw new Error('No active chat');
       if (remoteEnabled) {
-        // Attempt to insert into Supabase, then pick up new message from real-time,
-        // or pessimistically add ourselves if for any reason real-time lags
         const { error, data } = await supabase.from('chat_messages').insert({
           chat_id: chatIdRef.current,
           role,
@@ -110,35 +109,31 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
           status: 'final',
         }).select('id, created_at').single();
         if (error) {
-          // Can add an error reporting/tracking here
           console.error('Failed to insert message', error);
-        } else {
-          // Safeguard/optimistic for cases where real-time doesn't fire
-          setEntries((prev) => [...prev, {
-            id: data.id,
-            role,
-            text: text ?? undefined,
-            parts: parts ?? undefined,
-            createdAt: data.created_at,
-          }]);
+          throw error;
         }
+        // Do not optimistically append; rely on realtime to maintain unidirectional flow
+        return data.id as string;
       } else {
-        // Fallback: update local chat only for unauthenticated use
+        // Local-only fallback (unauthenticated)
+        const localId = crypto.randomUUID();
         setEntries((prev) => [...prev, {
-          id: crypto.randomUUID(),
+          id: localId,
           role,
           text: text ?? undefined,
           parts: parts ?? undefined,
           createdAt: new Date().toISOString(),
         }]);
+        return localId;
       }
-    }, [remoteEnabled, chatId]
+    }, [remoteEnabled]
   );
 
   // Insert a user message (as text)
   const addUserMessage = useCallback(
     async (text: string) => {
-      await insertMessage('user', text, undefined);
+      const id = await insertMessage('user', text, undefined);
+      return id;
     }, [insertMessage]
   );
 
@@ -163,7 +158,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
     addUserMessage,
     addSystemText,
     addSystemComponent,
-  }), [entries, addUserMessage, addSystemText, addSystemComponent]);
+    chatId: chatIdRef.current ?? null,
+  }), [entries, addUserMessage, addSystemText, addSystemComponent, chatIdRef.current]);
 
   // Provide children with chat state and message actions for in-line editing, etc.
   return (
