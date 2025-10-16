@@ -14,6 +14,12 @@ async function callOpenAI(messages: Array<{ role: 'system'|'user'|'assistant'; c
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY is not configured');
   }
+  try {
+    console.log('[intents/process] openai.chat.completions request', {
+      messagesCount: messages.length,
+      temperature,
+    });
+  } catch {}
   const response = await fetch(OPENAI_API_URL, {
     method: 'POST',
     headers: {
@@ -27,8 +33,14 @@ async function callOpenAI(messages: Array<{ role: 'system'|'user'|'assistant'; c
     }),
   });
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`OpenAI error: ${err}`);
+    const errText = await response.text();
+    try {
+      console.error('[intents/process] openai.chat.completions error', {
+        status: response.status,
+        body: errText,
+      });
+    } catch {}
+    throw new Error(`OpenAI error: ${errText}`);
   }
   const data = await response.json();
   const content: string = data?.choices?.[0]?.message?.content ?? '';
@@ -45,6 +57,13 @@ async function callOpenAIWithTools(args: {
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY is not configured');
   }
+  try {
+    console.log('[intents/process] openai.chat.completions (tools) request', {
+      messagesCount: args.messages.length,
+      toolsCount: args.tools?.length ?? 0,
+      temperature: args.temperature ?? 0,
+    });
+  } catch {}
   const response = await fetch(OPENAI_API_URL, {
     method: 'POST',
     headers: {
@@ -60,8 +79,14 @@ async function callOpenAIWithTools(args: {
     }),
   });
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`OpenAI error: ${err}`);
+    const errText = await response.text();
+    try {
+      console.error('[intents/process] openai.chat.completions (tools) error', {
+        status: response.status,
+        body: errText,
+      });
+    } catch {}
+    throw new Error(`OpenAI error: ${errText}`);
   }
   const data = await response.json();
   return data;
@@ -84,14 +109,27 @@ async function fetchChatStack(chatId: string) {
   const { createClient } = await import('@supabase/supabase-js');
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
   const anon = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-  if (!url || !anon) throw new Error('Supabase env missing');
+  if (!url || !anon) {
+    try {
+      console.error('[intents/process] fetchChatStack missing env', {
+        hasUrl: !!url,
+        hasServiceOrAnon: !!anon,
+      });
+    } catch {}
+    throw new Error('Supabase env missing');
+  }
   const supabase = createClient(url, anon, { auth: { persistSession: false } });
   const { data, error } = await supabase
     .from('chat_messages')
     .select('id, role, text, parts, created_at')
     .eq('chat_id', chatId)
     .order('created_at', { ascending: true });
-  if (error) throw new Error(error.message);
+  if (error) {
+    try {
+      console.error('[intents/process] fetchChatStack supabase error', error);
+    } catch {}
+    throw new Error(error.message);
+  }
   return data || [];
 }
 
@@ -99,7 +137,15 @@ async function insertSystemMessage(chatId: string, text: string) {
   const { createClient } = await import('@supabase/supabase-js');
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
   const anon = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-  if (!url || !anon) throw new Error('Supabase env missing');
+  if (!url || !anon) {
+    try {
+      console.error('[intents/process] insertSystemMessage missing env', {
+        hasUrl: !!url,
+        hasServiceOrAnon: !!anon,
+      });
+    } catch {}
+    throw new Error('Supabase env missing');
+  }
   const supabase = createClient(url, anon, { auth: { persistSession: false } });
   const { error } = await supabase.from('chat_messages').insert({
     chat_id: chatId,
@@ -108,7 +154,12 @@ async function insertSystemMessage(chatId: string, text: string) {
     parts: null,
     status: 'final',
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    try {
+      console.error('[intents/process] insertSystemMessage supabase error', error);
+    } catch {}
+    throw new Error(error.message);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -142,23 +193,41 @@ export async function POST(req: NextRequest) {
       },
     }];
     const identifyData = await callOpenAIWithTools({ messages: identifyMessages, tools, temperature: 0 });
+    try {
+      console.log('[intents/process] identify.message', JSON.stringify(identifyData?.choices?.[0]?.message ?? null));
+    } catch {}
     let intentStr: IntentEnum = 'advice';
     const toolCalls = identifyData?.choices?.[0]?.message?.tool_calls;
+    try {
+      console.log('[intents/process] identify.tool_calls', JSON.stringify(toolCalls ?? null));
+    } catch {}
     if (Array.isArray(toolCalls) && toolCalls.length) {
       const first = toolCalls[0];
       const argsJson = first?.function?.arguments;
       try {
+        console.log('[intents/process] identify.tool_call.arguments', argsJson);
+      } catch {}
+      try {
         const args = JSON.parse(argsJson);
         const v = args?.intention;
         if (v === 'record' || v === 'search' || v === 'advice') intentStr = v;
+        try {
+          console.log('[intents/process] identify.parsed_from_tool_call', intentStr);
+        } catch {}
       } catch {}
     } else {
       // Fallback: try to parse content as JSON (in case model returned JSON instead of tool call)
       const content: string = identifyData?.choices?.[0]?.message?.content ?? '';
       try {
+        console.log('[intents/process] identify.fallback.content', content);
+      } catch {}
+      try {
         const parsed = JSON.parse(content);
         const v = (parsed?.intention ?? parsed?.intent);
         if (v === 'record' || v === 'search' || v === 'advice') intentStr = v;
+        try {
+          console.log('[intents/process] identify.parsed_from_content', intentStr);
+        } catch {}
       } catch {}
     }
 
@@ -171,6 +240,9 @@ export async function POST(req: NextRequest) {
     } else {
       scenarioMessages = askAdvisePrompt(stack);
     }
+    try {
+      console.log('[intents/process] identify.final_intent', intentStr);
+    } catch {}
 
     const scenarioContent = await callOpenAI(scenarioMessages, 0.2);
 
@@ -179,7 +251,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, intent: intentStr });
   } catch (err: any) {
-    // Best-effort error surface via system message could be added here
+    try {
+      console.error('[intents/process] handler error', {
+        message: err?.message,
+        stack: err?.stack,
+      });
+    } catch {}
     return NextResponse.json({ error: err?.message || 'Unknown error' }, { status: 500 });
   }
 }
