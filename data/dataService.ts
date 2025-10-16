@@ -1,6 +1,7 @@
 import { Contact, Subject, Organization, Occupation, Relationship, Sentiment, Note, Commitment, Draft } from '../contexts/ContactContext';
 import { resolveContactTokens } from './strings';
 import { SupabaseDataService } from './supabaseDataService';
+import { LocalStorageDataService } from './localStorageDataService';
 
 export interface DataService {
   updateContact(id: string, updates: Partial<Contact>): Promise<Contact>;
@@ -30,5 +31,9 @@ export interface DataService {
   }>;
 }
 
+// Export both service implementations
+export const supabaseDataService: DataService = new SupabaseDataService();
+export const localStorageDataService: DataService = new LocalStorageDataService();
 
-export const dataService: DataService = new SupabaseDataService();
+// Default export for backward compatibility (will be replaced by context-based selection)
+export const dataService: DataService = supabaseDataService;

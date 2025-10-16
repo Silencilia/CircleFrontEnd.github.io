@@ -14,6 +14,7 @@ import { VoiceButtonLg } from '../components/Button';
 import { useContacts } from '../contexts/ContactContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useSpeedMode } from '../hooks/useSpeedMode';
+import { supabase } from '../lib/supabase';
 import {
   TITLE_HEIGHT_MOBILE,
   TITLE_HEIGHT_DESKTOP,
@@ -32,12 +33,21 @@ export default function NotePage() {
   // Current chat ID state with localStorage persistence
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   
+  // Track if user is authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  
   // Deterministic initial greeting for SSR; randomize after mount on client only
   const [greeting, setGreeting] = useState<string>(GREETINGS[0]);
 
   useEffect(() => {
     // Randomize greeting after hydration to avoid SSR/client mismatch
     setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+    
+    // Check authentication status
+    (async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      setIsAuthenticated(!!userRes.user?.id);
+    })();
   }, []);
 
   // Load currentChatId from localStorage on mount
@@ -106,9 +116,17 @@ export default function NotePage() {
           }}
         >
           <div className="h-full flex flex-col">
+            {/* Offline indicator - does not affect input visibility */}
+            {!isAuthenticated && (
+              <div className="w-full text-center flex-shrink-0">
+                <p className="font-circlemedium text-circle-primary/60 font-circletitlesmall">
+                  Offline now. Sign in for stored data.
+                </p>
+              </div>
+            )}
             {/* Render greeting and initial input only when no chat is active */}
             {!currentChatId ? (
-              <div className="h-full flex items-center justify-center px-lg">
+              <div className="flex-1 flex items-center justify-center px-lg min-h-0">
                 <div className="flex flex-col w-full gap-xl items-center">
                   <div className="text-center">
                     {/* Personalized greeting shown before first user input */}
@@ -124,8 +142,10 @@ export default function NotePage() {
               // Main chat window when a chat is active
               <ChatProvider chatId={currentChatId}>
                 <div className="h-full flex flex-col">
-                  <ChatWindow /> {/* Main chat conversation UI */}
-                  <div className="w-full px-lg max-w-[900px] mx-auto">
+                  <div className="flex-1 min-h-0">
+                    <ChatWindow /> {/* Main chat conversation UI */}
+                  </div>
+                  <div className="w-full px-lg max-w-[900px] mx-auto flex-shrink-0">
                     {/* TalkToCircle input for ongoing chat */}
                     <TalkToCircle />
                   </div>

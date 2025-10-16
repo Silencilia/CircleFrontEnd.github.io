@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { dataService } from '../data/dataService';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useRef } from 'react';
+import { DataService, supabaseDataService, localStorageDataService } from '../data/dataService';
 import { supabase } from '../lib/supabase';
 
 // Data interfaces
@@ -290,6 +290,9 @@ const ContactContext = createContext<ContactContextType | undefined>(undefined);
 // Provider component
 export function ContactProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(contactReducer, initialState);
+  
+  // Track which data service to use (Supabase or localStorage)
+  const dataServiceRef = useRef<DataService>(supabaseDataService);
 
   // Load data on mount
   useEffect(() => {
@@ -309,20 +312,17 @@ export function ContactProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
-      // If not signed in, clear to empty data and stop
+      // Check authentication status
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        dispatch({
-          type: 'SET_DATA',
-          payload: {
-            contacts: [], subjects: [], organizations: [], occupations: [],
-            relationships: [], sentiments: [], notes: [], commitments: [], drafts: [],
-          },
-        });
-        return;
+      
+      // Select appropriate data service
+      if (user) {
+        dataServiceRef.current = supabaseDataService;
+      } else {
+        dataServiceRef.current = localStorageDataService;
       }
 
-      const data = await dataService.getAllData();
+      const data = await dataServiceRef.current.getAllData();
       dispatch({ type: 'SET_DATA', payload: data });
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -333,10 +333,10 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
 
 
-  //  methods with Supabase integration
+  //  methods with data service integration
   const updateContact = async (id: string, updates: Partial<Contact>) => {
     try {
-      const updatedContact = await dataService.updateContact(id, updates);
+      const updatedContact = await dataServiceRef.current.updateContact(id, updates);
       dispatch({ type: 'UPDATE_CONTACT', payload: updatedContact });
     } catch (error) {
       console.error('Failed to update contact:', error);
@@ -361,7 +361,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const addContact = async (contact: Omit<Contact, 'id'>) => {
     try {
-      const newContact = await dataService.addContact(contact);
+      const newContact = await dataServiceRef.current.addContact(contact);
       dispatch({ type: 'ADD_CONTACT', payload: newContact });
     } catch (error) {
       console.error('Failed to add contact:', error);
@@ -371,7 +371,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const deleteContact = async (id: string) => {
     try {
-      await dataService.deleteContact(id);
+      await dataServiceRef.current.deleteContact(id);
       dispatch({ type: 'DELETE_CONTACT', payload: id });
     } catch (error) {
       console.error('Failed to delete contact:', error);
@@ -381,7 +381,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const addSubject = async (subject: Omit<Subject, 'id'>) => {
     try {
-      const newSubject = await dataService.addSubject(subject);
+      const newSubject = await dataServiceRef.current.addSubject(subject);
       // Note: We need to add SUBJECT action type to the reducer
       // For now, we'll reload all data
       await loadData();
@@ -393,7 +393,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const addOrganization = async (organization: Omit<Organization, 'id'>): Promise<Organization> => {
     try {
-      const newOrganization = await dataService.addOrganization(organization);
+      const newOrganization = await dataServiceRef.current.addOrganization(organization);
       dispatch({ type: 'ADD_ORGANIZATION', payload: newOrganization });
       return newOrganization;
     } catch (error) {
@@ -404,7 +404,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const addOccupation = async (occupation: Omit<Occupation, 'id'>): Promise<Occupation> => {
     try {
-      const newOccupation = await dataService.addOccupation(occupation);
+      const newOccupation = await dataServiceRef.current.addOccupation(occupation);
       dispatch({ type: 'ADD_OCCUPATION', payload: newOccupation });
       return newOccupation;
     } catch (error) {
@@ -415,7 +415,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const addRelationship = async (relationship: Omit<Relationship, 'id'>) => {
     try {
-      const newRelationship = await dataService.addRelationship(relationship);
+      const newRelationship = await dataServiceRef.current.addRelationship(relationship);
       // Note: We need to add RELATIONSHIP action type to the reducer
       // For now, we'll reload all data
       await loadData();
@@ -427,7 +427,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const addSentiment = async (sentiment: Omit<Sentiment, 'id'>) => {
     try {
-      const newSentiment = await dataService.addSentiment(sentiment);
+      const newSentiment = await dataServiceRef.current.addSentiment(sentiment);
       // Add the new sentiment to the state immediately
       dispatch({ type: 'ADD_SENTIMENT', payload: newSentiment });
       return newSentiment;
@@ -439,7 +439,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const updateSentiment = async (id: string, updates: Partial<Sentiment>) => {
     try {
-      const updatedSentiment = await dataService.updateSentiment(id, updates);
+      const updatedSentiment = await dataServiceRef.current.updateSentiment(id, updates);
       dispatch({ type: 'UPDATE_SENTIMENT', payload: updatedSentiment });
     } catch (error) {
       console.error('Failed to update sentiment:', error);
@@ -449,7 +449,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const addNote = async (note: Omit<Note, 'id' | 'created_at'>) => {
     try {
-      const newNote = await dataService.addNote(note);
+      const newNote = await dataServiceRef.current.addNote(note);
       dispatch({ type: 'ADD_NOTE', payload: newNote });
     } catch (error) {
       console.error('Failed to add note:', error);
@@ -459,7 +459,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const updateNote = async (id: string, updates: Partial<Note>) => {
     try {
-      const updatedNote = await dataService.updateNote(id, updates);
+      const updatedNote = await dataServiceRef.current.updateNote(id, updates);
       dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
     } catch (error) {
       console.error('Failed to update note:', error);
@@ -469,7 +469,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const addCommitment = async (commitment: Omit<Commitment, 'id'>) => {
     try {
-      const created = await dataService.addCommitment(commitment);
+      const created = await dataServiceRef.current.addCommitment(commitment);
       dispatch({ type: 'ADD_COMMITMENT', payload: created });
     } catch (error) {
       console.error('Failed to add commitment:', error);
@@ -479,7 +479,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const updateCommitment = async (id: string, updates: Partial<Commitment>) => {
     try {
-      const updated = await dataService.updateCommitment(id, updates);
+      const updated = await dataServiceRef.current.updateCommitment(id, updates);
       dispatch({ type: 'UPDATE_COMMITMENT', payload: updated });
     } catch (error) {
       console.error('Failed to update commitment:', error);
@@ -502,7 +502,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
         is_trashed: false
       };
       
-      const createdContact = await dataService.addContact(newContact);
+      const createdContact = await dataServiceRef.current.addContact(newContact);
       dispatch({ type: 'ADD_CONTACT', payload: createdContact });
       return createdContact;
     } catch (error) {
@@ -524,7 +524,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
         is_trashed: false
       };
       
-      const createdNote = await dataService.addNote(newNote);
+      const createdNote = await dataServiceRef.current.addNote(newNote);
       dispatch({ type: 'ADD_NOTE', payload: createdNote });
       return createdNote;
     } catch (error) {

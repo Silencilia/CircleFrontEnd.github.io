@@ -39,29 +39,49 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
     })();
   }, []);
 
-  // Upon chatId or remote status changing, load all chat messages from remote, else do nothing
+  // Upon chatId or remote status changing, load all chat messages
   useEffect(() => {
     let isMounted = true;
-    if (!remoteEnabled || !chatId) return;
+    if (!chatId) return;
+    
     (async () => {
-      // Query chat_messages in Supabase for this chatId, in creation order
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('id, role, text, parts, created_at')
-        .eq('chat_id', chatId)
-        .order('created_at', { ascending: true });
-      // If error, skip updating (optional error handling)
-      if (error) return;
-      if (!isMounted) return;
-      // Map every row in returned data to a ChatEntry suitable for our state
-      const mapped: ChatEntry[] = (data || []).map((row: any) => ({
-        id: row.id,
-        role: row.role,
-        text: row.text ?? undefined,
-        parts: row.parts ?? undefined,
-        createdAt: row.created_at,
-      }));
-      setEntries(mapped);
+      if (remoteEnabled) {
+        // Load from Supabase
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('id, role, text, parts, created_at')
+          .eq('chat_id', chatId)
+          .order('created_at', { ascending: true });
+        // If error, skip updating (optional error handling)
+        if (error) return;
+        if (!isMounted) return;
+        // Map every row in returned data to a ChatEntry suitable for our state
+        const mapped: ChatEntry[] = (data || []).map((row: any) => ({
+          id: row.id,
+          role: row.role,
+          text: row.text ?? undefined,
+          parts: row.parts ?? undefined,
+          createdAt: row.created_at,
+        }));
+        setEntries(mapped);
+      } else {
+        // Load from localStorage
+        if (typeof window !== 'undefined') {
+          const key = `circle_chat_messages_${chatId}`;
+          const stored = localStorage.getItem(key);
+          if (stored && isMounted) {
+            try {
+              const parsed = JSON.parse(stored);
+              setEntries(parsed);
+            } catch (e) {
+              console.error('Failed to parse chat messages from localStorage', e);
+              setEntries([]);
+            }
+          } else if (isMounted) {
+            setEntries([]);
+          }
+        }
+      }
     })();
     // Unmount: prevent setState if the component is unmounted
     return () => { isMounted = false; };
@@ -117,13 +137,22 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
       } else {
         // Local-only fallback (unauthenticated)
         const localId = crypto.randomUUID();
-        setEntries((prev) => [...prev, {
+        const newEntry: ChatEntry = {
           id: localId,
           role,
           text: text ?? undefined,
           parts: parts ?? undefined,
           createdAt: new Date().toISOString(),
-        }]);
+        };
+        setEntries((prev) => {
+          const updated = [...prev, newEntry];
+          // Persist to localStorage
+          if (typeof window !== 'undefined' && chatIdRef.current) {
+            const key = `circle_chat_messages_${chatIdRef.current}`;
+            localStorage.setItem(key, JSON.stringify(updated));
+          }
+          return updated;
+        });
         return localId;
       }
     }, [remoteEnabled]

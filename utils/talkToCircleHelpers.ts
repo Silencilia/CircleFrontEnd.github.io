@@ -3,11 +3,17 @@
  */
 
 /**
- * Detects person names in text using OpenAI API
- * @param text - The text to analyze for names
- * @returns Array of detected names, or empty array on error
+ * Processes user message intent and gets AI response
+ * @param chatId - The chat ID
+ * @param messageId - The message ID
+ * @param onSystemMessage - Optional callback to handle system response for offline mode
+ * @returns Response with ok status and optional content
  */
-export async function identifyRequest(chatId: string, messageId: string): Promise<{ ok: boolean } | { ok: false; error: string }> {
+export async function identifyRequest(
+  chatId: string, 
+  messageId: string,
+  onSystemMessage?: (content: string) => void
+): Promise<{ ok: boolean; content?: string } | { ok: false; error: string }> {
   try {
     const res = await fetch('/api/intents/process', {
       method: 'POST',
@@ -19,7 +25,13 @@ export async function identifyRequest(chatId: string, messageId: string): Promis
       return { ok: false, error: err?.error || 'Request failed' } as const;
     }
     const data = await res.json().catch(() => ({}));
-    return { ok: !!data?.ok } as const;
+    
+    // If there's content in the response and a callback, invoke it (for offline mode)
+    if (data?.content && onSystemMessage) {
+      onSystemMessage(data.content);
+    }
+    
+    return { ok: !!data?.ok, content: data?.content } as const;
   } catch (e: any) {
     return { ok: false, error: e?.message || 'Unknown error' } as const;
   }

@@ -44,7 +44,7 @@ const ChatWindow: React.FC = () => {
 
           return (
             <div key={e.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} w-full`}>
-              <div className={`flex flex-col ${isUser ? 'items-end' : 'items-stretch'} gap-md max-w-[75%]`}>
+              <div className={`flex flex-col ${isUser ? 'items-end max-w-[75%]' : 'items-stretch w-full'} gap-md`}>
                 {e.text ? bubble : null}
                 {parts}
               </div>

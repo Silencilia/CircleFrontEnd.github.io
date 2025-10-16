@@ -116,7 +116,8 @@ async function fetchChatStack(chatId: string) {
         hasServiceOrAnon: !!anon,
       });
     } catch {}
-    throw new Error('Supabase env missing');
+    // Return empty array for offline mode instead of throwing
+    return [];
   }
   const supabase = createClient(url, anon, { auth: { persistSession: false } });
   const { data, error } = await supabase
@@ -128,7 +129,8 @@ async function fetchChatStack(chatId: string) {
     try {
       console.error('[intents/process] fetchChatStack supabase error', error);
     } catch {}
-    throw new Error(error.message);
+    // Return empty array instead of throwing to support local-only chats
+    return [];
   }
   return data || [];
 }
@@ -139,12 +141,13 @@ async function insertSystemMessage(chatId: string, text: string) {
   const anon = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
   if (!url || !anon) {
     try {
-      console.error('[intents/process] insertSystemMessage missing env', {
+      console.error('[intents/process] insertSystemMessage missing env - skipping DB write for offline mode', {
         hasUrl: !!url,
         hasServiceOrAnon: !!anon,
       });
     } catch {}
-    throw new Error('Supabase env missing');
+    // Skip DB write for offline mode - response will be returned to client via response body
+    return;
   }
   const supabase = createClient(url, anon, { auth: { persistSession: false } });
   const { error } = await supabase.from('chat_messages').insert({
@@ -156,9 +159,10 @@ async function insertSystemMessage(chatId: string, text: string) {
   });
   if (error) {
     try {
-      console.error('[intents/process] insertSystemMessage supabase error', error);
+      console.error('[intents/process] insertSystemMessage supabase error - continuing anyway for offline mode', error);
     } catch {}
-    throw new Error(error.message);
+    // Don't throw - allow offline mode to continue
+    return;
   }
 }
 
@@ -246,10 +250,11 @@ export async function POST(req: NextRequest) {
 
     const scenarioContent = await callOpenAI(scenarioMessages, 0.2);
 
-    // 4) Insert system message
+    // 4) Insert system message (will skip if offline/no DB)
     await insertSystemMessage(chatId, scenarioContent || '(no content)');
 
-    return NextResponse.json({ ok: true, intent: intentStr });
+    // Return the response content for offline clients to store locally
+    return NextResponse.json({ ok: true, intent: intentStr, content: scenarioContent || '(no content)' });
   } catch (err: any) {
     try {
       console.error('[intents/process] handler error', {

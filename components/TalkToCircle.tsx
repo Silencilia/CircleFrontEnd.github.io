@@ -84,36 +84,73 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
       try {
         const { data: userRes } = await supabase.auth.getUser();
         const userId = userRes.user?.id;
-        if (!userId) {
-          return;
-        }
+        
+        if (userId) {
+          // User is authenticated - create chat in Supabase
+          const { data: createdChat, error: chatError } = await supabase
+            .from('chats')
+            .insert({ user_id: userId, title: null, metadata: {} })
+            .select('id')
+            .single();
+          if (chatError || !createdChat?.id) {
+            return;
+          }
 
-        const { data: createdChat, error: chatError } = await supabase
-          .from('chats')
-          .insert({ user_id: userId, title: null, metadata: {} })
-          .select('id')
-          .single();
-        if (chatError || !createdChat?.id) {
-          return;
-        }
-
-        const newChatId = createdChat.id as string;
-        // Insert the first user message for this chat BEFORE switching views
-        const { data: inserted, error: insertErr } = await supabase.from('chat_messages').insert({
-          chat_id: newChatId,
-          role: 'user',
-          text,
-          parts: null,
-          status: 'final',
-        }).select('id').single();
-        if (insertErr || !inserted?.id) {
+          const newChatId = createdChat.id as string;
+          // Insert the first user message for this chat BEFORE switching views
+          const { data: inserted, error: insertErr } = await supabase.from('chat_messages').insert({
+            chat_id: newChatId,
+            role: 'user',
+            text,
+            parts: null,
+            status: 'final',
+          }).select('id').single();
+          if (insertErr || !inserted?.id) {
+            onNewChatCreated?.(newChatId);
+            return;
+          }
+          // Inform parent so it can mount ChatProvider with this chatId after message exists
           onNewChatCreated?.(newChatId);
-          return;
+          // Fire-and-forget intent processing
+          identifyRequest(newChatId, inserted.id);
+        } else {
+          // User is not authenticated - create local chat
+          const localChatId = crypto.randomUUID();
+          const localMessageId = crypto.randomUUID();
+          
+          // Store initial message in localStorage
+          const key = `circle_chat_messages_${localChatId}`;
+          const initialEntry = {
+            id: localMessageId,
+            role: 'user',
+            text,
+            createdAt: new Date().toISOString(),
+          };
+          localStorage.setItem(key, JSON.stringify([initialEntry]));
+          
+          // Inform parent to mount ChatProvider with this local chatId
+          onNewChatCreated?.(localChatId);
+          
+          // Process intent and handle AI response for offline mode
+          identifyRequest(localChatId, localMessageId, (content) => {
+            // Add system message to localStorage
+            const stored = localStorage.getItem(key);
+            if (stored) {
+              try {
+                const messages = JSON.parse(stored);
+                messages.push({
+                  id: crypto.randomUUID(),
+                  role: 'system',
+                  text: content,
+                  createdAt: new Date().toISOString(),
+                });
+                localStorage.setItem(key, JSON.stringify(messages));
+              } catch (e) {
+                console.error('Failed to store system message', e);
+              }
+            }
+          });
         }
-        // Inform parent so it can mount ChatProvider with this chatId after message exists
-        onNewChatCreated?.(newChatId);
-        // Fire-and-forget intent processing
-        identifyRequest(newChatId, inserted.id);
       } catch {
         // Silent fail for now; could surface UI error later
       }
@@ -121,7 +158,14 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
       // Otherwise, add via chat context and trigger identify
       const messageId = await chat.addUserMessage(text);
       if (chat.chatId && messageId) {
-        identifyRequest(chat.chatId, messageId);
+        // Check if we're in offline mode
+        const { data: userRes } = await supabase.auth.getUser();
+        const isOffline = !userRes.user?.id;
+        
+        identifyRequest(chat.chatId, messageId, isOffline ? (content) => {
+          // Add system message via context for offline mode
+          chat.addSystemText(content);
+        } : undefined);
       }
     }
   };
