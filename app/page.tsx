@@ -116,17 +116,9 @@ export default function NotePage() {
           }}
         >
           <div className="h-full flex flex-col">
-            {/* Offline indicator - does not affect input visibility */}
-            {!isAuthenticated && (
-              <div className="w-full text-center flex-shrink-0">
-                <p className="font-circlemedium text-circle-primary/60 font-circletitlesmall">
-                  Offline now. Sign in for stored data.
-                </p>
-              </div>
-            )}
             {/* Render greeting and initial input only when no chat is active */}
             {!currentChatId ? (
-              <div className="flex-1 flex items-center justify-center px-lg min-h-0">
+              <div className="h-full flex items-center justify-center px-lg">
                 <div className="flex flex-col w-full gap-xl items-center">
                   <div className="text-center">
                     {/* Personalized greeting shown before first user input */}
@@ -142,10 +134,8 @@ export default function NotePage() {
               // Main chat window when a chat is active
               <ChatProvider chatId={currentChatId}>
                 <div className="h-full flex flex-col">
-                  <div className="flex-1 min-h-0 overflow-y-auto">
-                    <ChatWindow /> {/* Main chat conversation UI */}
-                  </div>
-                  <div className="w-full px-lg max-w-[900px] mx-auto flex-shrink-0">
+                  <ChatWindow /> {/* Main chat conversation UI */}
+                  <div className="w-full px-lg max-w-[900px] mx-auto">
                     {/* TalkToCircle input for ongoing chat */}
                     <TalkToCircle />
                   </div>
