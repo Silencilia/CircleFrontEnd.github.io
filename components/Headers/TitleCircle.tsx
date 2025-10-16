@@ -4,7 +4,6 @@ import { SpeedSwitch } from '../Switch';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useSpeedMode } from '../../hooks/useSpeedMode';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
 
 interface TitleCircleProps {
   title: string;
@@ -18,18 +17,6 @@ const TitleCircle: React.FC<TitleCircleProps> = ({ title, isAccountPage = false,
   const isMobile = useIsMobile();
   const { isSpeedMode, toggleSpeedMode } = useSpeedMode();
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(true);
-
-  React.useEffect(() => {
-    (async () => {
-      const { data: userRes } = await supabase.auth.getUser();
-      setIsAuthenticated(!!userRes.user?.id);
-    })();
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session?.user?.id);
-    });
-    return () => { sub.subscription.unsubscribe(); };
-  }, []);
 
   // Render the title bar differently for mobile and desktop
   return isMobile ? (
@@ -70,12 +57,6 @@ const TitleCircle: React.FC<TitleCircleProps> = ({ title, isAccountPage = false,
           <span className="font-circlelabelsmall text-circle-primary">{isSpeedMode ? 'speed mode' : 'talk mode'}</span>
           </div>
         </div>
-        {/* Offline indicator (absolute, no layout shift) */}
-        {!isAuthenticated && (
-          <div className="absolute left-0 right-0 bottom-0 w-full text-center">
-            <span className="font-circlemedium text-circle-primary/60 font-circletitlesmall">Offline now. Sign in for stored data.</span>
-          </div>
-        )}
       </div>
     </div>
   ) : (
@@ -117,12 +98,6 @@ const TitleCircle: React.FC<TitleCircleProps> = ({ title, isAccountPage = false,
             <AccountButton active={isAccountPage} disabled={isAccountPage} />
           )}
         </div>
-        {/* Offline indicator (absolute, no layout shift) */}
-        {!isAuthenticated && (
-          <div className="absolute left-0 right-0 bottom-0 w-full text-center">
-            <span className="font-circlemedium text-circle-primary/60 font-circletitlesmall">Offline now. Sign in for stored data.</span>
-          </div>
-        )}
       </div>
     </div>
   );

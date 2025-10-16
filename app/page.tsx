@@ -115,6 +115,14 @@ export default function NotePage() {
             bottom: isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP,
           }}
         >
+           {/* Offline indicator - only shown when not authenticated and no active chat */}
+           {!isAuthenticated && (
+                    <div className="absolute left-0 right-0 top-0 w-full text-center h-fit">
+                      <p className="font-circlemedium text-circle-primary/60 font-circletitlesmall">
+                        Offline now. Sign in for stored data.
+                      </p>
+                    </div>
+                  )}
           <div className="h-full flex flex-col">
             {/* Render greeting and initial input only when no chat is active */}
             {!currentChatId ? (
