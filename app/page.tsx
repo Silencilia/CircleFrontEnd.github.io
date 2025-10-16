@@ -104,25 +104,28 @@ export default function NotePage() {
           hasActiveChat={!!currentChatId}
           onNewChat={() => setCurrentChatId(null)}
         />
+          {/* Offline indicator - only shown when not authenticated and no active chat */}
+          {!isAuthenticated && (
+                    <div className="left-0 right-0 top-0 w-full text-center h-fit bg-circle-neutral">
+                      <p className="font-circlemedium text-circle-primary/60 font-circletitlesmall">
+                        Offline now. Sign in for stored data.
+                      </p>
+                    </div>
+                  )}  
       </div>
+
+           
       
       {/* Talk mode content area - fixed between header and nav */}
       {!isSpeedMode && (
         <div
           className="fixed left-0 right-0 z-40"
           style={{
-            top: `calc(${isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP} + env(safe-area-inset-top))`,
+            top: `calc(${isMobile ? TITLE_HEIGHT_MOBILE : TITLE_HEIGHT_DESKTOP} + env(safe-area-inset-top) + ${!isAuthenticated ? '20px' : '0px'})`,
             bottom: isMobile ? NAV_BAR_HEIGHT_MOBILE : NAV_BAR_HEIGHT_DESKTOP,
           }}
         >
-           {/* Offline indicator - only shown when not authenticated and no active chat */}
-           {!isAuthenticated && (
-                    <div className="absolute left-0 right-0 top-0 w-full text-center h-fit">
-                      <p className="font-circlemedium text-circle-primary/60 font-circletitlesmall">
-                        Offline now. Sign in for stored data.
-                      </p>
-                    </div>
-                  )}
+  
           <div className="h-full flex flex-col">
             {/* Render greeting and initial input only when no chat is active */}
             {!currentChatId ? (
@@ -141,9 +144,9 @@ export default function NotePage() {
             ) : (
               // Main chat window when a chat is active
               <ChatProvider chatId={currentChatId}>
-                <div className="h-full flex flex-col">
+                <div className="w-full h-full flex flex-col">
                   <ChatWindow /> {/* Main chat conversation UI */}
-                  <div className="w-full px-lg max-w-[900px] mx-auto">
+                  <div className="h-fit w-full px-lg max-w-[900px] mx-auto">
                     {/* TalkToCircle input for ongoing chat */}
                     <TalkToCircle />
                   </div>
