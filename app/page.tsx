@@ -142,7 +142,7 @@ export default function NotePage() {
               // Main chat window when a chat is active
               <ChatProvider chatId={currentChatId}>
                 <div className="h-full flex flex-col">
-                  <div className="flex-1 min-h-0">
+                  <div className="flex-1 min-h-0 overflow-y-auto">
                     <ChatWindow /> {/* Main chat conversation UI */}
                   </div>
                   <div className="w-full px-lg max-w-[900px] mx-auto flex-shrink-0">
