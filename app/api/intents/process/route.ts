@@ -6,6 +6,7 @@ import identifyPrompt from '@/app/api/prompts/intent-identify';
 import recordEventPrompt from '@/app/api/prompts/record-event';
 import searchInfoPrompt from '@/app/api/prompts/search-info';
 import askAdvisePrompt from '@/app/api/prompts/ask-advise';
+import { getRelevantContext } from '@/app/api/utils/retrieveRelevantData';
 
 type IntentEnum = 'record' | 'search' | 'advice';
 
@@ -169,10 +170,13 @@ async function insertSystemMessage(chatId: string, text: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { chatId, messageId } = body as { chatId?: string; messageId?: string };
+    const { chatId, messageId, localData } = body as { chatId?: string; messageId?: string; localData?: any };
     if (!chatId || !messageId) {
       return NextResponse.json({ error: 'Missing chatId or messageId' }, { status: 400 });
     }
+
+    // Get user ID from header (cached on client-side)
+    const userId = req.headers.get('X-User-ID') || undefined;
 
     // 1) Load full chat stack from DB
     const rows = await fetchChatStack(chatId);
@@ -235,14 +239,36 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    // 3) Dispatch to scenario handler
+    // 3) Retrieve relevant database context via semantic search
+    const latestUserMessage = stack[stack.length - 1]?.content || '';
+    console.log('[intents/process] Starting context retrieval:', {
+      latestUserMessage,
+      userId: userId || 'none',
+      hasLocalData: !!localData,
+      localDataKeys: localData ? Object.keys(localData) : []
+    });
+    
+    const dbContext = await getRelevantContext(
+      latestUserMessage,
+      userId,
+      localData,
+      20 // top 20 most relevant items
+    );
+    
+    console.log('[intents/process] Retrieved context:', {
+      contextLength: dbContext?.length || 0,
+      contextPreview: dbContext?.substring(0, 200) + '...',
+      isEmpty: !dbContext || dbContext.trim() === ''
+    });
+
+    // 4) Dispatch to scenario handler WITH context
     let scenarioMessages: Array<{ role: 'system'|'user'|'assistant'; content: string }> = [];
     if (intentStr === 'record') {
-      scenarioMessages = recordEventPrompt(stack);
+      scenarioMessages = recordEventPrompt(stack, dbContext);
     } else if (intentStr === 'search') {
-      scenarioMessages = searchInfoPrompt(stack);
+      scenarioMessages = searchInfoPrompt(stack, dbContext);
     } else {
-      scenarioMessages = askAdvisePrompt(stack);
+      scenarioMessages = askAdvisePrompt(stack, dbContext);
     }
     try {
       console.log('[intents/process] identify.final_intent', intentStr);
@@ -250,7 +276,7 @@ export async function POST(req: NextRequest) {
 
     const scenarioContent = await callOpenAI(scenarioMessages, 0.2);
 
-    // 4) Insert system message (will skip if offline/no DB)
+    // 5) Insert system message (will skip if offline/no DB)
     await insertSystemMessage(chatId, scenarioContent || '(no content)');
 
     // Return the response content for offline clients to store locally

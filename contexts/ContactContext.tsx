@@ -313,13 +313,30 @@ export function ContactProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_ERROR', payload: null });
       
       // Check authentication status
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
       // Select appropriate data service
       if (user) {
         dataServiceRef.current = supabaseDataService;
+
+        // Cache user ID in sessionStorage for API calls
+        sessionStorage.setItem('userId', user.id);
+
+        // Trigger embedding sync in background
+        fetch('/api/embeddings/sync', {
+          method: 'POST',
+          headers: {
+            'X-User-ID': user.id,
+            'Content-Type': 'application/json'
+          }
+        })
+          .then(res => res.json())
+          .then(result => console.log('Embedding sync complete:', result))
+          .catch(err => console.error('Embedding sync failed:', err));
       } else {
         dataServiceRef.current = localStorageDataService;
+        // Clear cached user ID on sign-out
+        sessionStorage.removeItem('userId');
       }
 
       const data = await dataServiceRef.current.getAllData();

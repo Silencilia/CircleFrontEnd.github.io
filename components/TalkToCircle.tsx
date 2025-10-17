@@ -6,7 +6,7 @@ import { UploadButton, VoiceButton, SendButton } from './Button';
  
 import { useChat } from '../contexts/ChatContext';
 import { supabase } from '../lib/supabase';
-import { identifyRequest } from '../utils/talkToCircleHelpers';
+import { identifyRequest } from '../utils/api/talkToCircleHelpers';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 interface TalkToCircleProps {
@@ -131,6 +131,19 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
           // Inform parent to mount ChatProvider with this local chatId
           onNewChatCreated?.(localChatId);
           
+          // Gather local storage data for offline mode
+          const localData = {
+            contacts: JSON.parse(localStorage.getItem('contacts') || '[]'),
+            notes: JSON.parse(localStorage.getItem('notes') || '[]'),
+            subjects: JSON.parse(localStorage.getItem('subjects') || '[]'),
+            relationships: JSON.parse(localStorage.getItem('relationships') || '[]'),
+            organizations: JSON.parse(localStorage.getItem('organizations') || '[]'),
+            occupations: JSON.parse(localStorage.getItem('occupations') || '[]'),
+            sentiments: JSON.parse(localStorage.getItem('sentiments') || '[]'),
+            commitments: JSON.parse(localStorage.getItem('commitments') || '[]'),
+            drafts: JSON.parse(localStorage.getItem('drafts') || '[]'),
+          };
+          
           // Process intent and handle AI response for offline mode
           identifyRequest(localChatId, localMessageId, (content) => {
             // Add system message to localStorage
@@ -149,7 +162,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
                 console.error('Failed to store system message', e);
               }
             }
-          });
+          }, localData);
         }
       } catch {
         // Silent fail for now; could surface UI error later
@@ -162,10 +175,27 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
         const { data: userRes } = await supabase.auth.getUser();
         const isOffline = !userRes.user?.id;
         
-        identifyRequest(chat.chatId, messageId, isOffline ? (content) => {
-          // Add system message via context for offline mode
-          chat.addSystemText(content);
-        } : undefined);
+        if (isOffline) {
+          // Gather local storage data for offline mode
+          const localData = {
+            contacts: JSON.parse(localStorage.getItem('contacts') || '[]'),
+            notes: JSON.parse(localStorage.getItem('notes') || '[]'),
+            subjects: JSON.parse(localStorage.getItem('subjects') || '[]'),
+            relationships: JSON.parse(localStorage.getItem('relationships') || '[]'),
+            organizations: JSON.parse(localStorage.getItem('organizations') || '[]'),
+            occupations: JSON.parse(localStorage.getItem('occupations') || '[]'),
+            sentiments: JSON.parse(localStorage.getItem('sentiments') || '[]'),
+            commitments: JSON.parse(localStorage.getItem('commitments') || '[]'),
+            drafts: JSON.parse(localStorage.getItem('drafts') || '[]'),
+          };
+          
+          identifyRequest(chat.chatId, messageId, (content) => {
+            // Add system message via context for offline mode
+            chat.addSystemText(content);
+          }, localData);
+        } else {
+          identifyRequest(chat.chatId, messageId);
+        }
       }
     }
   };

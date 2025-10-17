@@ -2,6 +2,8 @@
 import { supabase } from '../lib/supabase';
 import { Contact, Subject, Organization, Occupation, Relationship, Sentiment, Note, Commitment, Draft, PrecisionDate, TimeValue } from '../contexts/ContactContext';
 import { DataService } from './dataService';
+import { triggerEmbeddingGeneration } from '../utils/api/embeddingHelpers';
+
 
 // Helper functions to convert between app types and database types
 function precisionDateToDb(date: PrecisionDate | undefined, prefix: string = 'birth'): { [key: string]: number | null } {
@@ -59,6 +61,14 @@ export class SupabaseDataService implements DataService {
 
     // Get related data
     const contact = await this.getContactWithRelations(data.id);
+    
+    // Trigger embedding generation (fire-and-forget)
+    const content = `${contact.name} ${contact.occupation_id ? 'occupation' : ''} ${contact.organization_id ? 'organization' : ''}`;
+    triggerEmbeddingGeneration('contact', data.id, content, { 
+      name: contact.name,
+      updatedAt: new Date().toISOString()
+    });
+    
     return contact;
   }
 
@@ -102,7 +112,17 @@ export class SupabaseDataService implements DataService {
         .insert(note_ids.map(note_id => ({ contact_id: data.id, note_id })));
     }
 
-    return this.getContactWithRelations(data.id);
+    // Get the full contact with relations for embedding generation
+    const fullContact = await this.getContactWithRelations(data.id);
+    
+    // Trigger embedding generation (fire-and-forget)
+    const content = `${fullContact.name} ${fullContact.occupation_id ? 'occupation' : ''} ${fullContact.organization_id ? 'organization' : ''}`;
+    triggerEmbeddingGeneration('contact', data.id, content, { 
+      name: fullContact.name,
+      createdAt: new Date().toISOString()
+    });
+
+    return fullContact;
   }
 
   async deleteContact(id: string): Promise<void> {
@@ -231,7 +251,16 @@ export class SupabaseDataService implements DataService {
         .insert(contact_ids.map(contact_id => ({ note_id: data.id, contact_id })));
     }
 
-    return this.getNoteWithRelations(data.id);
+    // Get the full note with relations for embedding generation
+    const fullNote = await this.getNoteWithRelations(data.id);
+    
+    // Trigger embedding generation (fire-and-forget)
+    triggerEmbeddingGeneration('note', data.id, fullNote.content, { 
+      createdAt: fullNote.createdAt,
+      contactCount: contact_ids.length
+    });
+
+    return fullNote;
   }
 
   async updateNote(id: string, updates: Partial<Note>): Promise<Note> {
@@ -302,7 +331,16 @@ export class SupabaseDataService implements DataService {
       }
     }
 
-    return this.getNoteWithRelations(data.id);
+    // Get the full note with relations for embedding generation
+    const fullNote = await this.getNoteWithRelations(data.id);
+    
+    // Trigger embedding generation (fire-and-forget)
+    triggerEmbeddingGeneration('note', data.id, fullNote.content, { 
+      updatedAt: new Date().toISOString(),
+      contactCount: contact_ids?.length || 0
+    });
+
+    return fullNote;
   }
 
   async addCommitment(commitment: Omit<Commitment, 'id'>): Promise<Commitment> {
@@ -326,7 +364,17 @@ export class SupabaseDataService implements DataService {
         .insert(contact_ids.map(contact_id => ({ commitment_id: data.id, contact_id })));
     }
 
-    return this.getCommitmentWithRelations(data.id);
+    // Get the full commitment with relations for embedding generation
+    const fullCommitment = await this.getCommitmentWithRelations(data.id);
+    
+    // Trigger embedding generation (fire-and-forget)
+    triggerEmbeddingGeneration('commitment', data.id, fullCommitment.description, { 
+      createdAt: new Date().toISOString(),
+      dueDate: fullCommitment.due_date,
+      contactCount: contact_ids.length
+    });
+
+    return fullCommitment;
   }
 
   async updateCommitment(id: string, updates: Partial<Commitment>): Promise<Commitment> {
