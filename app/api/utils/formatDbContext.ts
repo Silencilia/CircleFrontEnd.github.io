@@ -83,10 +83,10 @@ export function formatNote(note: Note, relatedData: FormattedContext): string {
     if (note.date?.year) dateParts.push(note.date.year);
     if (note.date?.month) dateParts.push(note.date.month.toString().padStart(2, '0'));
     if (note.date?.day) dateParts.push(note.date.day.toString().padStart(2, '0'));
-    
-    const timeStr = note.time_value ? 
+
+    const timeStr = note.time_value && note.time_value.hour !== null && note.time_value.minute !== null ?
       `${note.time_value.hour.toString().padStart(2, '0')}:${note.time_value.minute.toString().padStart(2, '0')}` : '';
-    
+
     if (dateParts.length > 0) {
       const dateStr = dateParts.join('-');
       return timeStr ? `${dateStr} ${timeStr}` : dateStr;
