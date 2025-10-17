@@ -255,8 +255,8 @@ export class SupabaseDataService implements DataService {
     const fullNote = await this.getNoteWithRelations(data.id);
     
     // Trigger embedding generation (fire-and-forget)
-    triggerEmbeddingGeneration('note', data.id, fullNote.content, { 
-      createdAt: fullNote.createdAt,
+    triggerEmbeddingGeneration('note', data.id, fullNote.text, {
+      createdAt: fullNote.created_at,
       contactCount: contact_ids.length
     });
 
@@ -335,7 +335,7 @@ export class SupabaseDataService implements DataService {
     const fullNote = await this.getNoteWithRelations(data.id);
     
     // Trigger embedding generation (fire-and-forget)
-    triggerEmbeddingGeneration('note', data.id, fullNote.content, { 
+    triggerEmbeddingGeneration('note', data.id, fullNote.text, {
       updatedAt: new Date().toISOString(),
       contactCount: contact_ids?.length || 0
     });
@@ -368,9 +368,8 @@ export class SupabaseDataService implements DataService {
     const fullCommitment = await this.getCommitmentWithRelations(data.id);
     
     // Trigger embedding generation (fire-and-forget)
-    triggerEmbeddingGeneration('commitment', data.id, fullCommitment.description, { 
+    triggerEmbeddingGeneration('commitment', data.id, fullCommitment.text, {
       createdAt: new Date().toISOString(),
-      dueDate: fullCommitment.due_date,
       contactCount: contact_ids.length
     });
 
