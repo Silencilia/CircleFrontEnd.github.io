@@ -232,6 +232,12 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
                   onHeightChange={() => {
                     requestAnimationFrame(() => updateWrapState(value));
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
                   placeholder={STRINGS.PLACEHOLDERS.TALK_TO_CIRCLE}
                   minRows={1}
                   className={`font-circlechatmedium w-full resize-none overflow-y-auto bg-transparent focus:outline-none text-circle-primary placeholder-circle-primary/35 ${

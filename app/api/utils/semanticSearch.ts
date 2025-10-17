@@ -137,7 +137,15 @@ export async function searchWithPgVector(
       results: data?.map((r: any) => ({ entityType: r.entity_type, entityId: r.entity_id, similarity: r.similarity })) || []
     });
 
-    return data || [];
+    // Map the results to match the SearchResult interface
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      entityType: item.entity_type,  // Map snake_case to camelCase
+      entityId: item.entity_id,
+      content: item.content,
+      metadata: item.metadata,
+      similarity: item.similarity
+    }));
   } catch (error) {
     console.error('[semanticSearch] Failed to search with pgvector:', error);
     return [];
@@ -148,6 +156,8 @@ export async function searchWithPgVector(
  * Build searchable content string for different entity types
  */
 export function buildEntityContent(entityType: string, entityData: any, relatedData?: any): string {
+  console.log(`[buildEntityContent] Processing ${entityType}:${entityData.id}`);
+
   switch (entityType) {
     case 'contact':
       const contact = entityData;
@@ -156,25 +166,61 @@ export function buildEntityContent(entityType: string, entityData: any, relatedD
       const relationships = relatedData?.relationships?.filter((r: any) => contact.relationship_ids?.includes(r.id));
       const subjects = relatedData?.subjects?.filter((s: any) => contact.subject_ids?.includes(s.id));
       
-      return [
+      // Format birthday if available
+      const formatBirthday = (birthDate?: any): string => {
+        if (!birthDate) return '';
+        const parts = [];
+        if (birthDate.year) parts.push(birthDate.year.toString());
+        if (birthDate.month) parts.push(birthDate.month.toString().padStart(2, '0'));
+        if (birthDate.day) parts.push(birthDate.day.toString().padStart(2, '0'));
+        return parts.length > 0 ? `Born: ${parts.join('-')}` : '';
+      };
+      
+      const content = [
         contact.name,
-        occupation?.name,
+        occupation?.title,
         organization?.name,
-        relationships?.map((r: any) => r.name).join(' '),
-        subjects?.map((s: any) => s.name).join(' '),
+        relationships?.map((r: any) => r.label).join(' '),
+        subjects?.map((s: any) => s.label).join(' '),
+        formatBirthday(contact.birth_date), // Include birth date for age/personality context
         contact.last_interaction ? `last interaction ${contact.last_interaction}` : '',
       ].filter(Boolean).join(' ');
+      
+      console.log(`[buildEntityContent] Contact ${contact.name}: ${content.substring(0, 100)}...`);
+      
+      return content;
 
     case 'note':
       const note = entityData;
       const noteContacts = relatedData?.contacts?.filter((c: any) => note.contact_ids?.includes(c.id));
       const noteSentiments = relatedData?.sentiments?.filter((s: any) => note.sentiment_ids?.includes(s.id));
       
+      // Format date if available (actual event date, not created_at)
+      const formatDate = (date?: any): string => {
+        if (!date) return '';
+        const parts = [];
+        if (date.year) parts.push(date.year.toString());
+        if (date.month) parts.push(date.month.toString().padStart(2, '0'));
+        if (date.day) parts.push(date.day.toString().padStart(2, '0'));
+        return parts.length > 0 ? `Date: ${parts.join('-')}` : '';
+      };
+      
+      // Format time if available
+      const formatTime = (time?: any): string => {
+        if (!time) return '';
+        return `Time: ${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}`;
+      };
+      
+      console.log(`[buildEntityContent] Note ${note.id}: ${note.title || 'Untitled'} - ${note.text?.substring(0, 50) || 'No text'}...`);
+      
       return [
-        note.content,
+        note.title || '', // Include title
+        note.text || '', // Use 'text' field from Note interface
         noteContacts?.map((c: any) => c.name).join(' '),
-        noteSentiments?.map((s: any) => s.name).join(' '),
-        note.createdAt ? `created ${note.createdAt}` : '',
+        noteSentiments?.map((s: any) => s.label).join(' '), // Use 'label' for sentiments
+        formatDate(note.date), // Include actual event date
+        formatTime(note.time_value), // Include actual event time
+        note.created_at ? `recorded ${note.created_at}` : '', // Clarify this is recording time, not event time
       ].filter(Boolean).join(' ');
 
     case 'commitment':
@@ -182,10 +228,10 @@ export function buildEntityContent(entityType: string, entityData: any, relatedD
       const commitmentContacts = relatedData?.contacts?.filter((c: any) => commitment.contact_ids?.includes(c.id));
       
       return [
-        commitment.description,
+        commitment.text, // Use 'text' instead of 'description'
         commitmentContacts?.map((c: any) => c.name).join(' '),
-        commitment.due_date ? `due ${commitment.due_date}` : '',
-        commitment.status,
+        commitment.time ? `due ${commitment.time}` : '', // Use 'time' instead of 'due_date'
+        commitment.is_trashed ? `Status: trashed` : 'Status: active' // Use 'is_trashed' instead of 'status'
       ].filter(Boolean).join(' ');
 
     case 'subject':

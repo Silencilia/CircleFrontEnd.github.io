@@ -34,16 +34,39 @@ export function formatContact(contact: Contact, relatedData: FormattedContext): 
   const subjects = relatedData.subjects.filter(s => contact.subject_ids?.includes(s.id));
   const notes = relatedData.notes.filter(n => n.contact_ids?.includes(contact.id));
   
+  // Format birthday if available
+  const formatBirthday = (birthDate?: any): string => {
+    if (!birthDate) return '';
+    const parts = [];
+    if (birthDate.year) parts.push(birthDate.year.toString());
+    if (birthDate.month) parts.push(birthDate.month.toString().padStart(2, '0'));
+    if (birthDate.day) parts.push(birthDate.day.toString().padStart(2, '0'));
+    return parts.length > 0 ? `Born: ${parts.join('-')}` : '';
+  };
+  
+  console.log(`[formatContact] Formatting contact ${contact.name}:`, {
+    contactId: contact.id,
+    relationshipIds: contact.relationship_ids,
+    relationshipsFound: relationships.length,
+    relationshipLabels: relationships.map(r => r.label),
+    birthDate: contact.birth_date,
+    formattedBirthday: formatBirthday(contact.birth_date)
+  });
+  
   const parts = [
     contact.name,
     occupation ? `(${occupation.title}${organization ? ` at ${organization.name}` : ''})` : '',
+    formatBirthday(contact.birth_date),
     relationships.length > 0 ? `Relationships: ${relationships.map(r => r.label).join(', ')}` : '',
     subjects.length > 0 ? `Subjects: ${subjects.map(s => s.label).join(', ')}` : '',
     contact.last_interaction ? `Last interaction: ${contact.last_interaction}` : '',
     notes.length > 0 ? `Related notes: ${notes.length}` : ''
   ].filter(Boolean);
   
-  return parts.join(' | ');
+  const formattedContact = parts.join(' | ');
+  console.log(`[formatContact] Final formatted contact for ${contact.name}:`, formattedContact);
+  
+  return formattedContact;
 }
 
 /**
@@ -54,12 +77,33 @@ export function formatNote(note: Note, relatedData: FormattedContext): string {
   const sentiments = relatedData.sentiments.filter(s => note.sentiment_ids?.includes(s.id));
   const commitments = relatedData.commitments.filter(c => c.contact_ids?.some(id => note.contact_ids?.includes(id)));
   
+  // Format the actual event date/time
+  const formatDateTime = (note: Note): string => {
+    const dateParts = [];
+    if (note.date?.year) dateParts.push(note.date.year);
+    if (note.date?.month) dateParts.push(note.date.month.toString().padStart(2, '0'));
+    if (note.date?.day) dateParts.push(note.date.day.toString().padStart(2, '0'));
+    
+    const timeStr = note.time_value ? 
+      `${note.time_value.hour.toString().padStart(2, '0')}:${note.time_value.minute.toString().padStart(2, '0')}` : '';
+    
+    if (dateParts.length > 0) {
+      const dateStr = dateParts.join('-');
+      return timeStr ? `${dateStr} ${timeStr}` : dateStr;
+    }
+    return timeStr || '';
+  };
+  
+  const dateTimeStr = formatDateTime(note);
+  
   const parts = [
-    `[${note.created_at}]`,
+    dateTimeStr ? `[${dateTimeStr}]` : '',
     contacts.length > 0 ? `With: ${contacts.map(c => c.name).join(', ')}` : '',
+    note.title ? `Title: ${note.title}` : '',
     note.text,
     sentiments.length > 0 ? `Sentiments: ${sentiments.map(s => s.label).join(', ')}` : '',
-    commitments.length > 0 ? `Commitments: ${commitments.length}` : ''
+    commitments.length > 0 ? `Commitments: ${commitments.length}` : '',
+    note.created_at ? `Recorded: ${note.created_at}` : ''
   ].filter(Boolean);
   
   return parts.join(' | ');
@@ -143,10 +187,21 @@ export function formatDatabaseContext(
   Object.entries(groupedResults).forEach(([entityType, results]) => {
     const sortedResults = results.sort((a, b) => b.similarity - a.similarity);
     
+    console.log(`[formatDatabaseContext] Processing ${entityType} results:`, {
+      resultCount: sortedResults.length,
+      topResults: sortedResults.slice(0, 3).map(r => ({ entityId: r.entityId, similarity: r.similarity, content: r.content.substring(0, 100) }))
+    });
+    
     switch (entityType) {
       case 'contact':
+        console.log(`[formatDatabaseContext] Processing contact results, total contacts in allData: ${allData.contacts.length}`);
         const contacts = sortedResults.map(r => {
           const contact = allData.contacts.find(c => c.id === r.entityId);
+          console.log(`[formatDatabaseContext] Looking for contact ${r.entityId}:`, {
+            found: !!contact,
+            contactName: contact?.name,
+            searchResultContent: r.content.substring(0, 100)
+          });
           return contact ? formatContact(contact, allData) : r.content;
         });
         if (contacts.length > 0) {

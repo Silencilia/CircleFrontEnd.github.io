@@ -160,7 +160,13 @@ export async function syncUserEmbeddings(userId: string): Promise<SyncResult> {
                 .single();
 
               const content = buildEntityContentForEmbedding(entityType.name, entity, relatedData);
+              console.log(`[embeddingSync] Building content for ${entityType.name}:${entity.id}:`, {
+                entityName: entity.name || entity.title || entity.label || 'Unknown',
+                contentLength: content.length,
+                contentPreview: content.substring(0, 100)
+              });
               if (!content.trim()) {
+                console.log(`[embeddingSync] Skipping ${entityType.name}:${entity.id} - empty content`);
                 result.skipped++;
                 return;
               }

@@ -24,7 +24,7 @@ async function fetchAllUserData(userId: string): Promise<FormattedContext | null
     
     // Fetch all data in parallel
     const [
-      { data: contacts, error: contactsError },
+      { data: rawContacts, error: contactsError },
       { data: notes, error: notesError },
       { data: subjects, error: subjectsError },
       { data: relationships, error: relationshipsError },
@@ -42,6 +42,61 @@ async function fetchAllUserData(userId: string): Promise<FormattedContext | null
       supabase.from('sentiments').select('*').eq('user_id', userId),
       supabase.from('commitments').select('*').eq('user_id', userId)
     ]);
+
+    // Fetch all contact relationships, subjects, and notes in bulk
+    const [
+      { data: allContactRelationships },
+      { data: allContactSubjects },
+      { data: allContactNotes }
+    ] = await Promise.all([
+      rawContacts ? supabase.from('contact_relationships').select('contact_id, relationship_id').in('contact_id', rawContacts.map(c => c.id)) : { data: null },
+      rawContacts ? supabase.from('contact_subjects').select('contact_id, subject_id').in('contact_id', rawContacts.map(c => c.id)) : { data: null },
+      rawContacts ? supabase.from('contact_notes').select('contact_id, note_id').in('contact_id', rawContacts.map(c => c.id)) : { data: null }
+    ]);
+
+    // Group relationships, subjects, and notes by contact_id
+    const relationshipsByContact = allContactRelationships?.reduce((acc: Record<string, string[]>, rel: any) => {
+      if (!acc[rel.contact_id]) acc[rel.contact_id] = [];
+      acc[rel.contact_id].push(rel.relationship_id);
+      return acc;
+    }, {}) || {};
+
+    const subjectsByContact = allContactSubjects?.reduce((acc: Record<string, string[]>, subj: any) => {
+      if (!acc[subj.contact_id]) acc[subj.contact_id] = [];
+      acc[subj.contact_id].push(subj.subject_id);
+      return acc;
+    }, {}) || {};
+
+    const notesByContact = allContactNotes?.reduce((acc: Record<string, string[]>, note: any) => {
+      if (!acc[note.contact_id]) acc[note.contact_id] = [];
+      acc[note.contact_id].push(note.note_id);
+      return acc;
+    }, {}) || {};
+
+    // Convert raw contacts to proper Contact format
+    const contacts = rawContacts?.map((contact: any) => {
+      // Convert birth date columns to PrecisionDate object
+      const birth_date = (contact.birth_year !== null || contact.birth_month !== null || contact.birth_day !== null)
+        ? {
+            year: contact.birth_year,
+            month: contact.birth_month,
+            day: contact.birth_day
+          }
+        : undefined;
+
+      return {
+        id: contact.id,
+        name: contact.name,
+        occupation_id: contact.occupation_id,
+        organization_id: contact.organization_id,
+        birth_date,
+        last_interaction: contact.last_interaction,
+        subject_ids: subjectsByContact[contact.id] || [],
+        relationship_ids: relationshipsByContact[contact.id] || [],
+        note_ids: notesByContact[contact.id] || [],
+        is_trashed: contact.is_trashed || false
+      };
+    });
 
     // Check for errors
     const errors = [contactsError, notesError, subjectsError, relationshipsError, 
@@ -136,6 +191,26 @@ export async function getRelevantContext(
           sentiments: allData.sentiments.length,
           commitments: allData.commitments.length
         });
+        
+        // Debug: Show sample contact data structure
+        if (allData.contacts.length > 0) {
+          const sampleContact = allData.contacts[0];
+          console.log('[retrieveRelevantData] Sample contact data structure:', {
+            id: sampleContact.id,
+            name: sampleContact.name,
+            birth_date: sampleContact.birth_date,
+            relationship_ids: sampleContact.relationship_ids,
+            occupation_id: sampleContact.occupation_id,
+            organization_id: sampleContact.organization_id,
+            last_interaction: sampleContact.last_interaction
+          });
+        }
+        
+        // Debug: Show relationships data
+        console.log('[retrieveRelevantData] Available relationships:', allData.relationships.map(r => ({
+          id: r.id,
+          label: r.label
+        })));
         
         // Try semantic search first
         console.log('[retrieveRelevantData] Attempting semantic search with pgvector');

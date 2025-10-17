@@ -412,7 +412,12 @@ export class SupabaseDataService implements DataService {
     commitments: Commitment[];
     drafts: Draft[];
   }> {
-    // Fetch all data in parallel
+    // Get current user first
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+    const userId = userRes.user.id;
+
+    // Fetch all data in parallel WITH user_id filters
     const [
       { data: contacts, error: contactsError },
       { data: subjects, error: subjectsError },
@@ -428,14 +433,14 @@ export class SupabaseDataService implements DataService {
         *,
         occupation:occupations(*),
         organization:organizations(*)
-      `),
-      supabase.from('subjects').select('*'),
-      supabase.from('organizations').select('*'),
-      supabase.from('occupations').select('*'),
-      supabase.from('relationships').select('*'),
-      supabase.from('sentiments').select('*'),
-      supabase.from('notes').select('*'),
-      supabase.from('commitments').select('*'),
+      `).eq('user_id', userId),
+      supabase.from('subjects').select('*').eq('user_id', userId),
+      supabase.from('organizations').select('*').eq('user_id', userId),
+      supabase.from('occupations').select('*').eq('user_id', userId),
+      supabase.from('relationships').select('*').eq('user_id', userId),
+      supabase.from('sentiments').select('*').eq('user_id', userId),
+      supabase.from('notes').select('*').eq('user_id', userId),
+      supabase.from('commitments').select('*').eq('user_id', userId),
       supabase.from('drafts').select('*')
     ]);
 
