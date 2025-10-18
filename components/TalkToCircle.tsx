@@ -112,7 +112,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
           // Inform parent so it can mount ChatProvider with this chatId after message exists
           onNewChatCreated?.(newChatId);
           // Fire-and-forget intent processing
-          identifyRequest(newChatId, inserted.id, undefined, undefined, chat?.setIsThinking);
+          identifyRequest(newChatId, inserted.id, undefined, undefined, undefined);
         } else {
           // User is not authenticated - create local chat
           const localChatId = crypto.randomUUID();
@@ -162,7 +162,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
                 console.error('Failed to store system message', e);
               }
             }
-          }, localData, chat?.setIsThinking);
+          }, localData, undefined);
         }
       } catch {
         // Silent fail for now; could surface UI error later
