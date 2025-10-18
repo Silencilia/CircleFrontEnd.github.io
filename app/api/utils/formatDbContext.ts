@@ -4,6 +4,20 @@
 
 import { Contact, Note, Subject, Relationship, Organization, Occupation, Sentiment, Commitment } from '../../../contexts/ContactContext';
 
+/**
+ * Resolve contact tokens in text for AI context
+ * Converts {{contact:uuid}} tokens to actual contact names
+ */
+function resolveContactTokensForAI(text: string, contacts: Contact[]): string {
+  if (!text) return text;
+  const re = /\{\{\s*contact\s*:\s*([^}]+)\s*\}\}/g;
+  return text.replace(re, (_match, idStr) => {
+    const id = idStr.trim();
+    const contact = contacts?.find(c => c.id === id);
+    return contact?.name ?? `[Contact ${id}]`;
+  });
+}
+
 export interface FormattedContext {
   contacts: Contact[];
   notes: Note[];
@@ -59,7 +73,6 @@ export function formatContact(contact: Contact, relatedData: FormattedContext): 
     formatBirthday(contact.birth_date),
     relationships.length > 0 ? `Relationships: ${relationships.map(r => r.label).join(', ')}` : '',
     subjects.length > 0 ? `Subjects: ${subjects.map(s => s.label).join(', ')}` : '',
-    contact.last_interaction ? `Last interaction: ${contact.last_interaction}` : '',
     notes.length > 0 ? `Related notes: ${notes.length}` : ''
   ].filter(Boolean);
   
@@ -100,7 +113,7 @@ export function formatNote(note: Note, relatedData: FormattedContext): string {
     dateTimeStr ? `[${dateTimeStr}]` : '',
     contacts.length > 0 ? `With: ${contacts.map(c => c.name).join(', ')}` : '',
     note.title ? `Title: ${note.title}` : '',
-    note.text,
+    resolveContactTokensForAI(note.text, relatedData.contacts),
     sentiments.length > 0 ? `Sentiments: ${sentiments.map(s => s.label).join(', ')}` : '',
     commitments.length > 0 ? `Commitments: ${commitments.length}` : '',
     note.created_at ? `Recorded: ${note.created_at}` : ''

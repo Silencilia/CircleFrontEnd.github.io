@@ -112,7 +112,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
           // Inform parent so it can mount ChatProvider with this chatId after message exists
           onNewChatCreated?.(newChatId);
           // Fire-and-forget intent processing
-          identifyRequest(newChatId, inserted.id);
+          identifyRequest(newChatId, inserted.id, undefined, undefined, chat?.setIsThinking);
         } else {
           // User is not authenticated - create local chat
           const localChatId = crypto.randomUUID();
@@ -162,14 +162,16 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
                 console.error('Failed to store system message', e);
               }
             }
-          }, localData);
+          }, localData, chat?.setIsThinking);
         }
       } catch {
         // Silent fail for now; could surface UI error later
       }
     } else {
       // Otherwise, add via chat context and trigger identify
+      console.log('[TalkToCircle] Calling chat.addUserMessage with text:', text);
       const messageId = await chat.addUserMessage(text);
+      console.log('[TalkToCircle] addUserMessage returned messageId:', messageId);
       if (chat.chatId && messageId) {
         // Check if we're in offline mode
         const { data: userRes } = await supabase.auth.getUser();
@@ -192,9 +194,9 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
           identifyRequest(chat.chatId, messageId, (content) => {
             // Add system message via context for offline mode
             chat.addSystemText(content);
-          }, localData);
+          }, localData, chat.setIsThinking);
         } else {
-          identifyRequest(chat.chatId, messageId);
+          identifyRequest(chat.chatId, messageId, undefined, undefined, chat.setIsThinking);
         }
       }
     }

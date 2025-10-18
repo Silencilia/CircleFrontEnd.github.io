@@ -10,6 +10,8 @@ interface ChatContextValue {
   addSystemText: (text: string) => Promise<void>;
   addSystemComponent: (kind: ComponentKind, props: unknown) => Promise<void>;
   chatId: string | null;
+  isThinking: boolean;
+  setIsThinking: (thinking: boolean) => void;
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
@@ -25,6 +27,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   // Whether messages should be sent/loaded from Supabase (remote) or only local state
   const [remoteEnabled, setRemoteEnabled] = useState<boolean>(true);
+  // Whether an API request is in progress and we're waiting for a system response
+  const [isThinking, setIsThinking] = useState<boolean>(false);
   // Mutable ref of current chatId to use in async handlers
   const chatIdRef = useRef(chatId);
   chatIdRef.current = chatId;
@@ -87,6 +91,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
     return () => { isMounted = false; };
   }, [chatId, remoteEnabled]);
 
+  // Clear isThinking when switching chats
+  useEffect(() => {
+    setIsThinking(false);
+  }, [chatId]);
+
   // Subscribe to real-time update events for this chat's messages unless in local-only mode
   useEffect(() => {
     if (!remoteEnabled || !chatId) return;
@@ -99,9 +108,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
         table: 'chat_messages',
         filter: `chat_id=eq.${chatId}`,
       }, (payload) => {
+        console.log('[ChatContext] Real-time payload received:', payload);
         // Only handle new inserts — append to local chat state
         if (payload.eventType === 'INSERT') {
           const row: any = payload.new;
+          console.log('[ChatContext] Inserting new message:', { role: row.role, text: row.text });
           setEntries((prev) => [...prev, {
             id: row.id,
             role: row.role,
@@ -109,6 +120,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
             parts: row.parts ?? undefined,
             createdAt: row.created_at,
           }]);
+          // Note: isThinking state is now managed by the API request lifecycle
         }
       })
       .subscribe();
@@ -161,6 +173,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
   // Insert a user message (as text)
   const addUserMessage = useCallback(
     async (text: string) => {
+      console.log('[ChatContext] addUserMessage called with text:', text);
       const id = await insertMessage('user', text, undefined);
       return id;
     }, [insertMessage]
@@ -169,6 +182,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
   // Insert a system (AI) text message
   const addSystemText = useCallback(
     async (text: string) => {
+      console.log('[ChatContext] addSystemText called with text:', text);
       await insertMessage('system', text, undefined);
     }, [insertMessage]
   );
@@ -188,7 +202,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
     addSystemText,
     addSystemComponent,
     chatId: chatIdRef.current ?? null,
-  }), [entries, addUserMessage, addSystemText, addSystemComponent, chatIdRef.current]);
+    isThinking,
+    setIsThinking,
+  }), [entries, addUserMessage, addSystemText, addSystemComponent, chatIdRef.current, isThinking, setIsThinking]);
 
   // Provide children with chat state and message actions for in-line editing, etc.
   return (

@@ -54,7 +54,47 @@ export default function NotePage() {
   useEffect(() => {
     const savedChatId = localStorage.getItem('currentChatId');
     if (savedChatId) {
-      setCurrentChatId(savedChatId);
+      // Check if the chat still exists before setting it
+      (async () => {
+        try {
+          const { data: userRes } = await supabase.auth.getUser();
+          const userId = userRes.user?.id;
+
+          if (userId) {
+            // Check if chat exists in Supabase
+            const { data: chatData, error } = await supabase
+              .from('chats')
+              .select('id')
+              .eq('id', savedChatId)
+              .eq('user_id', userId)
+              .single();
+
+            if (!error && chatData) {
+              setCurrentChatId(savedChatId);
+            } else {
+              // Chat doesn't exist, clear localStorage
+              localStorage.removeItem('currentChatId');
+              setCurrentChatId(null);
+            }
+          } else {
+            // Offline mode - check localStorage for chat messages
+            const chatKey = `circle_chat_messages_${savedChatId}`;
+            const chatMessages = localStorage.getItem(chatKey);
+            if (chatMessages) {
+              setCurrentChatId(savedChatId);
+            } else {
+              // Chat doesn't exist, clear localStorage
+              localStorage.removeItem('currentChatId');
+              setCurrentChatId(null);
+            }
+          }
+        } catch (error) {
+          console.error('Error checking chat existence:', error);
+          // On error, clear the potentially invalid chat ID
+          localStorage.removeItem('currentChatId');
+          setCurrentChatId(null);
+        }
+      })();
     }
   }, []);
 

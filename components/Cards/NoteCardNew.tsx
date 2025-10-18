@@ -12,6 +12,7 @@ import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, getCardIn
 import { EDITING_MODE_PADDING } from '../../data/variables';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { extractContactIdsFromText } from '../../utils/api/extractContactIds';
 
 const Type: CardType = 'noteCardDetail';
 
@@ -218,7 +219,9 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
     if (cleanText !== currentNote.text) {
       try {
         setIsTextSaving(true);
-        await updateNote(note.id, { text: cleanText });
+        // Extract contact IDs from the new text
+        const contact_ids = extractContactIdsFromText(cleanText);
+        await updateNote(note.id, { text: cleanText, contact_ids });
       } catch (error) {
         console.error('Failed to update text:', error);
         setEditText(originalText);

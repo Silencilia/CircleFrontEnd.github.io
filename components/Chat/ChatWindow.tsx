@@ -5,10 +5,13 @@ import { useChat } from '../../contexts/ChatContext';
 import { renderComponent } from './registry';
 import UserMessageCard from './UserMessageCard';
 import SystemMessageCard from './SystemMessageCard';
+import ThinkingIndicator from './ThinkingIndicator';
 
 const ChatWindow: React.FC = () => {
-  const { entries } = useChat();
+  const { entries, isThinking } = useChat();
   const endRef = useRef<HTMLDivElement>(null);
+
+  console.log('[ChatWindow] isThinking:', isThinking, 'entries length:', entries.length);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,6 +54,16 @@ const ChatWindow: React.FC = () => {
             </div>
           );
         })}
+        {isThinking && (() => {
+          console.log('[ChatWindow] Rendering ThinkingIndicator');
+          return (
+            <div className="flex justify-start w-full">
+              <div className="flex flex-col items-stretch w-full gap-md">
+                <ThinkingIndicator />
+              </div>
+            </div>
+          );
+        })()}
         <div ref={endRef} />
       </div>
     </div>

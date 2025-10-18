@@ -97,6 +97,11 @@ const ChatCardSimple: React.FC<ChatCardSimpleProps> = ({ chatId }) => {
           try {
             await supabase.from('chats').delete().eq('id', chatId);
             setIsDeleted(true);
+            // Clear currentChatId from localStorage if this was the current chat
+            const currentChatId = localStorage.getItem('currentChatId');
+            if (currentChatId === chatId) {
+              localStorage.removeItem('currentChatId');
+            }
           } catch (e) {
             console.error('Failed to delete chat', e);
           } finally {

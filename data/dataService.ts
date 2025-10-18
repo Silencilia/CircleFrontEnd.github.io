@@ -1,5 +1,4 @@
 import { Contact, Subject, Organization, Occupation, Relationship, Sentiment, Note, Commitment, Draft } from '../contexts/ContactContext';
-import { resolveContactTokens } from './strings';
 import { SupabaseDataService } from './supabaseDataService';
 import { LocalStorageDataService } from './localStorageDataService';
 
