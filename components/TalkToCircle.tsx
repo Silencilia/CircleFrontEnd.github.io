@@ -22,7 +22,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onNew
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chat = (() => {
     try { return useChat(); } catch { return null; }
-  })();
+  })() as ReturnType<typeof useChat> | null;
   const [value, setValue] = useState('');
   const [isWrapped, setIsWrapped] = useState<boolean>(false);
  
