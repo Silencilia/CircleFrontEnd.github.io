@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 
 const ThinkingIndicator: React.FC = () => {
-  console.log('[ThinkingIndicator] Component rendered');
   const [dots, setDots] = useState(' . . .');
 
   useEffect(() => {

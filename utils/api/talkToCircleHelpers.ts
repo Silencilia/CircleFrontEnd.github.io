@@ -18,8 +18,6 @@ export async function identifyRequest(
   onThinkingChange?: (isThinking: boolean) => void
 ): Promise<{ ok: boolean; content?: string } | { ok: false; error: string }> {
   try {
-    console.log('[identifyRequest] Called with chatId:', chatId, 'messageId:', messageId, 'hasLocalData:', !!localData);
-    
     // Set thinking to true when request starts
     onThinkingChange?.(true);
     
@@ -41,22 +39,21 @@ export async function identifyRequest(
       headers,
       body: JSON.stringify(body),
     });
+    
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       // Set thinking to false on error
       onThinkingChange?.(false);
       return { ok: false, error: err?.error || 'Request failed' } as const;
     }
+    
     const data = await res.json().catch(() => ({}));
-
-    console.log('[identifyRequest] API response received:', { ok: data?.ok, hasContent: !!data?.content });
 
     // Set thinking to false when request completes
     onThinkingChange?.(false);
 
     // If there's content in the response and a callback, invoke it (for offline mode)
     if (data?.content && onSystemMessage) {
-      console.log('[identifyRequest] Calling onSystemMessage callback with content length:', data.content.length);
       onSystemMessage(data.content);
     }
 

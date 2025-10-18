@@ -33,41 +33,37 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
   const chatIdRef = useRef(chatId);
   chatIdRef.current = chatId;
 
-  // On mount: check authentication to determine if remote (Supabase) is available, else fallback to local storage only
-  useEffect(() => {
-    (async () => {
-      const { data: sessionRes } = await supabase.auth.getSession();
-      // We are remote-enabled if the session has a user id
-      const hasUser = !!sessionRes.session?.user?.id;
-      setRemoteEnabled(hasUser);
-    })();
-  }, []);
-
-  // Upon chatId or remote status changing, load all chat messages
+  // Combined initialization effect - handles auth check, chat loading, and real-time setup
   useEffect(() => {
     let isMounted = true;
-    if (!chatId) return;
     
-    (async () => {
-      if (remoteEnabled) {
+    const initializeChat = async () => {
+      // Check authentication
+      const { data: sessionRes } = await supabase.auth.getSession();
+      const hasUser = !!sessionRes.session?.user?.id;
+      setRemoteEnabled(hasUser);
+      
+      if (!chatId || !isMounted) return;
+      
+      // Load chat messages
+      if (hasUser) {
         // Load from Supabase
         const { data, error } = await supabase
           .from('chat_messages')
           .select('id, role, text, parts, created_at')
           .eq('chat_id', chatId)
           .order('created_at', { ascending: true });
-        // If error, skip updating (optional error handling)
-        if (error) return;
-        if (!isMounted) return;
-        // Map every row in returned data to a ChatEntry suitable for our state
-        const mapped: ChatEntry[] = (data || []).map((row: any) => ({
-          id: row.id,
-          role: row.role,
-          text: row.text ?? undefined,
-          parts: row.parts ?? undefined,
-          createdAt: row.created_at,
-        }));
-        setEntries(mapped);
+        
+        if (!error && isMounted) {
+          const mapped: ChatEntry[] = (data || []).map((row: any) => ({
+            id: row.id,
+            role: row.role,
+            text: row.text ?? undefined,
+            parts: row.parts ?? undefined,
+            createdAt: row.created_at,
+          }));
+          setEntries(mapped);
+        }
       } else {
         // Load from localStorage
         if (typeof window !== 'undefined') {
@@ -86,47 +82,42 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
           }
         }
       }
-    })();
-    // Unmount: prevent setState if the component is unmounted
-    return () => { isMounted = false; };
-  }, [chatId, remoteEnabled]);
-
-  // Clear isThinking when switching chats
-  useEffect(() => {
-    setIsThinking(false);
+      
+      // Setup real-time subscription for authenticated users
+      if (hasUser && chatId && isMounted) {
+        const channel = supabase
+          .channel(`chat:${chatId}`)
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `chat_id=eq.${chatId}`,
+          }, (payload) => {
+            if (payload.eventType === 'INSERT') {
+              const row: any = payload.new;
+              setEntries((prev) => [...prev, {
+                id: row.id,
+                role: row.role,
+                text: row.text ?? undefined,
+                parts: row.parts ?? undefined,
+                createdAt: row.created_at,
+              }]);
+            }
+          })
+          .subscribe();
+        
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      }
+    };
+    
+    initializeChat();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [chatId]);
-
-  // Subscribe to real-time update events for this chat's messages unless in local-only mode
-  useEffect(() => {
-    if (!remoteEnabled || !chatId) return;
-    // Subscribe to all postgres_changes for chat_messages, filtering by this chat's ID
-    const channel = supabase
-      .channel(`chat:${chatId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `chat_id=eq.${chatId}`,
-      }, (payload) => {
-        console.log('[ChatContext] Real-time payload received:', payload);
-        // Only handle new inserts — append to local chat state
-        if (payload.eventType === 'INSERT') {
-          const row: any = payload.new;
-          console.log('[ChatContext] Inserting new message:', { role: row.role, text: row.text });
-          setEntries((prev) => [...prev, {
-            id: row.id,
-            role: row.role,
-            text: row.text ?? undefined,
-            parts: row.parts ?? undefined,
-            createdAt: row.created_at,
-          }]);
-          // Note: isThinking state is now managed by the API request lifecycle
-        }
-      })
-      .subscribe();
-    // On unmount: remove the real-time channel subscription
-    return () => { supabase.removeChannel(channel); };
-  }, [chatId, remoteEnabled]);
 
   // Insert any type of message (user, system, or tool role), directly or optimistically, depending on remote/local mode
   const insertMessage = useCallback(
@@ -173,7 +164,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
   // Insert a user message (as text)
   const addUserMessage = useCallback(
     async (text: string) => {
-      console.log('[ChatContext] addUserMessage called with text:', text);
       const id = await insertMessage('user', text, undefined);
       return id;
     }, [insertMessage]
@@ -182,7 +172,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
   // Insert a system (AI) text message
   const addSystemText = useCallback(
     async (text: string) => {
-      console.log('[ChatContext] addSystemText called with text:', text);
       await insertMessage('system', text, undefined);
     }, [insertMessage]
   );
@@ -194,6 +183,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
       await insertMessage('system', undefined, parts);
     }, [insertMessage]
   );
+
+  // Clear isThinking when switching chats
+  useEffect(() => {
+    setIsThinking(false);
+  }, [chatId]);
 
   // Memoize the context value to avoid unnecessary renders in consumers
   const value = useMemo<ChatContextValue>(() => ({
