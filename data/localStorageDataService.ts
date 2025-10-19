@@ -12,7 +12,6 @@ const KEYS = {
   SENTIMENTS: 'circle_sentiments',
   NOTES: 'circle_notes',
   COMMITMENTS: 'circle_commitments',
-  DRAFTS: 'circle_drafts',
 };
 
 export class LocalStorageDataService implements DataService {
@@ -187,7 +186,7 @@ export class LocalStorageDataService implements DataService {
       sentiments: this.getItem<Sentiment>(KEYS.SENTIMENTS),
       notes: this.getItem<Note>(KEYS.NOTES),
       commitments: this.getItem<Commitment>(KEYS.COMMITMENTS),
-      drafts: this.getItem<Draft>(KEYS.DRAFTS),
+      drafts: [], // TODO: Implement drafts functionality
     };
   }
 }

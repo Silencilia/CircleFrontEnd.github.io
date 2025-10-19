@@ -90,7 +90,6 @@ async function fetchAllUserData(userId: string): Promise<FormattedContext | null
         occupation_id: contact.occupation_id,
         organization_id: contact.organization_id,
         birth_date,
-        last_interaction: contact.last_interaction,
         subject_ids: subjectsByContact[contact.id] || [],
         relationship_ids: relationshipsByContact[contact.id] || [],
         note_ids: notesByContact[contact.id] || [],
@@ -201,8 +200,7 @@ export async function getRelevantContext(
             birth_date: sampleContact.birth_date,
             relationship_ids: sampleContact.relationship_ids,
             occupation_id: sampleContact.occupation_id,
-            organization_id: sampleContact.organization_id,
-            last_interaction: sampleContact.last_interaction
+            organization_id: sampleContact.organization_id
           });
         }
         

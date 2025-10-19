@@ -13,7 +13,6 @@ const ContactManager: React.FC = () => {
     occupation_id: '',
     organization_id: '',
     birth_date: '',
-    last_interaction: '',
     subject_ids: [] as string[],
     relationship_ids: [] as string[],
     note_ids: [] as string[]
@@ -43,12 +42,11 @@ const ContactManager: React.FC = () => {
           occupation_id: newContact.occupation_id,
           organization_id: newContact.organization_id || undefined,
           birth_date: birth,
-          last_interaction: newContact.last_interaction ? new Date(newContact.last_interaction).getTime() : Date.now(),
           subject_ids: newContact.subject_ids,
           relationship_ids: newContact.relationship_ids,
           note_ids: newContact.note_ids
         });
-        setNewContact({ name: '', occupation_id: '', organization_id: '', birth_date: '', last_interaction: '', subject_ids: [], relationship_ids: [], note_ids: [] });
+        setNewContact({ name: '', occupation_id: '', organization_id: '', birth_date: '', subject_ids: [], relationship_ids: [], note_ids: [] });
       } catch (error) {
         console.error('Failed to add contact:', error);
       }
@@ -109,15 +107,6 @@ const ContactManager: React.FC = () => {
             placeholder="Birth Date"
             value={newContact.birth_date}
             onChange={(e) => setNewContact({ ...newContact, birth_date: e.target.value })}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <input
-            type="date"
-            placeholder="Last Interaction (optional)"
-            value={newContact.last_interaction}
-            onChange={(e) => setNewContact({ ...newContact, last_interaction: e.target.value })}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -221,9 +210,6 @@ const ContactManager: React.FC = () => {
                     <p className="text-gray-500 text-xs mb-1">Birth: {label}</p>
                   ) : null;
                 })()}
-                {contact.last_interaction && (
-                  <p className="text-gray-500 text-xs mb-2">Last: {formatTimestamp(contact.last_interaction)}</p>
-                )}
                 
                 {/* Subjects */}
                 <div className="mb-2">

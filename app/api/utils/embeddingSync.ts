@@ -87,31 +87,45 @@ export async function syncUserEmbeddings(userId: string): Promise<SyncResult> {
   try {
     const supabase = createClient(url, anon, { auth: { persistSession: false } });
     
-    // Fetch all user data
+    // Fetch only contacts and notes data (root entities)
     const [
       { data: contacts, error: contactsError },
-      { data: notes, error: notesError },
+      { data: notes, error: notesError }
+    ] = await Promise.all([
+      supabase.from('contacts').select('*').eq('user_id', userId),
+      supabase.from('notes').select('*').eq('user_id', userId)
+    ]);
+
+    // Fetch all related data for comprehensive content building
+    const [
       { data: subjects, error: subjectsError },
       { data: relationships, error: relationshipsError },
       { data: organizations, error: organizationsError },
       { data: occupations, error: occupationsError },
       { data: sentiments, error: sentimentsError },
-      { data: commitments, error: commitmentsError }
+      { data: commitments, error: commitmentsError },
+      { data: contactRelationships, error: contactRelationshipsError },
+      { data: contactSubjects, error: contactSubjectsError },
+      { data: contactNotes, error: contactNotesError },
+      { data: noteSentiments, error: noteSentimentsError }
     ] = await Promise.all([
-      supabase.from('contacts').select('*').eq('user_id', userId),
-      supabase.from('notes').select('*').eq('user_id', userId),
       supabase.from('subjects').select('*').eq('user_id', userId),
       supabase.from('relationships').select('*').eq('user_id', userId),
       supabase.from('organizations').select('*').eq('user_id', userId),
       supabase.from('occupations').select('*').eq('user_id', userId),
       supabase.from('sentiments').select('*').eq('user_id', userId),
-      supabase.from('commitments').select('*').eq('user_id', userId)
+      supabase.from('commitments').select('*').eq('user_id', userId),
+      supabase.from('contact_relationships').select('*'),
+      supabase.from('contact_subjects').select('*'),
+      supabase.from('contact_notes').select('*'),
+      supabase.from('note_sentiments').select('*')
     ]);
 
     // Check for errors
     const errors = [contactsError, notesError, subjectsError, relationshipsError, 
                    organizationsError, occupationsError, sentimentsError, 
-                   commitmentsError].filter(Boolean);
+                   commitmentsError, contactRelationshipsError, contactSubjectsError,
+                   contactNotesError, noteSentimentsError].filter(Boolean);
     
     if (errors.length > 0) {
       console.error('Errors fetching user data for sync:', errors);
@@ -119,7 +133,7 @@ export async function syncUserEmbeddings(userId: string): Promise<SyncResult> {
       return result;
     }
 
-    // Prepare related data for content building
+    // Prepare related data for content building with junction table data
     const relatedData = {
       contacts: contacts || [],
       notes: notes || [],
@@ -128,20 +142,32 @@ export async function syncUserEmbeddings(userId: string): Promise<SyncResult> {
       organizations: organizations || [],
       occupations: occupations || [],
       sentiments: sentiments || [],
-      commitments: commitments || []
+      commitments: commitments || [],
+      contactRelationships: contactRelationships || [],
+      contactSubjects: contactSubjects || [],
+      contactNotes: contactNotes || [],
+      noteSentiments: noteSentiments || []
     };
 
-    // Process each entity type
+    // Process only contacts and notes (root entities that contain all other data)
     const entityTypes = [
       { name: 'contact', data: contacts || [] },
-      { name: 'note', data: notes || [] },
-      { name: 'subject', data: subjects || [] },
-      { name: 'relationship', data: relationships || [] },
-      { name: 'organization', data: organizations || [] },
-      { name: 'occupation', data: occupations || [] },
-      { name: 'sentiment', data: sentiments || [] },
-      { name: 'commitment', data: commitments || [] }
+      { name: 'note', data: notes || [] }
     ];
+    
+    console.log(`[embeddingSync] Processing ${entityTypes.reduce((sum, et) => sum + et.data.length, 0)} root entities (${contacts?.length || 0} contacts, ${notes?.length || 0} notes)`);
+    console.log(`[embeddingSync] Related data counts:`, {
+      subjects: subjects?.length || 0,
+      relationships: relationships?.length || 0,
+      organizations: organizations?.length || 0,
+      occupations: occupations?.length || 0,
+      sentiments: sentiments?.length || 0,
+      commitments: commitments?.length || 0,
+      contactRelationships: contactRelationships?.length || 0,
+      contactSubjects: contactSubjects?.length || 0,
+      contactNotes: contactNotes?.length || 0,
+      noteSentiments: noteSentiments?.length || 0
+    });
 
     // Process entities in batches to avoid rate limits
     const batchSize = 10;
@@ -160,13 +186,7 @@ export async function syncUserEmbeddings(userId: string): Promise<SyncResult> {
                 .single();
 
               const content = buildEntityContentForEmbedding(entityType.name, entity, relatedData);
-              console.log(`[embeddingSync] Building content for ${entityType.name}:${entity.id}:`, {
-                entityName: entity.name || entity.title || entity.label || 'Unknown',
-                contentLength: content.length,
-                contentPreview: content.substring(0, 100)
-              });
               if (!content.trim()) {
-                console.log(`[embeddingSync] Skipping ${entityType.name}:${entity.id} - empty content`);
                 result.skipped++;
                 return;
               }
@@ -213,7 +233,6 @@ export async function syncUserEmbeddings(userId: string): Promise<SyncResult> {
       }
     }
 
-    console.log(`Embedding sync complete: ${result.created} created, ${result.updated} updated, ${result.skipped} skipped, ${result.errors} errors`);
     return result;
     
   } catch (error) {

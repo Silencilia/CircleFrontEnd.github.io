@@ -5,7 +5,7 @@ export default function identifyPrompt(stack: Array<{ role: 'system'|'user'; con
     role: 'system',
     content:
       'You are an intent classifier. Use the provided function tool to return the classification.\n' +
-      'Call set_message_type with the appropriate { intention } among: "record", "search", "advice".\n' +
+      'Call identify_intent with the appropriate { intention } among: "record", "search", "advice".\n' +
       '- record: The user is logging a recent event they experienced (e.g., who, what activity, when, where, details).\n' +
       '- search: The user is seeking specific factual information already stored in Contacts or Notes and related stored info (e.g., lookup or retrieval).\n' +
       '- advice: The user wants guidance on a social decision using the full context of Contacts and Notes and related stored info.\n' +

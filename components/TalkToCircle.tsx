@@ -85,9 +85,7 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onMes
       onMessageSend?.(text);
     } else {
       // Otherwise, add via chat context and trigger identify
-      console.log('[TalkToCircle] Calling chat.addUserMessage with text:', text);
       const messageId = await chat.addUserMessage(text);
-      console.log('[TalkToCircle] addUserMessage returned messageId:', messageId);
       if (chat.chatId && messageId) {
         // Check if we're in offline mode
         const { data: userRes } = await supabase.auth.getUser();

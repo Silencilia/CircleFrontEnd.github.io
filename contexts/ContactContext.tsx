@@ -42,6 +42,13 @@ export interface Sentiment {
   category: string;
 }
 
+export interface Draft {
+  id: string;
+  text: string;
+  date: PrecisionDate;
+  time: TimeValue;
+}
+
 
 // Helpers for converting to/from TimeValue
 export function parseTimeToTimeValue(input: TimeValue | string | Date | null | undefined): TimeValue {
@@ -105,11 +112,6 @@ export interface Commitment {
   is_trashed: boolean;
 }
 
-export interface Draft {
-  date: PrecisionDate;
-  time: TimeValue;
-  text: string;
-}
 
 
 
@@ -119,7 +121,6 @@ export interface Contact {
   occupation_id?: string;
   organization_id?: string;
   birth_date?: PrecisionDate;
-  last_interaction: number;
   subject_ids: string[];
   relationship_ids: string[];
   note_ids: string[];
@@ -153,7 +154,9 @@ type ContactAction =
   | { type: 'UPDATE_NOTE'; payload: Note }
   | { type: 'ADD_COMMITMENT'; payload: Commitment }
   | { type: 'UPDATE_COMMITMENT'; payload: Commitment }
+  | { type: 'ADD_SUBJECT'; payload: Subject }
   | { type: 'UPDATE_SUBJECT'; payload: Subject }
+  | { type: 'ADD_RELATIONSHIP'; payload: Relationship }
   | { type: 'ADD_ORGANIZATION'; payload: Organization }
   | { type: 'ADD_OCCUPATION'; payload: Occupation }
   | { type: 'ADD_SENTIMENT'; payload: Sentiment }
@@ -234,6 +237,12 @@ function contactReducer(state: ContactState, action: ContactAction): ContactStat
         ),
       };
     
+    case 'ADD_SUBJECT':
+      return { ...state, subjects: [...state.subjects, action.payload] };
+
+    case 'ADD_RELATIONSHIP':
+      return { ...state, relationships: [...state.relationships, action.payload] };
+    
     case 'ADD_ORGANIZATION':
       return { ...state, organizations: [...state.organizations, action.payload] };
 
@@ -271,17 +280,21 @@ interface ContactContextType {
   updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
   addCommitment: (commitment: Omit<Commitment, 'id'>) => Promise<void>;
   updateCommitment: (id: string, updates: Partial<Commitment>) => Promise<void>;
-  addSubject: (subject: Omit<Subject, 'id'>) => Promise<void>;
+  addSubject: (subject: Omit<Subject, 'id'>) => Promise<Subject>;
   updateSubject: (id: string, updates: Partial<Subject>) => Promise<void>;
   addOrganization: (organization: Omit<Organization, 'id'>) => Promise<Organization>;
   addOccupation: (occupation: Omit<Occupation, 'id'>) => Promise<Occupation>;
-  addRelationship: (relationship: Omit<Relationship, 'id'>) => Promise<void>;
+  addRelationship: (relationship: Omit<Relationship, 'id'>) => Promise<Relationship>;
   addSentiment: (sentiment: Omit<Sentiment, 'id'>) => Promise<Sentiment>;
   updateSentiment: (id: string, updates: Partial<Sentiment>) => Promise<void>;
   // New contact creation
   createNewContact: () => Promise<Contact>;
+  // Temporary contact for editing
+  createTemporaryContact: () => Contact;
   // New note creation
   createNewNote: () => Promise<Note>;
+  // Temporary note for editing
+  createTemporaryNote: () => Note;
 }
 
 // Create context
@@ -399,9 +412,8 @@ export function ContactProvider({ children }: { children: ReactNode }) {
   const addSubject = async (subject: Omit<Subject, 'id'>) => {
     try {
       const newSubject = await dataServiceRef.current.addSubject(subject);
-      // Note: We need to add SUBJECT action type to the reducer
-      // For now, we'll reload all data
-      await loadData();
+      dispatch({ type: 'ADD_SUBJECT', payload: newSubject });
+      return newSubject;
     } catch (error) {
       console.error('Failed to add subject:', error);
       throw error;
@@ -433,9 +445,8 @@ export function ContactProvider({ children }: { children: ReactNode }) {
   const addRelationship = async (relationship: Omit<Relationship, 'id'>) => {
     try {
       const newRelationship = await dataServiceRef.current.addRelationship(relationship);
-      // Note: We need to add RELATIONSHIP action type to the reducer
-      // For now, we'll reload all data
-      await loadData();
+      dispatch({ type: 'ADD_RELATIONSHIP', payload: newRelationship });
+      return newRelationship;
     } catch (error) {
       console.error('Failed to add relationship:', error);
       throw error;
@@ -512,7 +523,6 @@ export function ContactProvider({ children }: { children: ReactNode }) {
         occupation_id: undefined,
         organization_id: undefined,
         birth_date: undefined,
-        last_interaction: Date.now(),
         subject_ids: [],
         relationship_ids: [],
         note_ids: [],
@@ -540,7 +550,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
         contact_ids: [],
         is_trashed: false
       };
-      
+
       const createdNote = await dataServiceRef.current.addNote(newNote);
       dispatch({ type: 'ADD_NOTE', payload: createdNote });
       return createdNote;
@@ -548,6 +558,39 @@ export function ContactProvider({ children }: { children: ReactNode }) {
       console.error('Failed to create new note:', error);
       throw error;
     }
+  };
+
+  const createTemporaryContact = (): Contact => {
+    // Create a temporary contact for editing purposes (not saved to database yet)
+    const tempContact: Contact = {
+      id: `temp-${Date.now()}`, // Temporary ID
+      name: '',
+      occupation_id: undefined,
+      organization_id: undefined,
+      birth_date: undefined,
+      subject_ids: [],
+      relationship_ids: [],
+      note_ids: [],
+      is_trashed: false
+    };
+
+    return tempContact;
+  };
+
+  const createTemporaryNote = (): Note => {
+    // Create a temporary note for editing purposes (not saved to database yet)
+    const tempNote: Note = {
+      id: `temp-${Date.now()}`, // Temporary ID
+      title: '',
+      text: '',
+      time_value: { hour: null, minute: null },
+      date: { year: null, month: null, day: null },
+      sentiment_ids: [],
+      contact_ids: [],
+      is_trashed: false
+    };
+
+    return tempNote;
   };
 
 
@@ -569,7 +612,9 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     addSentiment,
     updateSentiment,
     createNewContact,
+    createTemporaryContact,
     createNewNote,
+    createTemporaryNote,
   };
 
   return (

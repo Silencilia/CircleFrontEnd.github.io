@@ -17,6 +17,9 @@ export async function identifyRequest(
   localData?: any,
   onThinkingChange?: (isThinking: boolean) => void
 ): Promise<{ ok: boolean; content?: string } | { ok: false; error: string }> {
+  const startTime = Date.now();
+  console.log(`[PERF] Client: Starting API request at ${new Date().toISOString()}`);
+  
   try {
     // Set thinking to true when request starts
     onThinkingChange?.(true);
@@ -34,16 +37,21 @@ export async function identifyRequest(
       headers['X-User-ID'] = userId;
     }
 
+    const fetchStart = Date.now();
     const res = await fetch('/api/intents/process', {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
     });
+    const fetchTime = Date.now() - fetchStart;
+    console.log(`[PERF] Client: API fetch completed in ${fetchTime}ms`);
     
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       // Set thinking to false on error
       onThinkingChange?.(false);
+      const totalTime = Date.now() - startTime;
+      console.log(`[PERF] Client: Request failed after ${totalTime}ms`);
       return { ok: false, error: err?.error || 'Request failed' } as const;
     }
     
@@ -57,10 +65,15 @@ export async function identifyRequest(
       onSystemMessage(data.content);
     }
 
+    const totalTime = Date.now() - startTime;
+    console.log(`[PERF] Client: Total request time ${totalTime}ms (${totalTime/1000}s)`);
+
     return { ok: !!data?.ok, content: data?.content } as const;
   } catch (e: any) {
     // Set thinking to false on error
     onThinkingChange?.(false);
+    const totalTime = Date.now() - startTime;
+    console.log(`[PERF] Client: Request error after ${totalTime}ms:`, e?.message);
     return { ok: false, error: e?.message || 'Unknown error' } as const;
   }
 }

@@ -36,9 +36,12 @@ function dbToTimeValue(time_hour: number | null, time_minute: number | null): Ti
 
 export class SupabaseDataService implements DataService {
   async updateContact(id: string, updates: Partial<Contact>): Promise<Contact> {
-    const { birth_date, ...otherUpdates } = updates;
+    const { birth_date, subject_ids, relationship_ids, note_ids, ...otherUpdates } = updates;
     const dbUpdates: any = { ...otherUpdates };
-    
+
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     if (birth_date) {
       const { birth_year, birth_month, birth_day } = precisionDateToDb(birth_date);
       dbUpdates.birth_year = birth_year;
@@ -46,18 +49,68 @@ export class SupabaseDataService implements DataService {
       dbUpdates.birth_day = birth_day;
     }
 
-    const { data, error } = await supabase
-      .from('contacts')
-      .update(dbUpdates)
-      .eq('id', id)
-      .select(`
-        *,
-        occupation:occupations(*),
-        organization:organizations(*)
-      `)
-      .single();
+    let data;
 
-    if (error) throw error;
+    // Only update the main contacts table if there are actual fields to update
+    if (Object.keys(dbUpdates).length > 0) {
+      const { data: updateData, error } = await supabase
+        .from('contacts')
+        .update(dbUpdates)
+        .eq('id', id)
+        .eq('user_id', userRes.user.id)
+        .select(`
+          *,
+          occupation:occupations(*),
+          organization:organizations(*)
+        `)
+        .single();
+
+      if (error) throw error;
+      data = updateData;
+    } else {
+      // Get the current contact data without updating when only relationships change
+      const { data: currentData, error: fetchError } = await supabase
+        .from('contacts')
+        .select(`
+          *,
+          occupation:occupations(*),
+          organization:organizations(*)
+        `)
+        .eq('id', id)
+        .eq('user_id', userRes.user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      data = currentData;
+    }
+
+    // Update relationships if provided
+    if (subject_ids !== undefined) {
+      await supabase.from('contact_subjects').delete().eq('contact_id', id);
+      if (subject_ids.length > 0) {
+        await supabase
+          .from('contact_subjects')
+          .insert(subject_ids.map(subject_id => ({ contact_id: id, subject_id })));
+      }
+    }
+
+    if (relationship_ids !== undefined) {
+      await supabase.from('contact_relationships').delete().eq('contact_id', id);
+      if (relationship_ids.length > 0) {
+        await supabase
+          .from('contact_relationships')
+          .insert(relationship_ids.map(relationship_id => ({ contact_id: id, relationship_id })));
+      }
+    }
+
+    if (note_ids !== undefined) {
+      await supabase.from('contact_notes').delete().eq('contact_id', id);
+      if (note_ids.length > 0) {
+        await supabase
+          .from('contact_notes')
+          .insert(note_ids.map(note_id => ({ contact_id: id, note_id })));
+      }
+    }
 
     // Get related data
     const contact = await this.getContactWithRelations(data.id);
@@ -126,10 +179,14 @@ export class SupabaseDataService implements DataService {
   }
 
   async deleteContact(id: string): Promise<void> {
+    const { data: userRes } = await supabase.auth.getUser();
+    if (!userRes.user) throw new Error('Not signed in');
+
     const { error } = await supabase
       .from('contacts')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', userRes.user.id);
 
     if (error) throw error;
   }
@@ -426,8 +483,7 @@ export class SupabaseDataService implements DataService {
       { data: relationships, error: relationshipsError },
       { data: sentiments, error: sentimentsError },
       { data: notes, error: notesError },
-      { data: commitments, error: commitmentsError },
-      { data: drafts, error: draftsError }
+      { data: commitments, error: commitmentsError }
     ] = await Promise.all([
       supabase.from('contacts').select(`
         *,
@@ -440,12 +496,11 @@ export class SupabaseDataService implements DataService {
       supabase.from('relationships').select('*').eq('user_id', userId),
       supabase.from('sentiments').select('*').eq('user_id', userId),
       supabase.from('notes').select('*').eq('user_id', userId),
-      supabase.from('commitments').select('*').eq('user_id', userId),
-      supabase.from('drafts').select('*')
+      supabase.from('commitments').select('*').eq('user_id', userId)
     ]);
 
     // Check for errors
-    const errors = [contactsError, subjectsError, organizationsError, occupationsError, relationshipsError, sentimentsError, notesError, commitmentsError, draftsError];
+    const errors = [contactsError, subjectsError, organizationsError, occupationsError, relationshipsError, sentimentsError, notesError, commitmentsError];
     const firstError = errors.find(error => error);
     if (firstError) throw firstError;
 
@@ -496,7 +551,6 @@ export class SupabaseDataService implements DataService {
       occupation_id: contact.occupation_id || undefined,
       organization_id: contact.organization_id || undefined,
       birth_date: dbToPrecisionDate(contact.birth_year, contact.birth_month, contact.birth_day),
-      last_interaction: contact.last_interaction,
       subject_ids: contactSubjectsMap.get(contact.id) || [],
       relationship_ids: contactRelationshipsMap.get(contact.id) || [],
       note_ids: contactNotesMap.get(contact.id) || [],
@@ -523,12 +577,6 @@ export class SupabaseDataService implements DataService {
       is_trashed: commitment.is_trashed
     })) || [];
 
-    const convertedDrafts = drafts?.map(draft => ({
-      date: { year: draft.draft_year, month: draft.draft_month, day: draft.draft_day },
-      time: { hour: draft.time_hour, minute: draft.time_minute },
-      text: draft.text
-    })) || [];
-
     return {
       contacts: convertedContacts,
       subjects: subjects?.map(s => ({ id: s.id, label: s.label, category: s.category })) || [],
@@ -538,7 +586,7 @@ export class SupabaseDataService implements DataService {
       sentiments: sentiments?.map(s => ({ id: s.id, label: s.label, category: s.category })) || [],
       notes: convertedNotes,
       commitments: convertedCommitments,
-      drafts: convertedDrafts
+      drafts: [] // TODO: Implement drafts functionality
     };
   }
 
@@ -581,7 +629,6 @@ export class SupabaseDataService implements DataService {
       occupation_id: contactData.occupation_id,
       organization_id: contactData.organization_id,
       birth_date: dbToPrecisionDate(contactData.birth_year, contactData.birth_month, contactData.birth_day),
-      last_interaction: contactData.last_interaction,
       is_trashed: contactData.is_trashed || false,
       subject_ids: subjectData?.map(s => s.subject_id) || [],
       relationship_ids: relationshipData?.map(r => r.relationship_id) || [],

@@ -1,0 +1,15 @@
+"use strict";(()=>{var e={};e.id=917,e.ids=[917],e.modules={399:e=>{e.exports=require("next/dist/compiled/next-server/app-page.runtime.prod.js")},517:e=>{e.exports=require("next/dist/compiled/next-server/app-route.runtime.prod.js")},572:(e,t,r)=>{r.r(t),r.d(t,{originalPathname:()=>d,patchFetch:()=>f,requestAsyncStorage:()=>c,routeModule:()=>p,serverHooks:()=>m,staticGenerationAsyncStorage:()=>u});var n={};r.r(n),r.d(n,{POST:()=>l});var a=r(9303),s=r(8716),o=r(670),i=r(7070);async function l(e){try{var t;let{text:r}=await e.json().catch(()=>({}));if(!r||"string"!=typeof r||!r.trim())return i.NextResponse.json({error:'Missing or invalid "text"'},{status:400});let n=process.env.OPENAI_API_KEY;if(!n)return i.NextResponse.json({error:"OPENAI_API_KEY is not configured"},{status:500});let a=(t=r.trim(),`You are a careful name detector.
+Extract all likely HUMAN PERSON NAMES from the following text. Return ONLY a valid JSON array of distinct strings, no commentary.
+
+Rules:
+- Include first names, last names, and full names
+- Include nicknames and common shortened versions
+- Exclude organizations, places, dates, product names
+- Exclude titles unless they are part of the written name (e.g., "Dr. Brown" → "Brown" is acceptable, prefer the name without the title)
+- Do not infer names that are not explicitly present
+- If no likely names are present, return an empty array
+
+Text:
+"""
+${t}
+"""`),s=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${n}`},body:JSON.stringify({model:"gpt-4o-mini",temperature:.1,messages:[{role:"system",content:"You return only valid JSON with no commentary."},{role:"user",content:a}]})});if(!s.ok){let e=await s.text();return i.NextResponse.json({error:`OpenAI error: ${e}`},{status:502})}let o=await s.json(),l=o?.choices?.[0]?.message?.content??"[]",p=[];try{let e=JSON.parse(l);Array.isArray(e)&&(p=e.filter(e=>"string"==typeof e).map(e=>e.trim()).filter(Boolean))}catch{let e=l.match(/\[[\s\S]*\]/);if(e)try{let t=JSON.parse(e[0]);Array.isArray(t)&&(p=t.filter(e=>"string"==typeof e).map(e=>e.trim()).filter(Boolean))}catch{}}let c=new Set,u=p.filter(e=>{let t=e.toLowerCase();return!c.has(t)&&(c.add(t),!0)});return i.NextResponse.json({names:u})}catch(e){return i.NextResponse.json({error:e?.message||"Unknown error"},{status:500})}}let p=new a.AppRouteRouteModule({definition:{kind:s.x.APP_ROUTE,page:"/api/detect-names/route",pathname:"/api/detect-names",filename:"route",bundlePath:"app/api/detect-names/route"},resolvedPagePath:"C:\\Users\\silen\\OneDrive\\Documents\\App Development\\Circle\\app\\api\\detect-names\\route.ts",nextConfigOutput:"",userland:n}),{requestAsyncStorage:c,staticGenerationAsyncStorage:u,serverHooks:m}=p,d="/api/detect-names/route";function f(){return(0,o.patchFetch)({serverHooks:m,staticGenerationAsyncStorage:u})}}};var t=require("../../../webpack-runtime.js");t.C(e);var r=e=>t(t.s=e),n=t.X(0,[276,972],()=>r(572));module.exports=n})();

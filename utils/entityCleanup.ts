@@ -357,7 +357,6 @@ export async function destroyEmptyContacts(): Promise<CleanupResult> {
       const hasOccupation = contact.occupation_id !== null && contact.occupation_id !== undefined;
       const hasOrganization = contact.organization_id !== null && contact.organization_id !== undefined;
       const hasBirthDate = contact.birth_year !== null && contact.birth_month !== null && contact.birth_day !== null;
-      const hasLastInteraction = contact.last_interaction !== null && contact.last_interaction !== undefined;
       const hasSubjects = contactSubjectsMap.has(contact.id);
       const hasRelationships = contactRelationshipsMap.has(contact.id);
       const hasNotes = contactNotesMap.has(contact.id);
@@ -368,7 +367,6 @@ export async function destroyEmptyContacts(): Promise<CleanupResult> {
              !hasOccupation && 
              !hasOrganization && 
              !hasBirthDate && 
-             !hasLastInteraction && 
              !hasSubjects && 
              !hasRelationships && 
              !hasNotes && 

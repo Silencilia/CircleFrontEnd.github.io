@@ -9,6 +9,8 @@ interface SentimentTagProps {
   fillColor?: string;
   textColor?: string;
   className?: string;
+  deleteButtonColor?: string;
+  iconStrokeColor?: string;
   onClick?: (sentiment: Sentiment) => void;
 }
 
@@ -18,6 +20,8 @@ const SentimentTag: React.FC<SentimentTagProps> = ({
   fillColor = 'bg-circle-neutral',
   textColor = 'text-circle-primary',
   className = '',
+  deleteButtonColor = 'bg-circle-neutral',
+  iconStrokeColor = 'rgb(38 43 53)',
   onClick,
 }) => {
   const { state, updateNote } = useContacts();
@@ -71,8 +75,8 @@ const SentimentTag: React.FC<SentimentTagProps> = ({
         {/* Delete button - only show when clicked */}
         {showDeleteButton && (
           <DeleteTagButton
-            buttonColor="bg-circle-neutral"
-            iconStrokeColor="text-circle-primary"
+            buttonColor={deleteButtonColor}
+            iconStrokeColor={iconStrokeColor}
             className="hover:opacity-80"
             onDelete={() => {
               setShowDeleteConfirm(true);

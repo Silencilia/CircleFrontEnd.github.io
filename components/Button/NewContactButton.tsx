@@ -6,18 +6,21 @@ import { Contact, useContacts } from '../../contexts/ContactContext';
 
 interface NewContactButtonProps {
   className?: string;
+  onClick?: () => void;
 }
 
-const NewContactButton: React.FC<NewContactButtonProps> = ({ className = '' }) => {
-  const { createNewContact } = useContacts();
+const NewContactButton: React.FC<NewContactButtonProps> = ({ className = '', onClick }) => {
+  const { createTemporaryContact } = useContacts();
   const [newContact, setNewContact] = useState<Contact | null>(null);
 
-  const handleClick = async () => {
-    try {
-      const contact = await createNewContact();
-      setNewContact(contact);
-    } catch (error) {
-      console.error('Failed to create new contact:', error);
+  const handleClick = () => {
+    if (onClick) {
+      // Use parent-provided handler (preferred for page-level state management)
+      onClick();
+    } else {
+      // Fallback to internal state management (for backward compatibility)
+      const tempContact = createTemporaryContact();
+      setNewContact(tempContact);
     }
   };
 
@@ -56,8 +59,8 @@ const NewContactButton: React.FC<NewContactButtonProps> = ({ className = '' }) =
         </div>
       </button>
 
-      {/* Overlay for ContactCardNew via portal to escape parent stacking contexts */}
-      {newContact
+      {/* Overlay for ContactCardNew via portal to escape parent stacking contexts (fallback for backward compatibility) */}
+      {!onClick && newContact
         ? createPortal(
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
               <ContactCardNew

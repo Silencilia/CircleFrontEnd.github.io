@@ -3,17 +3,19 @@ import ContentEditable from 'react-contenteditable';
 import { Contact, Subject, Relationship, Note, useContacts } from '../../contexts/ContactContext';
 import { CardIndex, createSourceRecord, CardType, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import { SubjectTag, RelationshipTag } from '../Tag';
+import { NewTagButton } from '../Button';
 import { destroyAllUnusedEntities } from '../../utils/entityCleanup';
 
 const Type: CardType = 'contactCardDetail';
 import NoteCard from './NoteCard';
 import NoteCardDetail from './NoteCardDetail';
-import { CalendarIcon, NoteIcon, ConfirmIcon, CancelIcon } from '../icons';
-import { MinimizeButton } from '../Button';
+import { CalendarIcon, NoteIcon } from '../icons';
 import { EDITING_MODE_PADDING } from '../../data/variables';
 import { ConfirmButton, CancelButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
+import NewSubject from '../Dialogs/NewSubject';
+import NewRelationship from '../Dialogs/NewRelationship';
 import { formatYyyyMmDdToLong } from '../../data/strings';
 import useCardNavigation from '../../hooks/useCardNavigation';
 
@@ -45,7 +47,7 @@ interface ContactCardDetailProps {
 }
 
 const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimize, caller, onOpenNote, onOpenContactDetail }) => {
-  const { state, updateContact, addOccupation, addOrganization, deleteContact } = useContacts();
+  const { state, updateContact, addOccupation, addOrganization, deleteContact, addContact } = useContacts();
   if (contact.is_trashed) {
     return null;
   }
@@ -55,9 +57,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const [startY, setStartY] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [isAnyNoteEditing, setIsAnyNoteEditing] = useState(false);
-  
-  // Get the latest contact data from context state
-  const currentContact = state.contacts.find(c => c.id === contact.id) || contact;
+
+  // Check if this is a temporary contact (not yet saved to database)
+  const isTemporaryContact = contact.id.startsWith('temp-');
+  // Local state for temporary contact data (only used for temporary contacts)
+  const [tempContactData, setTempContactData] = useState<Contact | null>(isTemporaryContact ? contact : null);
+  // Get the latest contact data from context state, or temp data for temporary contacts
+  const currentContact = isTemporaryContact ? (tempContactData || contact) : (state.contacts.find(c => c.id === contact.id) || contact);
   
   // Name editing state
   const [isNameEditing, setIsNameEditing] = useState(false);
@@ -69,8 +75,16 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const [noteDetailCaller, setNoteDetailCaller] = useState<CardIndex | null>(null);
 
   // Get related data
-  const occupation = currentContact.occupation_id ? state.occupations.find(o => o.id === currentContact.occupation_id) : null;
-  const organization = currentContact.organization_id ? state.organizations.find(org => org.id === currentContact.organization_id) : null;
+  const occupation = currentContact.occupation_id
+    ? isTemporaryContact && typeof currentContact.occupation_id === 'string'
+      ? { id: 'temp', title: currentContact.occupation_id } // For temporary contacts, occupation_id is the title
+      : state.occupations.find(o => o.id === currentContact.occupation_id) // For saved contacts, occupation_id is an actual ID
+    : null;
+  const organization = currentContact.organization_id
+    ? isTemporaryContact && typeof currentContact.organization_id === 'string'
+      ? { id: 'temp', name: currentContact.organization_id } // For temporary contacts, organization_id is the name
+      : state.organizations.find(org => org.id === currentContact.organization_id) // For saved contacts, organization_id is an actual ID
+    : null;
   const subjects = currentContact.subject_ids ? currentContact.subject_ids.map(id => state.subjects.find(s => s.id === id)).filter(Boolean) as Subject[] : [];
   const relationships = currentContact.relationship_ids ? currentContact.relationship_ids.map(id => state.relationships.find(r => r.id === id)).filter(Boolean) as Relationship[] : [];
   const notes = currentContact.note_ids ? (currentContact.note_ids
@@ -83,6 +97,10 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   
   // Delete dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Subject and relationship dialog states
+  const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
+  const [isRelationshipDialogOpen, setIsRelationshipDialogOpen] = useState(false);
 
   // Sync initial birth date to picker state when opening (parse YYYY-MM-DD as local)
   const openBirthDatePicker = () => {
@@ -107,7 +125,14 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
             month: value.precision === 'year' ? null : (value.month ?? null),
             day: value.precision === 'day' ? (value.day ?? null) : null,
           };
-      await updateContact(currentContact.id, { birth_date: birth });
+
+      if (isTemporaryContact) {
+        // Update local state for temporary contacts
+        setTempContactData(prev => prev ? { ...prev, birth_date: birth } : null);
+      } else {
+        // Update database for saved contacts
+        await updateContact(currentContact.id, { birth_date: birth });
+      }
       setIsBirthDatePickerOpen(false);
     } catch (error) {
       console.error('Failed to update birth date:', error);
@@ -240,10 +265,15 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     if (cleanName !== currentContact.name) {
       console.log('Updating contact with ID:', currentContact.id);
 
-      // Update contact in database
       try {
         setIsNameSaving(true);
-        await updateContact(currentContact.id, { name: cleanName });
+        if (isTemporaryContact) {
+          // Update local state for temporary contacts
+          setTempContactData(prev => prev ? { ...prev, name: cleanName } : null);
+        } else {
+          // Update database for saved contacts
+          await updateContact(currentContact.id, { name: cleanName });
+        }
         console.log('Name updated successfully');
       } catch (error) {
         console.error('Failed to update name:', error);
@@ -325,25 +355,35 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     // Clean the input value to remove any HTML tags
     const cleanOccupation = currentHtml.replace(/<[^>]*>/g, '').trim();
     console.log('Saving occupation:', cleanOccupation, 'Current occupation:', occupation?.title);
-    
+
     if (cleanOccupation !== (occupation?.title || '')) {
       console.log('Updating contact occupation with ID:', currentContact.id);
-      
+
       try {
-        if (cleanOccupation === '') {
-          // Clear the occupation - use undefined instead of null
-          await updateContact(currentContact.id, { occupation_id: undefined });
+        if (isTemporaryContact) {
+          // For temporary contacts, store occupation title locally
+          // We'll resolve occupation_id when saving the contact
+          setTempContactData(prev => prev ? {
+            ...prev,
+            occupation_id: cleanOccupation === '' ? undefined : cleanOccupation
+          } : null);
         } else {
-          // Check if occupation already exists, if not create new one
-          let existingOccupation = state.occupations.find(o => o.title === cleanOccupation);
-          
-          if (!existingOccupation) {
-            const newOcc = await addOccupation({ title: cleanOccupation });
-            existingOccupation = newOcc;
-          }
-          
-          if (existingOccupation) {
-            await updateContact(currentContact.id, { occupation_id: existingOccupation.id });
+          // For saved contacts, handle occupation creation/updating normally
+          if (cleanOccupation === '') {
+            // Clear the occupation - use undefined instead of null
+            await updateContact(currentContact.id, { occupation_id: undefined });
+          } else {
+            // Check if occupation already exists, if not create new one
+            let existingOccupation = state.occupations.find(o => o.title === cleanOccupation);
+
+            if (!existingOccupation) {
+              const newOcc = await addOccupation({ title: cleanOccupation });
+              existingOccupation = newOcc;
+            }
+
+            if (existingOccupation) {
+              await updateContact(currentContact.id, { occupation_id: existingOccupation.id });
+            }
           }
         }
       } catch (error) {
@@ -421,20 +461,30 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
       console.log('Updating contact organization with ID:', currentContact.id);
       
       try {
-        if (cleanOrganization === '') {
-          // Clear the organization - use undefined instead of null
-          await updateContact(currentContact.id, { organization_id: undefined });
+        if (isTemporaryContact) {
+          // For temporary contacts, store organization name locally
+          // We'll resolve organization_id when saving the contact
+          setTempContactData(prev => prev ? {
+            ...prev,
+            organization_id: cleanOrganization === '' ? undefined : cleanOrganization
+          } : null);
         } else {
-          // Check if organization already exists, if not create new one
-          let existingOrganization = state.organizations.find(org => org.name === cleanOrganization);
-          
-          if (!existingOrganization) {
-            const newOrg = await addOrganization({ name: cleanOrganization });
-            existingOrganization = newOrg;
-          }
-          
-          if (existingOrganization) {
-            await updateContact(currentContact.id, { organization_id: existingOrganization.id });
+          // For saved contacts, handle organization creation/updating normally
+          if (cleanOrganization === '') {
+            // Clear the organization - use undefined instead of null
+            await updateContact(currentContact.id, { organization_id: undefined });
+          } else {
+            // Check if organization already exists, if not create new one
+            let existingOrganization = state.organizations.find(org => org.name === cleanOrganization);
+
+            if (!existingOrganization) {
+              const newOrg = await addOrganization({ name: cleanOrganization });
+              existingOrganization = newOrg;
+            }
+
+            if (existingOrganization) {
+              await updateContact(currentContact.id, { organization_id: existingOrganization.id });
+            }
           }
         }
       } catch (error) {
@@ -498,26 +548,74 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   // Confirm button handler - cleanup unused entities and close card
   const handleConfirm = async () => {
     try {
-      console.log('Confirming contact and cleaning up unused entities...');
-      await destroyAllUnusedEntities();
-      console.log('Entity cleanup completed');
+      if (isTemporaryContact) {
+        console.log('Saving temporary contact to database...');
+        // For temporary contacts, we need to resolve occupation/organization titles to IDs
+        let occupationId = undefined;
+        let organizationId = undefined;
+
+        // Resolve occupation
+        if (currentContact.occupation_id && typeof currentContact.occupation_id === 'string') {
+          const existingOccupation = state.occupations.find(o => o.title === currentContact.occupation_id);
+          if (existingOccupation) {
+            occupationId = existingOccupation.id;
+          } else if (currentContact.occupation_id !== '') {
+            const newOcc = await addOccupation({ title: currentContact.occupation_id });
+            occupationId = newOcc.id;
+          }
+        }
+
+        // Resolve organization
+        if (currentContact.organization_id && typeof currentContact.organization_id === 'string') {
+          const existingOrganization = state.organizations.find(org => org.name === currentContact.organization_id);
+          if (existingOrganization) {
+            organizationId = existingOrganization.id;
+          } else if (currentContact.organization_id !== '') {
+            const newOrg = await addOrganization({ name: currentContact.organization_id });
+            organizationId = newOrg.id;
+          }
+        }
+
+        // Save the contact to database
+        const contactToSave = {
+          name: currentContact.name,
+          occupation_id: occupationId,
+          organization_id: organizationId,
+          birth_date: currentContact.birth_date,
+          subject_ids: currentContact.subject_ids,
+          relationship_ids: currentContact.relationship_ids,
+          note_ids: currentContact.note_ids,
+          is_trashed: false
+        };
+        await addContact(contactToSave);
+        console.log('Temporary contact saved successfully');
+      } else {
+        console.log('Confirming contact and cleaning up unused entities...');
+        await destroyAllUnusedEntities();
+        console.log('Entity cleanup completed');
+      }
       clearCardIndexArray();
       onMinimize?.();
     } catch (error) {
-      console.error('Failed to cleanup entities:', error);
-      // Still close the card even if cleanup fails
+      console.error('Failed to save contact:', error);
+      // Still close the card even if save fails
       clearCardIndexArray();
       onMinimize?.();
     }
   };
 
-  // Cancel button handler - cleanup unused entities, delete current contact, and close card
+  // Cancel button handler - cleanup unused entities and close card
   const handleCancel = async () => {
     try {
-      console.log('Canceling contact, cleaning up unused entities, and deleting current contact...');
-      await destroyAllUnusedEntities();
-      await deleteContact(currentContact.id);
-      console.log('Contact deleted and entity cleanup completed');
+      if (isTemporaryContact) {
+        console.log('Canceling temporary contact creation...');
+        // For temporary contacts, just close without deleting
+      } else {
+        console.log('Canceling contact, cleaning up unused entities, and deleting current contact...');
+        await destroyAllUnusedEntities();
+        await deleteContact(currentContact.id);
+        console.log('Contact deleted and entity cleanup completed');
+      }
       clearCardIndexArray();
       onMinimize?.();
     } catch (error) {
@@ -528,6 +626,52 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     }
   };
 
+  // Subject dialog handlers
+  const handleSubjectSelect = (subject: Subject) => {
+    if (isTemporaryContact) {
+      // For temporary contacts, update local state
+      const currentSubjectIds = currentContact.subject_ids || [];
+      if (!currentSubjectIds.includes(subject.id)) {
+        setTempContactData(prev => prev ? {
+          ...prev,
+          subject_ids: [...currentSubjectIds, subject.id]
+        } : null);
+      }
+    } else {
+      // For saved contacts, this would use updateContact, but since we're in ContactCardNew,
+      // we should only have temporary contacts
+      console.warn('Unexpected: handleSubjectSelect called for non-temporary contact');
+    }
+    setIsSubjectDialogOpen(false);
+  };
+
+  const handleNewSubjectClick = () => {
+    setIsSubjectDialogOpen(true);
+  };
+
+  // Relationship dialog handlers
+  const handleRelationshipSelect = (relationship: Relationship) => {
+    if (isTemporaryContact) {
+      // For temporary contacts, update local state
+      const currentRelationshipIds = currentContact.relationship_ids || [];
+      if (!currentRelationshipIds.includes(relationship.id)) {
+        setTempContactData(prev => prev ? {
+          ...prev,
+          relationship_ids: [...currentRelationshipIds, relationship.id]
+        } : null);
+      }
+    } else {
+      // For saved contacts, this would use updateContact, but since we're in ContactCardNew,
+      // we should only have temporary contacts
+      console.warn('Unexpected: handleRelationshipSelect called for non-temporary contact');
+    }
+    setIsRelationshipDialogOpen(false);
+  };
+
+  const handleNewRelationshipClick = () => {
+    setIsRelationshipDialogOpen(true);
+  };
+
   const { openNoteDetail: navOpenNoteDetail, handleBack } = useCardNavigation({
     openNote: onOpenNote,
     openContact: onOpenContactDetail,
@@ -535,15 +679,19 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   });
 
   return (
-    <>
-    <div className="w-[630px] h-fit bg-white shadow-[2px_2px_10px_rgba(0,0,0,0.25)] rounded-xl p-[15px] flex flex-col gap-[40px]">
+    <div className="crd-dtl">
+      <div className="w-full h-full flex flex-col gap-2xl overflow-hidden">
       {/* Contact Info Section */}
-      <div className="w-full h-fit flex flex-col gap-[10px]">
-        <div className="w-full h-fit flex flex-col gap-[10px]">
+      <div className="w-full h-fit flex flex-col gap-md">
+        <div className="w-full h-fit flex flex-col gap-md">
           {/* Name and Buttons Row */}
-          <div className="w-full h-fit flex flex-row justify-between items-center">
-            {/* Name */}
-            <div className="w-fit h-[24px] flex items-center gap-2">
+          <div className="w-full h-fit flex flex-row justify-between items-start">
+            
+            <div className="w-fit h-fit flex flex-col gap-md">
+              {/* Card title */}
+              <span className="w-fit h-fit font-circletitlemedium text-circle-primary">Create new contact</span>
+              {/* Name input */}
+              <div className="w-fit h-fit flex items-center gap-2">
               {isNameEditing ? (
                 <ContentEditable
                   innerRef={nameContentEditableRef}
@@ -553,7 +701,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   onKeyDownCapture={handleNameKeyDown}
                   onKeyUp={handleNameKeyUp}
                   onBlur={handleNameBlur}
-                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary`}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circletitlemedium text-circle-primary`}
                   style={{
                     minHeight: '20px',
                     wordWrap: 'break-word',
@@ -567,11 +715,11 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   title="Click to edit"
                 >
                   {currentContact.name ? (
-                    <span className="font-circlebodymedium text-circle-primary">
+                    <span className="font-circletitlemedium text-circle-primary">
                       {currentContact.name}
                     </span>
                   ) : (
-                    <span className="font-circlebodymedium text-circle-primary italic opacity-50">
+                    <span className="font-circletitlemedium text-circle-primary italic opacity-50">
                       New Contact
                     </span>
                   )}
@@ -591,27 +739,23 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                   />
                 </div>
               )}
+              </div>
             </div>
-
             {/* Right side - Confirm and Cancel buttons */}
             <div className="w-fit h-fit flex flex-row justify-end items-center gap-[2px]">
-              {/* Confirm button */}
-              <button
-                onClick={handleConfirm}
-                className="btn-sm hover:bg-circle-neutral-variant transition-colors group"
-                aria-label="Confirm contact"
-              >
-                <ConfirmIcon className="text-circle-primary" />
-              </button>
-              
               {/* Cancel button */}
-              <button
+              <CancelButton
                 onClick={handleCancel}
-                className="btn-sm hover:bg-circle-neutral-variant transition-colors group"
-                aria-label="Cancel contact"
-              >
-                <CancelIcon className="text-circle-primary" />
-              </button>
+                ariaLabel="Cancel contact"
+              />
+             
+              {/* Confirm button */}
+              <ConfirmButton
+                onClick={handleConfirm}
+                ariaLabel="Confirm contact"
+              />
+
+             
             </div>
           </div>
           
@@ -714,8 +858,10 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
           </div>
         </div>
 
-        {/* Birth Date */}
-        <div className="w-fit h-[20px] flex flex-col gap-0">
+       
+      </div>
+ {/* Birth Date */}
+ <div className="w-fit h-[20px] flex flex-col gap-0">
           <div className="w-fit h-[20px] flex flex-row items-center gap-[10px]">
             <CalendarIcon width={16} height={16} className="text-circle-primary" />
             <button
@@ -728,9 +874,58 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
             </button>
           </div>
         </div>
+      {/* Tags Section */}
+      <div className="w-fit h-fit flex flex-col gap-sm">
+        {/* Relationships */}
+        <div className="w-fit h-fit flex flex-row flex-wrap items-start content-start gap-sm">
+          {relationships.length > 0 ? (
+            relationships.map((relationship) => (
+              <RelationshipTag
+                key={relationship.id}
+                relationship={relationship}
+                contactId={currentContact.id}
+                editable={false}
+                deleteButtonColor="rgb(251 247 243)"
+                iconStrokeColor="rgb(38 43 53)"
+              />
+            ))
+          ) : (
+            <div className="text-circle-primary/50 italic font-circlelabelmedium">No relationships recorded.</div>
+          )}
+          <NewTagButton
+            onClick={handleNewRelationshipClick}
+            aria-label="Add new relationship tag"
+            fillColor="bg-circle-primary"
+            iconStrokeColor="text-circle-white"
+            hoverFillColor="hover:bg-circle-secondary"
+            hoverIconStrokeColor="group-hover:text-circle-white"
+          />
+        </div>
+
+        {/* Subjects */}
+        <div className="w-fit h-fit flex flex-row flex-wrap items-start content-start gap-sm">
+          {subjects.length > 0 ? (
+            subjects.map((subject) => (
+              <SubjectTag
+                key={subject.id}
+                subject={subject}
+                contactId={currentContact.id}
+                editable={true}
+              />
+            ))
+          ) : (
+            <div className="text-circle-primary/50 italic font-circlelabelmedium">No subjects recorded.</div>
+          )}
+          <NewTagButton
+            onClick={handleNewSubjectClick}
+            aria-label="Add new subject tag"
+            fillColor="bg-circle-secondary"
+            iconStrokeColor="text-circle-white"
+            hoverFillColor="hover:bg-circle-primary"
+            hoverIconStrokeColor="group-hover:text-circle-white"
+          />
+        </div>
       </div>
-
-
     </div>
     {/* Birth Date Picker Overlay */}
     {isBirthDatePickerOpen && (
@@ -782,7 +977,45 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         </div>
       </div>
     )}
-    </>
+
+    {/* New Subject Dialog */}
+    {isSubjectDialogOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-circle-primary/50"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setIsSubjectDialogOpen(false);
+        }}
+      >
+        <div className="mx-4">
+          <NewSubject
+            isOpen={isSubjectDialogOpen}
+            onClose={() => setIsSubjectDialogOpen(false)}
+            onSelect={handleSubjectSelect}
+            contactId={currentContact.id}
+          />
+        </div>
+      </div>
+    )}
+
+    {/* New Relationship Dialog */}
+    {isRelationshipDialogOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-circle-primary/50"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setIsRelationshipDialogOpen(false);
+        }}
+      >
+        <div className="mx-4">
+          <NewRelationship
+            isOpen={isRelationshipDialogOpen}
+            onClose={() => setIsRelationshipDialogOpen(false)}
+            onSelect={handleRelationshipSelect}
+            contactId={currentContact.id}
+          />
+        </div>
+      </div>
+    )}
+  </div>
   );
 };
 

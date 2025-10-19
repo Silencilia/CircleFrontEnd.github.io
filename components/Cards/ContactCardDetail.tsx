@@ -4,6 +4,7 @@ import ScrollContainer from 'react-indiana-drag-scroll';
 import { Contact, Subject, Relationship, Note, useContacts } from '../../contexts/ContactContext';
 import { CardIndex, createSourceRecord, CardType, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import { SubjectTag, RelationshipTag } from '../Tag';
+import { NewTagButton } from '../Button';
 
 const Type: CardType = 'contactCardDetail';
 import NoteCard from './NoteCard';
@@ -14,6 +15,8 @@ import { EDITING_MODE_PADDING } from '../../data/variables';
 import { BackButton, RecycleButton, ConfirmButton, CancelButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
+import NewSubject from '../Dialogs/NewSubject';
+import NewRelationship from '../Dialogs/NewRelationship';
 import { formatYyyyMmDdToLong } from '../../data/strings';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -80,6 +83,10 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   
   // Delete dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Subject and relationship dialog states
+  const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
+  const [isRelationshipDialogOpen, setIsRelationshipDialogOpen] = useState(false);
 
   // Sync initial birth date to picker state when opening (parse YYYY-MM-DD as local)
   const openBirthDatePicker = () => {
@@ -441,6 +448,26 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     }
   };
 
+  // Subject dialog handlers
+  const handleSubjectSelect = (subject: Subject) => {
+    console.log('Subject selected:', subject);
+    setIsSubjectDialogOpen(false);
+  };
+
+  const handleNewSubjectClick = () => {
+    setIsSubjectDialogOpen(true);
+  };
+
+  // Relationship dialog handlers
+  const handleRelationshipSelect = (relationship: Relationship) => {
+    console.log('Relationship selected:', relationship);
+    setIsRelationshipDialogOpen(false);
+  };
+
+  const handleNewRelationshipClick = () => {
+    setIsRelationshipDialogOpen(true);
+  };
+
   const { openNoteDetail: navOpenNoteDetail, handleBack } = useCardNavigation({
     openNote: onOpenNote,
     openContact: onOpenContactDetail,
@@ -699,13 +726,23 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               <RelationshipTag
                 key={relationship.id}
                 relationship={relationship}
-                contactId={contact.id}
+                contactId={currentContact.id}
                 editable={false}
+                deleteButtonColor="rgb(251 247 243)"
+                iconStrokeColor="rgb(38 43 53)"
               />
             ))
           ) : (
             <div className="text-circle-primary/50 italic font-circlelabelmedium">No relationships recorded.</div>
           )}
+          <NewTagButton
+            onClick={handleNewRelationshipClick}
+            aria-label="Add new relationship tag"
+            fillColor="bg-circle-primary"
+            iconStrokeColor="text-circle-white"
+            hoverFillColor="hover:bg-circle-secondary"
+            hoverIconStrokeColor="group-hover:text-circle-white"
+          />
         </div>
 
         {/* Subjects */}
@@ -715,13 +752,21 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               <SubjectTag
                 key={subject.id}
                 subject={subject}
-                contactId={contact.id}
+                contactId={currentContact.id}
                 editable={true}
               />
             ))
           ) : (
             <div className="text-circle-primary/50 italic font-circlelabelmedium">No subjects recorded.</div>
           )}
+          <NewTagButton
+            onClick={handleNewSubjectClick}
+            aria-label="Add new subject tag"
+            fillColor="bg-circle-secondary"
+            iconStrokeColor="text-circle-white"
+            hoverFillColor="hover:bg-circle-primary"
+            hoverIconStrokeColor="group-hover:text-circle-white"
+          />
         </div>
       </div>
         </div>
@@ -754,6 +799,44 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
         itemType="contact"
         itemName={currentContact.name}
       />
+
+      {/* New Subject Dialog */}
+      {isSubjectDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-circle-primary/50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsSubjectDialogOpen(false);
+          }}
+        >
+          <div className="mx-4">
+            <NewSubject
+              isOpen={isSubjectDialogOpen}
+              onClose={() => setIsSubjectDialogOpen(false)}
+              onSelect={handleSubjectSelect}
+              contactId={currentContact.id}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* New Relationship Dialog */}
+      {isRelationshipDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-circle-primary/50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsRelationshipDialogOpen(false);
+          }}
+        >
+          <div className="mx-4">
+            <NewRelationship
+              isOpen={isRelationshipDialogOpen}
+              onClose={() => setIsRelationshipDialogOpen(false)}
+              onSelect={handleRelationshipSelect}
+              contactId={currentContact.id}
+            />
+          </div>
+        </div>
+      )}
 
       {typeof window !== 'undefined' && noteDetail && (
         <div

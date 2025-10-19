@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Subject, useContacts } from '../../contexts/ContactContext';
 import ContentEditable from 'react-contenteditable';
 import { DeleteTagButton } from './index';
-import SubjectDeleteDialog from '../Dialogs/SubjectDeleteDialog';
+import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 
 interface SubjectTagProps {
   subject: Subject;
@@ -10,6 +10,8 @@ interface SubjectTagProps {
   fillColor?: string;
   textColor?: string;
   className?: string;
+  deleteButtonColor?: string;
+  iconStrokeColor?: string;
   onClick?: (subject: Subject) => void;
   editable?: boolean;
   onEditComplete?: () => void;
@@ -21,6 +23,8 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
   fillColor = 'bg-circle-secondary',
   textColor = 'text-white',
   className = '',
+  deleteButtonColor = 'bg-circle-secondary',
+  iconStrokeColor = 'rgb(255 255 255)',
   onClick,
   editable = false,
   onEditComplete,
@@ -28,6 +32,7 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
   const { state, updateSubject, updateContact } = useContacts();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(subject.label);
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const contentEditableRef = useRef<HTMLElement>(null);
 
@@ -57,6 +62,9 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
     } else if (onClick) {
       // If not editable, trigger the onClick handler
       onClick(subject);
+    } else {
+      // Toggle delete button visibility
+      setShowDeleteButton(!showDeleteButton);
     }
   };
 
@@ -114,20 +122,24 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
   };
 
   const handleDelete = async () => {
-    if (!currentContact) return;
-    
+    if (!currentContact) {
+      console.error('No current contact found, cannot delete subject');
+      return;
+    }
+
     try {
       // Remove the subject from the contact's subject_ids array
       const updatedSubjectIds = currentContact.subject_ids.filter(id => id !== subject.id);
       await updateContact(currentContact.id, { subject_ids: updatedSubjectIds });
       setShowDeleteConfirm(false);
+      setShowDeleteButton(false);
     } catch (error) {
       console.error('Failed to remove subject:', error);
     }
   };
 
   const baseClasses = 'tg flex items-center flex-shrink-0';
-  const interactiveClasses = (onClick || editable) ? 'cursor-pointer hover:opacity-80 transition-opacity' : '';
+  const interactiveClasses = (onClick || editable || true) ? 'cursor-pointer hover:opacity-80 transition-opacity' : '';
   const combinedClasses = `${baseClasses} ${fillColor} ${interactiveClasses} ${className}`;
 
   return (
@@ -155,23 +167,28 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
           </span>
         )}
         
-        {/* Delete button - only show when editing */}
-        {isEditing && (
+        {/* Delete button - show when editing OR when clicked */}
+        {(isEditing || showDeleteButton) && (
           <DeleteTagButton
-            buttonColor="#FFFFFF"
-            iconStrokeColor="#E76835"
-            className="hover:bg-gray-100"
+            buttonColor={isEditing ? "#FFFFFF" : deleteButtonColor}
+            iconStrokeColor={isEditing ? "#E76835" : iconStrokeColor}
+            className={isEditing ? "hover:bg-gray-100" : "hover:opacity-80"}
             onDelete={() => setShowDeleteConfirm(true)}
           />
         )}
       </div>
 
       {/* Confirmation Dialog */}
-      <SubjectDeleteDialog
+      <DeleteConfirmationDialog
         isOpen={showDeleteConfirm}
-        subjectLabel={subject.label}
-        onConfirm={handleDelete}
-        onCancel={() => setShowDeleteConfirm(false)}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+        }}
+        onConfirm={() => {
+          handleDelete();
+        }}
+        itemType="subject tag"
+        itemName={subject.label}
       />
     </>
   );

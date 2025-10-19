@@ -459,6 +459,8 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
               noteId={currentNote.id}
               fillColor="bg-circle-neutral"
               textColor="text-circle-primary"
+              deleteButtonColor="rgb(38 43 53)"
+              iconStrokeColor="rgb(251 247 243)"
             />
           ))}
           <NewTagButton

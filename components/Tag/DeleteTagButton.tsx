@@ -29,7 +29,9 @@ const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
         hover:opacity-80 transition-opacity
         ${className}
       `}
-      style={{ backgroundColor: buttonColor }}
+      style={{ 
+        backgroundColor: buttonColor,
+      }}
       aria-label="Delete tag"
     >
       <DeleteTagIcon fillColor={buttonColor} strokeColor={iconStrokeColor} />

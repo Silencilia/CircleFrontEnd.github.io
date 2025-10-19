@@ -27,7 +27,7 @@ import {
 } from '../../utils/designConstants';
 
 export default function MemoPage() {
-  const { state, createNewNote } = useContacts();
+  const { state, createNewNote, createTemporaryNote } = useContacts();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -66,13 +66,10 @@ export default function MemoPage() {
     setSearchQuery(query);
   };
 
-  const handleNewNote = async () => {
-    try {
-      const note = await createNewNote();
-      setNewNote(note);
-    } catch (error) {
-      console.error('Failed to create new note:', error);
-    }
+  const handleNewNote = () => {
+    // Create a temporary note for editing (not saved to database yet)
+    const tempNote = createTemporaryNote();
+    setNewNote(tempNote);
   };
 
 

@@ -92,7 +92,8 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 /**
- * Search using pgvector embeddings table
+ * Search using pgvector embeddings table with retry logic
+ * Tries progressively lower thresholds if no results are found
  */
 export async function searchWithPgVector(
   query: string,
@@ -100,7 +101,7 @@ export async function searchWithPgVector(
   topK: number = 20,
   threshold: number = 0.5
 ): Promise<SearchResult[]> {
-  console.log('[semanticSearch] Starting pgvector search:', { query, userId, topK, threshold });
+  console.log('[semanticSearch] Starting pgvector search with retry logic:', { query, userId, topK, threshold });
   
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -110,42 +111,58 @@ export async function searchWithPgVector(
     return [];
   }
 
+  // Define retry thresholds - progressively lower to catch more results
+  const retryThresholds = [threshold, 0.4, 0.3];
+  
   try {
     const supabase = createClient(url, anon, { auth: { persistSession: false } });
     
-    // Generate embedding for the query
+    // Generate embedding for the query (only once)
     console.log('[semanticSearch] Generating query embedding...');
     const queryEmbedding = await generateEmbedding(query);
     console.log('[semanticSearch] Query embedding generated, length:', queryEmbedding.length);
     
-    // Use the match_embeddings SQL function
-    console.log('[semanticSearch] Calling match_embeddings function...');
-    const { data, error } = await supabase.rpc('match_embeddings', {
-      query_embedding: queryEmbedding,
-      match_threshold: threshold,
-      match_count: topK,
-      filter_user_id: userId
-    });
+    // Try each threshold until we get results
+    for (let i = 0; i < retryThresholds.length; i++) {
+      const currentThreshold = retryThresholds[i];
+      console.log(`[semanticSearch] Attempt ${i + 1}/${retryThresholds.length} with threshold ${currentThreshold}`);
+      
+      const { data, error } = await supabase.rpc('match_embeddings', {
+        query_embedding: queryEmbedding,
+        match_threshold: currentThreshold,
+        match_count: topK,
+        filter_user_id: userId
+      });
 
-    if (error) {
-      console.error('[semanticSearch] pgvector search error:', error);
-      return [];
+      if (error) {
+        console.error(`[semanticSearch] pgvector search error with threshold ${currentThreshold}:`, error);
+        continue; // Try next threshold
+      }
+
+      const resultCount = data?.length || 0;
+      console.log(`[semanticSearch] Threshold ${currentThreshold} returned ${resultCount} results`);
+
+      if (resultCount > 0) {
+        console.log('[semanticSearch] pgvector search successful:', {
+          threshold: currentThreshold,
+          resultCount,
+          results: data?.map((r: any) => ({ entityType: r.entity_type, entityId: r.entity_id, similarity: r.similarity })) || []
+        });
+
+        // Map the results to match the SearchResult interface
+        return (data || []).map((item: any) => ({
+          id: item.id,
+          entityType: item.entity_type,  // Map snake_case to camelCase
+          entityId: item.entity_id,
+          content: item.content,
+          metadata: item.metadata,
+          similarity: item.similarity
+        }));
+      }
     }
 
-    console.log('[semanticSearch] pgvector search results:', {
-      resultCount: data?.length || 0,
-      results: data?.map((r: any) => ({ entityType: r.entity_type, entityId: r.entity_id, similarity: r.similarity })) || []
-    });
-
-    // Map the results to match the SearchResult interface
-    return (data || []).map((item: any) => ({
-      id: item.id,
-      entityType: item.entity_type,  // Map snake_case to camelCase
-      entityId: item.entity_id,
-      content: item.content,
-      metadata: item.metadata,
-      similarity: item.similarity
-    }));
+    console.log('[semanticSearch] All threshold attempts failed, returning empty results');
+    return [];
   } catch (error) {
     console.error('[semanticSearch] Failed to search with pgvector:', error);
     return [];
@@ -153,47 +170,90 @@ export async function searchWithPgVector(
 }
 
 /**
+ * Resolve contact tokens in text for AI context
+ * Converts {{contact:uuid}} tokens to actual contact names
+ */
+function resolveContactTokensForAI(text: string, contacts: any[]): string {
+  if (!text) return text;
+  const re = /\{\{\s*contact\s*:\s*([^}]+)\s*\}\}/g;
+  return text.replace(re, (_match, idStr) => {
+    const id = idStr.trim();
+    const contact = contacts?.find(c => c.id === id);
+    return contact?.name ?? `[Contact ${id}]`;
+  });
+}
+
+/**
  * Build searchable content string for different entity types
+ * Only generates content for contacts and notes - all other entity data is embedded within these
  */
 export function buildEntityContent(entityType: string, entityData: any, relatedData?: any): string {
-  console.log(`[buildEntityContent] Processing ${entityType}:${entityData.id}`);
-
   switch (entityType) {
     case 'contact':
       const contact = entityData;
       const occupation = relatedData?.occupations?.find((o: any) => o.id === contact.occupation_id);
       const organization = relatedData?.organizations?.find((o: any) => o.id === contact.organization_id);
-      const relationships = relatedData?.relationships?.filter((r: any) => contact.relationship_ids?.includes(r.id));
-      const subjects = relatedData?.subjects?.filter((s: any) => contact.subject_ids?.includes(s.id));
       
-      // Format birthday if available
-      const formatBirthday = (birthDate?: any): string => {
-        if (!birthDate) return '';
+      // Get relationships and subjects through junction tables
+      const contactRelationshipIds = relatedData?.contactRelationships
+        ?.filter((cr: any) => cr.contact_id === contact.id)
+        ?.map((cr: any) => cr.relationship_id) || [];
+      const relationships = relatedData?.relationships?.filter((r: any) => contactRelationshipIds.includes(r.id));
+      
+      const contactSubjectIds = relatedData?.contactSubjects
+        ?.filter((cs: any) => cs.contact_id === contact.id)
+        ?.map((cs: any) => cs.subject_id) || [];
+      const subjects = relatedData?.subjects?.filter((s: any) => contactSubjectIds.includes(s.id));
+      
+      // Format birthday if available (check both birth_date object and individual fields)
+      const formatBirthday = (contact: any): string => {
         const parts = [];
-        if (birthDate.year) parts.push(birthDate.year.toString());
-        if (birthDate.month) parts.push(birthDate.month.toString().padStart(2, '0'));
-        if (birthDate.day) parts.push(birthDate.day.toString().padStart(2, '0'));
+        
+        // Check if birth_date is an object
+        if (contact.birth_date?.year) {
+          parts.push(contact.birth_date.year.toString());
+          if (contact.birth_date.month) parts.push(contact.birth_date.month.toString().padStart(2, '0'));
+          if (contact.birth_date.day) parts.push(contact.birth_date.day.toString().padStart(2, '0'));
+        }
+        // Check individual fields
+        else if (contact.birth_year) {
+          parts.push(contact.birth_year.toString());
+          if (contact.birth_month) parts.push(contact.birth_month.toString().padStart(2, '0'));
+          if (contact.birth_day) parts.push(contact.birth_day.toString().padStart(2, '0'));
+        }
+        
         return parts.length > 0 ? `Born: ${parts.join('-')}` : '';
       };
       
-      const content = [
-        contact.name,
+      // Build comprehensive contact content including all related data
+      const occupationOrg = [
         occupation?.title,
-        organization?.name,
-        relationships?.map((r: any) => r.label).join(' '),
-        subjects?.map((s: any) => s.label).join(' '),
-        formatBirthday(contact.birth_date), // Include birth date for age/personality context
-        contact.last_interaction ? `last interaction ${contact.last_interaction}` : '',
+        organization?.name ? `at ${organization.name}` : ''
       ].filter(Boolean).join(' ');
       
-      console.log(`[buildEntityContent] Contact ${contact.name}: ${content.substring(0, 100)}...`);
+      const content = [
+        contact.name,
+        occupationOrg || '',
+        relationships?.length > 0 ? `Relationships: ${relationships.map((r: any) => r.label).join(', ')}` : '',
+        subjects?.length > 0 ? `Subjects: ${subjects.map((s: any) => s.label).join(', ')}` : '',
+        formatBirthday(contact),
+      ].filter(Boolean).join(' | ');
       
       return content;
 
     case 'note':
       const note = entityData;
-      const noteContacts = relatedData?.contacts?.filter((c: any) => note.contact_ids?.includes(c.id));
-      const noteSentiments = relatedData?.sentiments?.filter((s: any) => note.sentiment_ids?.includes(s.id));
+      
+      // Get contacts and sentiments through junction tables
+      const noteContactIds = relatedData?.contactNotes
+        ?.filter((cn: any) => cn.note_id === note.id)
+        ?.map((cn: any) => cn.contact_id) || [];
+      const noteContacts = relatedData?.contacts?.filter((c: any) => noteContactIds.includes(c.id));
+      
+      const noteSentimentIds = relatedData?.noteSentiments
+        ?.filter((ns: any) => ns.note_id === note.id)
+        ?.map((ns: any) => ns.sentiment_id) || [];
+      const noteSentiments = relatedData?.sentiments?.filter((s: any) => noteSentimentIds.includes(s.id));
       
       // Format date if available (actual event date, not created_at)
       const formatDate = (date?: any): string => {
@@ -211,46 +271,31 @@ export function buildEntityContent(entityType: string, entityData: any, relatedD
         return `Time: ${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}`;
       };
       
-      console.log(`[buildEntityContent] Note ${note.id}: ${note.title || 'Untitled'} - ${note.text?.substring(0, 50) || 'No text'}...`);
+      // Resolve contact UUIDs in note text to actual names
+      const resolvedText = resolveContactTokensForAI(note.text || '', relatedData?.contacts || []);
       
+      // Build comprehensive note content including all related data
       return [
-        note.title || '', // Include title
-        note.text || '', // Use 'text' field from Note interface
-        noteContacts?.map((c: any) => c.name).join(' '),
-        noteSentiments?.map((s: any) => s.label).join(' '), // Use 'label' for sentiments
-        formatDate(note.date), // Include actual event date
-        formatTime(note.time_value), // Include actual event time
-        note.created_at ? `recorded ${note.created_at}` : '', // Clarify this is recording time, not event time
-      ].filter(Boolean).join(' ');
+        note.title ? `Title: ${note.title}` : '',
+        resolvedText,
+        noteContacts?.length > 0 ? `With: ${noteContacts.map((c: any) => c.name).join(', ')}` : '',
+        noteSentiments?.length > 0 ? `Sentiments: ${noteSentiments.map((s: any) => s.label).join(', ')}` : '',
+        formatDate(note.date),
+        formatTime(note.time_value),
+        note.created_at ? `Recorded: ${note.created_at}` : ''
+      ].filter(Boolean).join(' | ');
 
+    // Only contacts and notes should have embeddings - all other entity types return empty string
     case 'commitment':
-      const commitment = entityData;
-      const commitmentContacts = relatedData?.contacts?.filter((c: any) => commitment.contact_ids?.includes(c.id));
-      
-      return [
-        commitment.text, // Use 'text' instead of 'description'
-        commitmentContacts?.map((c: any) => c.name).join(' '),
-        commitment.time ? `due ${commitment.time}` : '', // Use 'time' instead of 'due_date'
-        commitment.is_trashed ? `Status: trashed` : 'Status: active' // Use 'is_trashed' instead of 'status'
-      ].filter(Boolean).join(' ');
-
     case 'subject':
-      return entityData.name || '';
-
     case 'relationship':
-      return entityData.name || '';
-
     case 'organization':
-      return entityData.name || '';
-
     case 'occupation':
-      return entityData.name || '';
-
     case 'sentiment':
-      return entityData.name || '';
+      return '';
 
     default:
-      return JSON.stringify(entityData);
+      return '';
   }
 }
 
@@ -272,8 +317,10 @@ export async function searchOnTheFly(
     
     const allEntities: Array<{ entityType: string; entityId: string; entityData: any; relatedData: LocalData }> = [];
     
-    // Collect all entities with their related data
-    Object.entries(localData).forEach(([key, entities]) => {
+    // Collect only contacts and notes (root entities that contain all other data)
+    const rootEntityTypes = ['contacts', 'notes'];
+    rootEntityTypes.forEach((key) => {
+      const entities = localData[key as keyof LocalData];
       if (Array.isArray(entities)) {
         console.log(`[semanticSearch] Processing ${key}: ${entities.length} entities`);
         entities.forEach(entity => {
@@ -287,7 +334,7 @@ export async function searchOnTheFly(
       }
     });
 
-    console.log('[semanticSearch] Total entities to process:', allEntities.length);
+    console.log('[semanticSearch] Total root entities to process:', allEntities.length, '(contacts and notes only)');
 
     // Generate embeddings for all entities and calculate similarities
     const results: SearchResult[] = [];
@@ -352,15 +399,15 @@ export async function searchRelevantData(
     return searchOnTheFly(query, localData, topK);
   }
 
-  // If user ID is provided, try pgvector first
+  // If user ID is provided, try pgvector first with retry logic
   if (userId) {
-    console.log('[semanticSearch] Using pgvector search with userId');
+    console.log('[semanticSearch] Using pgvector search with retry logic');
     const pgVectorResults = await searchWithPgVector(query, userId, topK);
     if (pgVectorResults.length > 0) {
       console.log('[semanticSearch] pgvector search successful, returning results');
       return pgVectorResults;
     } else {
-      console.log('[semanticSearch] pgvector search returned no results');
+      console.log('[semanticSearch] pgvector search with retry logic returned no results');
     }
   }
 
