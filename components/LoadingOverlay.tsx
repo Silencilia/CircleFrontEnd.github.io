@@ -1,5 +1,5 @@
 import React from 'react';
-import CircleLoadingAnimation from './animation/circleloading/CircleLoadingAnimation';
+import CircleLoadingAnimation from './Animation/CircleLoading/CircleLoadingAnimation';
 
 interface LoadingOverlayProps {
   isVisible: boolean;

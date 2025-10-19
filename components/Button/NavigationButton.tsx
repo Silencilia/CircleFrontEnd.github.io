@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import CircleLoadingAnimation from '../animation/circleloading/CircleLoadingAnimation';
+import CircleLoadingAnimation from '../Animation/CircleLoading/CircleLoadingAnimation';
 
 interface NavigationButtonProps {
   href?: string;
