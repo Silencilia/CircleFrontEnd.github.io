@@ -210,13 +210,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           <div className="flex flex-row justify-between items-center w-full self-stretch">
             <div className="font-circlelabelsmall text-circle-primary">Current value: {formatDate(value)}</div>
             <div className="flex flex-row justify-end items-center p-0 gap-xs w-fit">
-              <ConfirmButton
-                onClick={() => { onConfirm?.(value); }}
-                ariaLabel="Confirm"
-              />
               <CancelButton
                 onClick={() => onCancel?.()}
                 ariaLabel="Cancel"
+              />
+              <ConfirmButton
+                onClick={() => { onConfirm?.(value); }}
+                ariaLabel="Confirm"
               />
             </div>
           </div>

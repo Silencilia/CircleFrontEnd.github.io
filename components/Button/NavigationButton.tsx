@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import CircleLoadingAnimation from '../animation/circleloading/CircleLoadingAnimation';
 
 interface NavigationButtonProps {
   href?: string;
@@ -24,7 +25,11 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
 
   const content = (
     <div className="flex flex-col items-center gap-xs">
-      {icon}
+      {label === 'Circle' && isActive ? (
+        <CircleLoadingAnimation width={24} height={24} />
+      ) : (
+        icon
+      )}
       <span className="font-circlelabelnav text-circle-primary text-center flex items-center">
         {label}
       </span>

@@ -298,13 +298,13 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                   )}
                   {isTitleEditing && (
                     <div className="flex gap-[2px]">
-                      <ConfirmButton
-                        onClick={handleTitleSave}
-                        ariaLabel={isTitleSaving ? 'Saving...' : 'Save title'}
-                      />
                       <CancelButton
                         onClick={handleTitleCancel}
                         ariaLabel="Cancel title edit"
+                      />
+                      <ConfirmButton
+                        onClick={handleTitleSave}
+                        ariaLabel={isTitleSaving ? 'Saving...' : 'Save title'}
                       />
                     </div>
                   )}

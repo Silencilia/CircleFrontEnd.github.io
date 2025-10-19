@@ -1,15 +1,15 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/api/intents/process/route": "app/api/intents/process/route.js",
-  "/api/migrate/route": "app/api/migrate/route.js",
   "/account/page": "app/account/page.js",
   "/api/embeddings/generate/route": "app/api/embeddings/generate/route.js",
+  "/api/intents/process/route": "app/api/intents/process/route.js",
+  "/api/embeddings/sync/route": "app/api/embeddings/sync/route.js",
+  "/api/migrate/route": "app/api/migrate/route.js",
   "/chats/page": "app/chats/page.js",
-  "/memo/page": "app/memo/page.js",
   "/api/detect-names/route": "app/api/detect-names/route.js",
   "/developer/page": "app/developer/page.js",
-  "/api/embeddings/sync/route": "app/api/embeddings/sync/route.js",
+  "/memo/page": "app/memo/page.js",
   "/page": "app/page.js",
-  "/contacts/page": "app/contacts/page.js",
-  "/draft/page": "app/draft/page.js"
+  "/draft/page": "app/draft/page.js",
+  "/contacts/page": "app/contacts/page.js"
 }

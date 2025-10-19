@@ -729,13 +729,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               {/* Name edit controls - show when editing, positioned to the right */}
               {isNameEditing && (
                 <div className="flex gap-[2px]">
-                  <ConfirmButton 
-                    onClick={handleNameSave} 
-                    ariaLabel={isNameSaving ? 'Saving...' : 'Save name'}
-                  />
                   <CancelButton 
                     onClick={handleNameCancel} 
                     ariaLabel="Cancel name edit"
+                  />
+                  <ConfirmButton 
+                    onClick={handleNameSave} 
+                    ariaLabel={isNameSaving ? 'Saving...' : 'Save name'}
                   />
                 </div>
               )}
@@ -795,13 +795,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               {/* Occupation edit controls - show when editing, positioned to the right */}
               {isOccupationEditing && (
                 <div className="flex gap-[2px]">
-                  <ConfirmButton 
-                    onClick={handleOccupationSave} 
-                    ariaLabel="Save occupation"
-                  />
                   <CancelButton 
                     onClick={handleOccupationCancel}
                     ariaLabel="Cancel occupation edit"
+                  />
+                  <ConfirmButton 
+                    onClick={handleOccupationSave} 
+                    ariaLabel="Save occupation"
                   />
                 </div>
               )}
@@ -844,13 +844,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               {/* Organization edit controls - show when editing, positioned to the right */}
               {isOrganizationEditing && (
                 <div className="flex gap-[2px]">
-                  <ConfirmButton 
-                    onClick={handleOrganizationSave} 
-                    ariaLabel="Save organization"
-                  />
                   <CancelButton 
                     onClick={handleOrganizationCancel}
                     ariaLabel="Cancel organization edit"
+                  />
+                  <ConfirmButton 
+                    onClick={handleOrganizationSave} 
+                    ariaLabel="Save organization"
                   />
                 </div>
               )}

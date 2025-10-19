@@ -8,8 +8,10 @@ import { NewContactButton } from '../../components/Button';
 import ContactGallery from '../../components/Gallery/ContactGallery';
 import NavigationBar from '../../components/NavigationBar';
 import ContactCardNew from '../../components/Cards/ContactCardNew';
+import LoadingOverlay from '../../components/LoadingOverlay';
 import { useContacts, Contact } from '../../contexts/ContactContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { LOADING_STRINGS } from '../../data/strings';
 import {
   TITLE_HEIGHT_MOBILE,
   TITLE_HEIGHT_DESKTOP,
@@ -51,14 +53,11 @@ export default function ContactsPage() {
   return (
     <div className="relative w-full min-h-screen bg-circle-neutral">
       {/* Loading overlay - appears on top instead of replacing content */}
-      {isLoading && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-circle-neutral bg-opacity-90">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading contacts...</p>
-          </div>
-        </div>
-      )}
+      <LoadingOverlay
+        isVisible={isLoading}
+        isOverlay={true}
+        zIndex={200}
+      />
       {/* Title and SearchBar - fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-50 w-full bg-circle-neutral flex flex-col items-stretch">
           {/* Title - Above */}

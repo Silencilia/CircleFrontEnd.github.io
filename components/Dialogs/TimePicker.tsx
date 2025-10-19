@@ -485,16 +485,16 @@ export const TimePicker: React.FC<TimePickerProps> = ({
             </div>
             {(onConfirm || onCancel) && (
               <div className="flex flex-row justify-end items-center gap-xs w-fit">
-                {onConfirm && (
-                  <ConfirmButton
-                    onClick={() => onConfirm?.({ hour: effectiveHour, minute: effectiveMinute })}
-                    ariaLabel="Confirm"
-                  />
-                )}
                 {onCancel && (
                   <CancelButton
                     onClick={() => onCancel?.()}
                     ariaLabel="Cancel"
+                  />
+                )}
+                {onConfirm && (
+                  <ConfirmButton
+                    onClick={() => onConfirm?.({ hour: effectiveHour, minute: effectiveMinute })}
+                    ariaLabel="Confirm"
                   />
                 )}
               </div>

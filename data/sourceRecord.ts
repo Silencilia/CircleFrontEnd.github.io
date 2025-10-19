@@ -1,4 +1,4 @@
-export type CardType = 'noteCardDetail' | 'contactCardDetail';
+export type CardType = 'noteCardDetail' | 'contactCardDetail' | 'nameConfirmationDialog';
 
 export interface CardIndex {
   component: CardType;

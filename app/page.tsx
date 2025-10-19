@@ -18,6 +18,8 @@ import { supabase } from '../lib/supabase';
 import { identifyRequest } from '../utils/api/talkToCircleHelpers';
 import { useChat } from '../contexts/ChatContext';
 import { useEffect } from 'react';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { LOADING_STRINGS } from '../data/strings';
 import { useRef } from 'react';
 import {
   TITLE_HEIGHT_MOBILE,
@@ -262,12 +264,10 @@ export default function NotePage() {
   // Loading state: do not block on empty data; only while actively loading
   if (state.isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-circle-neutral">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading contacts...</p>
-        </div>
-      </div>
+      <LoadingOverlay
+        isVisible={true}
+        isOverlay={false}
+      />
     );
   }
 

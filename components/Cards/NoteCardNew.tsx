@@ -6,6 +6,7 @@ import { Note, useContacts, Contact, parseTimeToTimeValue, TimeValue } from '../
 import { CalendarIcon } from '../icons';
 import { ConfirmButton, CancelButton, NewTagButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
+import NameConfirmationDialog from '../Dialogs/NameConfirmationDialog';
 import { contactReference } from '../../data/referenceParsing';
 import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
 import TimePicker from '../Dialogs/TimePicker';
@@ -13,6 +14,7 @@ import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, getCardIn
 import { EDITING_MODE_PADDING } from '../../data/variables';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { extractContactIdsFromText } from '../../utils/api/extractContactIds';
+import { detectContactNames } from '../../utils/contactNameDetection';
 
 const Type: CardType = 'noteCardDetail';
 
@@ -37,6 +39,17 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const [dateValue, setDateValue] = useState<DynamicPrecisionDateValue>({ precision: 'none', year: null, month: null, day: null });
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [timeValue, setTimeValue] = useState<TimeValue>({ hour: null, minute: null });
+
+  // Name confirmation dialog state
+  const [isNameConfirmationOpen, setIsNameConfirmationOpen] = useState(false);
+  const [processedNoteText, setProcessedNoteText] = useState('');
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('=== STATE CHANGE ===');
+    console.log('isNameConfirmationOpen:', isNameConfirmationOpen);
+    console.log('processedNoteText:', processedNoteText);
+  }, [isNameConfirmationOpen, processedNoteText]);
 
   // Title editing state
   const [isTitleEditing, setIsTitleEditing] = useState(false);
@@ -118,6 +131,66 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
     openContact: onOpenContactDetail,
     closeCurrent: onMinimize,
   });
+
+  // Helper function to save note to database
+  const saveNoteToDatabase = async () => {
+    console.log('=== saveNoteToDatabase called ===');
+    console.log('currentNote:', currentNote);
+    try {
+      const noteToSave = {
+        title: currentNote.title,
+        text: currentNote.text,
+        time_value: currentNote.time_value,
+        date: currentNote.date,
+        sentiment_ids: currentNote.sentiment_ids,
+        contact_ids: currentNote.contact_ids,
+        is_trashed: false
+      };
+      console.log('Saving note:', noteToSave);
+      await addNote(noteToSave);
+      console.log('Note saved successfully');
+
+      // Close the card after successful save
+      console.log('Closing card');
+      clearCardIndexArray();
+      if (onMinimize) onMinimize();
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      // Don't close if save failed
+    }
+  };
+
+  // Name confirmation dialog handlers
+  const handleNameConfirmationConfirm = async (confirmedText: string) => {
+    console.log('=== handleNameConfirmationConfirm called ===');
+    console.log('confirmedText:', confirmedText);
+    try {
+      // Update the note text with the processed version
+      if (isTemporaryNote) {
+        console.log('Updating temp note data with confirmed text');
+        setTempNoteData(prev => prev ? { ...prev, text: confirmedText } : null);
+      }
+
+      // Close the dialog
+      console.log('Closing name confirmation dialog');
+      setIsNameConfirmationOpen(false);
+
+      // Save the note with the processed text
+      console.log('Saving note with confirmed text');
+      await saveNoteToDatabase();
+    } catch (error) {
+      console.error('Failed to save note with confirmed names:', error);
+    }
+  };
+
+  const handleNameConfirmationCancel = () => {
+    console.log('=== handleNameConfirmationCancel called ===');
+    console.log('Closing name confirmation dialog');
+    setIsNameConfirmationOpen(false);
+    // Save the note with original text
+    console.log('Saving note with original text');
+    saveNoteToDatabase();
+  };
 
   // Update edit values when note changes
   useEffect(() => {
@@ -335,13 +408,13 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                     {/* Title edit controls - show when editing */}
                     {isTitleEditing && (
                       <div className="flex gap-[2px]">
-                        <ConfirmButton
-                          onClick={handleTitleSave}
-                          ariaLabel={isTitleSaving ? 'Saving...' : 'Save title'}
-                        />
                         <CancelButton
                           onClick={handleTitleCancel}
                           ariaLabel="Cancel title edit"
+                        />
+                        <ConfirmButton
+                          onClick={handleTitleSave}
+                          ariaLabel={isTitleSaving ? 'Saving...' : 'Save title'}
                         />
                       </div>
                     )}
@@ -366,27 +439,68 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                     />
                     <ConfirmButton
                       onClick={async () => {
+                        console.log('🚀 === CONFIRM BUTTON CLICKED ===');
+                        console.log('isTemporaryNote:', isTemporaryNote);
+                        console.log('currentNote.text:', `"${currentNote.text}"`);
+                        console.log('currentNote.text length:', currentNote.text?.length || 0);
+                        console.log('state.contacts:', state.contacts);
+                        console.log('state.contacts.length:', state.contacts.length);
+                        console.log('state.contacts names:', state.contacts.map(c => `"${c.name}"`));
+
                         if (isTemporaryNote) {
+                          console.log('📝 === PROCESSING TEMPORARY NOTE ===');
                           try {
-                            // Save the temporary note to database
-                            const noteToSave = {
-                              title: currentNote.title,
-                              text: currentNote.text,
-                              time_value: currentNote.time_value,
-                              date: currentNote.date,
-                              sentiment_ids: currentNote.sentiment_ids,
-                              contact_ids: currentNote.contact_ids,
-                              is_trashed: false
-                            };
-                            await addNote(noteToSave);
+                            // First, detect contact names in the note text
+                            console.log('🔍 === STARTING NAME DETECTION ===');
+                            console.log('Note text to analyze:', `"${currentNote.text}"`);
+                            console.log('Available contacts count:', state.contacts.length);
+                            console.log('Available contact names:', state.contacts.map(c => `"${c.name}"`));
+
+                            const detectionResult = await detectContactNames(currentNote.text, state.contacts);
+
+                            console.log('🎯 === NAME DETECTION RESULT ===');
+                            console.log('detectionResult object:', detectionResult);
+                            console.log('detectedContacts.length:', detectionResult.detectedContacts.length);
+                            console.log('processedText:', `"${detectionResult.processedText}"`);
+                            console.log('detectedContacts details:', detectionResult.detectedContacts.map(dc => ({
+                              name: dc.name,
+                              originalText: dc.originalText,
+                              similarity: dc.similarity
+                            })));
+
+                            if (detectionResult.detectedContacts.length > 0) {
+                              // Show name confirmation dialog
+                              console.log('✅ === SHOWING NAME CONFIRMATION DIALOG ===');
+                              console.log('About to set processedNoteText to:', `"${detectionResult.processedText}"`);
+                              console.log('About to set isNameConfirmationOpen to true');
+
+                              setProcessedNoteText(detectionResult.processedText);
+                              setIsNameConfirmationOpen(true);
+
+                              console.log('✅ Dialog state set - isNameConfirmationOpen should be true now');
+                              console.log('✅ processedNoteText set to:', `"${detectionResult.processedText}"`);
+                              console.log('✅ Returning early to wait for user confirmation');
+                              return; // Don't save yet, wait for user confirmation
+                            } else {
+                              // No names detected, proceed with normal save
+                              console.log('❌ === NO NAMES DETECTED, PROCEEDING WITH SAVE ===');
+                              await saveNoteToDatabase();
+                            }
                           } catch (error) {
-                            console.error('Failed to save note:', error);
-                            return; // Don't close if save failed
+                            console.error('💥 === NAME DETECTION ERROR ===');
+                            console.error('Failed to detect contact names:', error);
+                            console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+                            console.error('Error message:', error instanceof Error ? error.message : error);
+                            // Fallback: save without name detection
+                            console.log('🔄 Falling back to save without name detection');
+                            await saveNoteToDatabase();
                           }
+                        } else {
+                          // For saved notes, just close
+                          console.log('📝 === NOT A TEMPORARY NOTE, CLOSING ===');
+                          clearCardIndexArray();
+                          if (onMinimize) onMinimize();
                         }
-                        // Close the card
-                        clearCardIndexArray();
-                        if (onMinimize) onMinimize();
                       }}
                       ariaLabel="Confirm note creation"
                     />
@@ -511,13 +625,13 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
               {/* Text edit controls - show when editing */}
               {isTextEditing && (
                 <div className="flex gap-[2px] flex-shrink-0">
-                  <ConfirmButton
-                    onClick={handleTextSave}
-                    ariaLabel={isTextSaving ? 'Saving...' : 'Save text'}
-                  />
                   <CancelButton
                     onClick={handleTextCancel}
                     ariaLabel="Cancel text edit"
+                  />
+                  <ConfirmButton
+                    onClick={handleTextSave}
+                    ariaLabel={isTextSaving ? 'Saving...' : 'Save text'}
                   />
                 </div>
               )}
@@ -547,9 +661,18 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
       <DeleteConfirmationDialog
         isOpen={showDeleteDialog}
         onCancel={() => setShowDeleteDialog(false)}
-        onConfirm={handleDelete}  
+        onConfirm={handleDelete}
         itemType="note"
         itemName={note.title}
+      />
+
+      {/* Name Confirmation Dialog */}
+      <NameConfirmationDialog
+        isOpen={isNameConfirmationOpen}
+        onConfirm={handleNameConfirmationConfirm}
+        onCancel={handleNameConfirmationCancel}
+        noteText={processedNoteText}
+        contacts={state.contacts}
       />
 
       {/* Contact Detail Overlay removed; parent manages single overlay */}
