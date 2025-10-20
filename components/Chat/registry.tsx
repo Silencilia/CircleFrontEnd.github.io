@@ -1,5 +1,5 @@
 import React from 'react';
-import NameConfirm from '../Dialogs/NameConfirm';
+import NameConfirm from '../Dialogs/NameConfirmationDialog';
 import { ComponentKind } from '../../types/chat';
 
 type Renderer = (props: any) => React.ReactNode;
