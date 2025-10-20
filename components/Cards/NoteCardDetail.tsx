@@ -31,13 +31,6 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   // Always render with the latest note from context in case it was updated
   const currentNote = state.notes.find(n => n.id === note.id) || note;
   
-  console.log('NoteCardDetail: Component rendered with:', {
-    propNoteId: note.id,
-    propNoteTitle: note.title,
-    currentNoteId: currentNote.id,
-    currentNoteTitle: currentNote.title,
-    foundInContext: !!state.notes.find(n => n.id === note.id)
-  });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [dateValue, setDateValue] = useState<DynamicPrecisionDateValue>({ precision: 'none', year: null, month: null, day: null });
@@ -54,14 +47,9 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const [isTitleSaving, setIsTitleSaving] = useState(false);
   const titleContentEditableRef = useRef<HTMLElement>(null);
 
-  // Debug: Log when sentimentUpdateTrigger changes
-  useEffect(() => {
-    console.log('NoteCardDetail: sentimentUpdateTrigger changed to', sentimentUpdateTrigger);
-  }, [sentimentUpdateTrigger]);
 
   // Update editTitle when note title changes
   useEffect(() => {
-    console.log('NoteCardDetail: currentNote.title changed to:', currentNote.title);
     setEditTitle(currentNote.title);
   }, [currentNote.title]);
 
@@ -83,9 +71,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const handleNewSentimentClick = async () => {
     try {
       // Clean up unused sentiments first
-      console.log('Cleaning up unused sentiments...');
       const cleanupResult = await destroyUnusedSentiments();
-      console.log(`Cleanup completed: ${cleanupResult.deletedCount} unused sentiments deleted`);
       
       if (cleanupResult.errors.length > 0) {
         console.error('Errors during cleanup:', cleanupResult.errors);
@@ -111,7 +97,6 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
 
   // Title editing handlers
   const handleTitleEditClick = () => {
-    console.log('Title edit click triggered!');
     setIsTitleEditing(true);
     setEditTitle(currentNote.title);
     setOriginalTitle(currentNote.title);
@@ -131,28 +116,17 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const handleTitleSave = async () => {
     const currentHtml = titleContentEditableRef.current?.innerHTML ?? editTitle;
     const cleanTitle = currentHtml.replace(/<[^>]*>/g, '').trim();
-    console.log('handleTitleSave called:', {
-      currentHtml,
-      cleanTitle,
-      currentTitle: currentNote.title,
-      noteId: currentNote.id,
-      isDifferent: cleanTitle !== currentNote.title
-    });
     
     if (cleanTitle !== currentNote.title) {
       try {
         setIsTitleSaving(true);
-        console.log('Calling updateNote with:', { id: currentNote.id, title: cleanTitle });
         await updateNote(currentNote.id, { title: cleanTitle });
-        console.log('updateNote completed successfully');
       } catch (error) {
         console.error('Failed to update title:', error);
         setEditTitle(originalTitle);
       } finally {
         setIsTitleSaving(false);
       }
-    } else {
-      console.log('No changes to save - title is the same');
     }
     setIsTitleEditing(false);
   };

@@ -295,17 +295,28 @@ export class SupabaseDataService implements DataService {
 
     if (error) throw error;
 
-    // Add relationships
+    // Add relationships in parallel for better performance
+    const relationshipPromises = [];
+    
     if (sentiment_ids.length > 0) {
-      await supabase
-        .from('note_sentiments')
-        .insert(sentiment_ids.map(sentiment_id => ({ note_id: data.id, sentiment_id })));
+      relationshipPromises.push(
+        supabase
+          .from('note_sentiments')
+          .insert(sentiment_ids.map(sentiment_id => ({ note_id: data.id, sentiment_id })))
+      );
     }
 
     if (contact_ids.length > 0) {
-      await supabase
-        .from('contact_notes')
-        .insert(contact_ids.map(contact_id => ({ note_id: data.id, contact_id })));
+      relationshipPromises.push(
+        supabase
+          .from('contact_notes')
+          .insert(contact_ids.map(contact_id => ({ note_id: data.id, contact_id })))
+      );
+    }
+
+    // Execute relationship inserts in parallel
+    if (relationshipPromises.length > 0) {
+      await Promise.all(relationshipPromises);
     }
 
     // Get the full note with relations for embedding generation
@@ -321,8 +332,6 @@ export class SupabaseDataService implements DataService {
   }
 
   async updateNote(id: string, updates: Partial<Note>): Promise<Note> {
-    console.log('SupabaseDataService: updateNote called with id:', id, 'updates:', updates);
-    
     const { date, time_value, sentiment_ids, contact_ids, ...otherUpdates } = updates;
     const dbUpdates: any = { ...otherUpdates };
     
@@ -337,16 +346,12 @@ export class SupabaseDataService implements DataService {
       dbUpdates.time_minute = time_minute;
     }
 
-    console.log('SupabaseDataService: dbUpdates to send:', dbUpdates);
-
     // First, let's check if the note exists
     const { data: existingNote, error: checkError } = await supabase
       .from('notes')
       .select('id, title')
       .eq('id', id)
       .single();
-
-    console.log('SupabaseDataService: Note existence check:', { existingNote, checkError });
 
     if (checkError) throw checkError;
     if (!existingNote) throw new Error(`Note with id ${id} not found`);
@@ -361,12 +366,8 @@ export class SupabaseDataService implements DataService {
         .select()
         .single();
 
-      console.log('SupabaseDataService: Update result:', { data: updateData, error });
-
       if (error) throw error;
       data = updateData;
-    } else {
-      console.log('SupabaseDataService: Skipping main table update - no field updates needed');
     }
 
     // Update relationships if provided
@@ -557,17 +558,19 @@ export class SupabaseDataService implements DataService {
       is_trashed: contact.is_trashed
     })) || [];
 
-    const convertedNotes = notes?.map(note => ({
-      id: note.id,
-      title: note.title,
-      text: note.text,
-      date: dbToPrecisionDate(note.note_year, note.note_month, note.note_day),
-      time_value: dbToTimeValue(note.time_hour, note.time_minute),
-      sentiment_ids: noteSentimentsMap.get(note.id) || [],
-      contact_ids: contactNotesMap.get(note.id) || [],
-      created_at: note.created_at,
-      is_trashed: note.is_trashed
-    })) || [];
+    const convertedNotes = notes?.map(note => {
+      return {
+        id: note.id,
+        title: note.title,
+        text: note.text,
+        date: dbToPrecisionDate(note.note_year, note.note_month, note.note_day),
+        time_value: dbToTimeValue(note.time_hour, note.time_minute),
+        sentiment_ids: noteSentimentsMap.get(note.id) || [],
+        contact_ids: contactNotesMap.get(note.id) || [],
+        created_at: note.created_at,
+        is_trashed: note.is_trashed
+      };
+    }) || [];
 
     const convertedCommitments = commitments?.map(commitment => ({
       id: commitment.id,

@@ -30,19 +30,15 @@ export function useCardNavigation(options: CardNavigationOptions = {}) {
 
   const handleBack = useCallback((currentType: CardType, currentId: string) => {
     const arr = getCardIndexArray();
-    console.log('🔙 handleBack called:', { currentType, currentId, cardStack: arr });
 
     if (arr.length === 0) {
-      console.log('🔙 No cards in stack, closing current');
       options.closeCurrent?.();
       return;
     }
 
     const last = popCardIndexArray();
-    console.log('🔙 Popped card from stack:', last);
 
     if (!last) {
-      console.log('🔙 No card popped, closing current');
       options.closeCurrent?.();
       return;
     }
@@ -50,11 +46,9 @@ export function useCardNavigation(options: CardNavigationOptions = {}) {
     if (last.component === 'noteCardDetail') {
       const note = state.notes.find(n => n.id === last.id);
       if (note) {
-        console.log('🔙 Opening note detail:', note.title);
         openNoteDetail(note, createSourceRecord(currentType, currentId));
         return;
       }
-      console.log('🔙 Note not found, closing current');
       options.closeCurrent?.();
       return;
     }
@@ -62,11 +56,9 @@ export function useCardNavigation(options: CardNavigationOptions = {}) {
     if (last.component === 'contactCardDetail') {
       const contact = state.contacts.find(c => c.id === last.id);
       if (contact) {
-        console.log('🔙 Opening contact detail:', contact.name);
         openContactDetail(contact, createSourceRecord(currentType, currentId));
         return;
       }
-      console.log('🔙 Contact not found, closing current');
       options.closeCurrent?.();
       return;
     }
@@ -74,11 +66,9 @@ export function useCardNavigation(options: CardNavigationOptions = {}) {
     if (last.component === 'nameConfirmationDialog') {
       // For name confirmation dialog, we don't need to open it again
       // since it's managed by the parent component's state
-      console.log('🔙 Returning to name confirmation dialog (no action needed)');
       return;
     }
 
-    console.log('🔙 Unknown card type, closing current');
     options.closeCurrent?.();
   }, [state.notes, state.contacts, openNoteDetail, openContactDetail, options]);
 

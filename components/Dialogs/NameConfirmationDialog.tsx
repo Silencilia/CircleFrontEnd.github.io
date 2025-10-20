@@ -21,24 +21,8 @@ const NameConfirmationDialog: React.FC<NameConfirmationDialogProps> = ({
   noteText,
   contacts
 }) => {
-  console.log('🎭 === NameConfirmationDialog render ===');
-  console.log('isOpen:', isOpen);
-  console.log('noteText:', `"${noteText}"`);
-  console.log('noteText length:', noteText.length);
-  console.log('contacts.length:', contacts.length);
-  console.log('contacts names:', contacts.map(c => `"${c.name}"`));
-  console.log('typeof window:', typeof window);
-
-  if (!isOpen) {
-    console.log('❌ Dialog not open, returning null');
-    return null;
-  }
-  if (typeof window === 'undefined') {
-    console.log('❌ Window undefined, returning null');
-    return null;
-  }
-
-  console.log('✅ Rendering NameConfirmationDialog');
+  if (!isOpen) return null;
+  if (typeof window === 'undefined') return null;
 
   // State for managing contact detail overlay
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -59,7 +43,6 @@ const NameConfirmationDialog: React.FC<NameConfirmationDialogProps> = ({
 
   const handleContactClick = (contact: Contact | undefined, id: string) => {
     if (!contact) return;
-    console.log('🎯 Contact clicked in NameConfirmationDialog:', contact.name);
     setSelectedContact(contact);
   };
 
@@ -70,17 +53,17 @@ const NameConfirmationDialog: React.FC<NameConfirmationDialogProps> = ({
       onKeyDown={handleKeyDown}
       tabIndex={-1}
     >
-      <div className="bg-circle-white border border-circle-neutral-variant rounded-md p-md max-w-[600px] w-full mx-md shadow-lg">
+      <div className="crd-dtl border border-circle-neutral-variant shadow-lg">
         <h3 className="font-circletitlemedium text-circle-primary mb-lg">
           Confirm Contact Names
         </h3>
         
         <div className="mb-lg">
           <p className="font-circlebodymedium text-circle-primary mb-sm">
-            We've detected potential contact names in your note. Please review and confirm:
+            People you know are mentioned in your note. Please review and confirm. Click the note to edit it. Click on a name to view more information.
           </p>
           
-          <div className="bg-circle-neutral-variant rounded-sm p-md min-h-[120px] max-h-[300px] overflow-y-auto">
+          <div className="bg-circle-neutral-variant rounded-sm p-md h-fit overflow-y-auto">
             <div className="font-circlebodymedium text-circle-primary text-left">
               {contactReference(
                 noteText,
@@ -98,10 +81,10 @@ const NameConfirmationDialog: React.FC<NameConfirmationDialogProps> = ({
             ariaLabel="Cancel name confirmation"
           />
           
-          <ConfirmButton
-            onClick={() => onConfirm(noteText)}
-            ariaLabel="Confirm detected names"
-          />
+      <ConfirmButton
+        onClick={() => onConfirm(noteText)}
+        ariaLabel="Confirm detected names"
+      />
         </div>
       </div>
 
@@ -111,7 +94,6 @@ const NameConfirmationDialog: React.FC<NameConfirmationDialogProps> = ({
           className="fixed inset-0 z-[10000] flex items-center justify-center"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
-              console.log('🎭 Closing contact detail overlay');
               setSelectedContact(null);
             }
           }}
@@ -121,16 +103,13 @@ const NameConfirmationDialog: React.FC<NameConfirmationDialogProps> = ({
               contact={selectedContact}
               caller={createSourceRecord('nameConfirmationDialog', 'temp')}
               onMinimize={() => {
-                console.log('🎭 Contact detail minimized, returning to name confirmation');
                 setSelectedContact(null);
               }}
               onOpenNote={(note) => {
                 // Handle note opening if needed
-                console.log('🎭 Note opened from contact detail in dialog');
                 setSelectedContact(null); // Close contact detail when opening note
               }}
               onOpenContactDetail={(nextContact) => {
-                console.log('🎭 Opening nested contact from dialog:', nextContact.name);
                 setSelectedContact(nextContact);
               }}
             />
