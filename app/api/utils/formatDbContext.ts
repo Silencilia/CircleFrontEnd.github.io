@@ -3,20 +3,7 @@
  */
 
 import { Contact, Note, Subject, Relationship, Organization, Occupation, Sentiment, Commitment } from '../../../contexts/ContactContext';
-
-/**
- * Resolve contact tokens in text for AI context
- * Converts {{contact:uuid}} tokens to actual contact names
- */
-function resolveContactTokensForAI(text: string, contacts: Contact[]): string {
-  if (!text) return text;
-  const re = /\{\{\s*contact\s*:\s*([^}]+)\s*\}\}/g;
-  return text.replace(re, (_match, idStr) => {
-    const id = idStr.trim();
-    const contact = contacts?.find(c => c.id === id);
-    return contact?.name ?? `[Contact ${id}]`;
-  });
-}
+import { resolveContactTokensForAI } from '../../../utils/contactReference';
 
 export interface FormattedContext {
   contacts: Contact[];

@@ -16,6 +16,10 @@ import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, clearCard
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { destroyUnusedSentiments } from '../../utils/entityCleanup';
 import { EDITING_MODE_PADDING } from '../../data/variables';
+import { formatTextWithContactReferences, convertHtmlToUuidFormat, CONTACT_REFERENCE_STYLES } from '../../utils/contactReference';
+
+// Force Tailwind to include contact reference highlight classes
+const _tailwindContactClasses = 'font-circlebodymedium-highlight font-circlebodysmall-highlight';
 
 const Type: CardType = 'noteCardDetail';
 
@@ -47,11 +51,35 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const [isTitleSaving, setIsTitleSaving] = useState(false);
   const titleContentEditableRef = useRef<HTMLElement>(null);
 
+  // Text editing state
+  const [isTextEditing, setIsTextEditing] = useState(false);
+  const [editText, setEditText] = useState(currentNote.text);
+  const [originalText, setOriginalText] = useState(currentNote.text);
+  const [isTextSaving, setIsTextSaving] = useState(false);
+  const [wasTextEditingBeforeContactOpen, setWasTextEditingBeforeContactOpen] = useState(false);
+  const textContentEditableRef = useRef<HTMLElement>(null);
+
 
   // Update editTitle when note title changes
   useEffect(() => {
     setEditTitle(currentNote.title);
   }, [currentNote.title]);
+
+  // Update editText when note text changes
+  useEffect(() => {
+    setEditText(currentNote.text);
+  }, [currentNote.text]);
+
+  // Restore text editing mode if it was active before opening a contact detail
+  useEffect(() => {
+    if (wasTextEditingBeforeContactOpen && !isTextEditing) {
+      // Small delay to ensure the component has fully rendered
+      setTimeout(() => {
+        setIsTextEditing(true);
+        setWasTextEditingBeforeContactOpen(false);
+      }, 100);
+    }
+  }, [wasTextEditingBeforeContactOpen, isTextEditing]);
 
   // Handle sentiment selection from dialog
   const handleSentimentSelect = async (selectedSentiment: any) => {
@@ -161,6 +189,87 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
         handleTitleSave();
       }
     }, 100);
+  };
+
+  // Text editing handlers
+  const handleTextEditClick = () => {
+    setIsTextEditing(true);
+    setEditText(currentNote.text);
+    setOriginalText(currentNote.text);
+    setTimeout(() => {
+      if (textContentEditableRef.current) {
+        textContentEditableRef.current.focus();
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(textContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleTextSave = async () => {
+    const currentHtml = textContentEditableRef.current?.innerHTML ?? editText;
+    // Convert HTML back to UUID format before saving
+    const cleanText = convertHtmlToUuidFormat(currentHtml).trim();
+    
+    if (cleanText !== currentNote.text) {
+      try {
+        setIsTextSaving(true);
+        await updateNote(currentNote.id, { text: cleanText });
+      } catch (error) {
+        console.error('Failed to update text:', error);
+        setEditText(originalText);
+      } finally {
+        setIsTextSaving(false);
+      }
+    }
+    setIsTextEditing(false);
+  };
+
+  const handleTextCancel = () => {
+    setEditText(currentNote.text);
+    setIsTextEditing(false);
+  };
+
+  const handleTextKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTextSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTextCancel();
+    }
+  };
+
+  const handleTextKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleTextBlur = () => {
+    setTimeout(() => {
+      if (isTextEditing) {
+        handleTextSave();
+      }
+    }, 100);
+  };
+
+  // Handle contact click during text editing
+  const handleContactClick = (contactId: string) => {
+    const contact = state.contacts.find(c => c.id === contactId);
+    if (contact && onOpenContactDetail) {
+      // Remember that we were in text editing mode
+      setWasTextEditingBeforeContactOpen(isTextEditing);
+      const cardIndex = createSourceRecord('noteCardDetail', currentNote.id);
+      addToCardIndexArray(cardIndex);
+      onOpenContactDetail(contact, cardIndex);
+    }
   };
 
   if (currentNote.is_trashed) {
@@ -404,26 +513,110 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           </div>
         </div>
         {/* Text */}
-        <ScrollContainer
-          className="w-full h-fit min-h-0 bg-circle-neutral-variant rounded-sm p-md flex flex-row justify-start items-start overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing"
-          horizontal={false}
-          vertical={true}
-        >
-          <div className="w-fit font-circlebodymedium text-circle-primary text-left">
-            {contactReference(
-              currentNote.text,
-              state.contacts,
-              contact => {
-                if (!contact) return;
-                const cardIndex = createSourceRecord('noteCardDetail', currentNote.id);
-                addToCardIndexArray(cardIndex);
-                if (onOpenContactDetail) {
-                  onOpenContactDetail(contact, cardIndex);
+        <div className={`w-full h-fit min-h-0 bg-circle-neutral-variant rounded-sm p-md flex flex-col ${isTextEditing ? 'gap-xs' : ''}`}>
+          {isTextEditing ? (
+            <>
+              <div className="w-full h-fit min-h-0 flex flex-row justify-start items-start overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden cursor-text border border-circle-primary rounded focus-within:ring-2 focus-within:ring-inset focus-within:ring-circle-primary focus-within:ring-opacity-50">
+                <div className="w-fit font-circlebodymedium text-circle-primary text-left">
+                  <ContentEditable
+                    innerRef={textContentEditableRef}
+                    html={formatTextWithContactReferences(editText, state.contacts)}
+                    onChange={e => setEditText(e.target.value)}
+                    onKeyDownCapture={(e) => {
+                      // Handle deletion of contact spans
+                      if (e.key === 'Backspace' || e.key === 'Delete') {
+                        const selection = window.getSelection();
+                        if (selection && selection.rangeCount > 0) {
+                          const range = selection.getRangeAt(0);
+                          const container = range.commonAncestorContainer;
+                          
+                          // Check if we're trying to delete a contact span
+                          let elementToCheck = container.nodeType === Node.TEXT_NODE ? container.parentElement : container as Element;
+                          
+                          while (elementToCheck && elementToCheck !== textContentEditableRef.current) {
+                            if (elementToCheck.getAttribute(CONTACT_REFERENCE_STYLES.attributes.contactRef) === 'true') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // Remove the entire contact span
+                              elementToCheck.remove();
+                              return;
+                            }
+                            elementToCheck = elementToCheck.parentElement;
+                          }
+                        }
+                      }
+                      
+                      // Call the original keydown handler
+                      handleTextKeyDown(e);
+                    }}
+                    onKeyUp={handleTextKeyUp}
+                    onBlur={handleTextBlur}
+                    className={`outline-none ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[100px] font-circlebodymedium text-circle-primary cursor-text`}
+              style={{
+                      minHeight: '100px',
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}
+                    onClick={(e) => {
+                      // Handle clicks on contact reference spans
+                      const target = e.target as HTMLElement;
+                      if (target.getAttribute(CONTACT_REFERENCE_STYLES.attributes.contactRef) === 'true') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const contactId = target.getAttribute(CONTACT_REFERENCE_STYLES.attributes.contactId);
+                        if (contactId) {
+                          handleContactClick(contactId);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-[2px] justify-end">
+                <CancelButton
+                  onClick={handleTextCancel}
+                  ariaLabel="Cancel text edit"
+                />
+                <ConfirmButton
+                  onClick={handleTextSave}
+                  ariaLabel={isTextSaving ? 'Saving...' : 'Save text'}
+                />
+              </div>
+            </>
+          ) : (
+            <ScrollContainer
+              className={`w-full h-fit min-h-0 flex flex-row justify-start items-start overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing`}
+              horizontal={false}
+              vertical={true}
+            >
+              <div className="w-fit font-circlebodymedium text-circle-primary text-left">
+                <div
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleTextEditClick();
+                  }}
+                  className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium text-circle-primary"
+                  title="Click to edit"
+                  style={{ pointerEvents: 'auto' }}
+                >
+              {contactReference(
+                currentNote.text,
+                state.contacts,
+                contact => {
+                  if (!contact) return;
+                  const cardIndex = createSourceRecord('noteCardDetail', currentNote.id);
+                  addToCardIndexArray(cardIndex);
+                  if (onOpenContactDetail) {
+                    onOpenContactDetail(contact, cardIndex);
+                  }
                 }
-              }
-            )}
-          </div>
-        </ScrollContainer>
+              )}
+            </div>
+              </div>
+            </ScrollContainer>
+          )}
+        </div>
         {/* Sentiment Tags */}
         <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">
           {sentimentObjects.map(sentiment => (

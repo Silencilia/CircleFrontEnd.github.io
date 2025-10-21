@@ -1,5 +1,9 @@
 import React from 'react';
 import { Contact } from '../contexts/ContactContext';
+import { CONTACT_REFERENCE_REGEX, CONTACT_REFERENCE_STYLES } from '../utils/contactReference';
+
+// Force Tailwind to include contact reference highlight classes
+const _tailwindContactClasses = 'font-circlebodymedium-highlight font-circlebodysmall-highlight';
 
 // Turn text with tokens like {{contact:ID}} into JSX with clickable spans.
 // The clickable span should look like body-medium-highlight and be focusable.
@@ -11,10 +15,11 @@ export function contactReference(
 ): (string | JSX.Element)[] {
   const parts: (string | JSX.Element)[] = [];
   let lastIndex = 0;
-  const regex = /\{\{\s*contact\s*:([^}]+)\s*\}\}/g;
+  // Reset regex lastIndex to ensure consistent results
+  CONTACT_REFERENCE_REGEX.lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(text)) !== null) {
+  while ((match = CONTACT_REFERENCE_REGEX.exec(text)) !== null) {
     if (match.index > lastIndex) {
       const beforeText = text.slice(lastIndex, match.index);
       // Wrap plain text in an editable span so container clicks can target only these chunks
@@ -31,7 +36,7 @@ export function contactReference(
     parts.push(
       <span
         key={`contact-${contactId}-${match.index}`}
-        className={`${isMobile ? 'font-circlebodysmall-highlight' : 'font-circlebodymedium-highlight'} text-circle-primary cursor-pointer rounded-sm`}
+        className={isMobile ? CONTACT_REFERENCE_STYLES.mobile : CONTACT_REFERENCE_STYLES.base}
         data-contact-ref="true"
         role="button"
         tabIndex={0}
@@ -52,7 +57,7 @@ export function contactReference(
       </span>
     );
 
-    lastIndex = regex.lastIndex;
+    lastIndex = CONTACT_REFERENCE_REGEX.lastIndex;
   }
 
   if (lastIndex < text.length) {
