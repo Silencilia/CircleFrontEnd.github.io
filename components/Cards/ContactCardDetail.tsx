@@ -750,7 +750,6 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                 key={subject.id}
                 subject={subject}
                 contactId={currentContact.id}
-                editable={true}
               />
             ))
           ) : (

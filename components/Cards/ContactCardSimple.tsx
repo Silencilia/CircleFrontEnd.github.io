@@ -103,7 +103,6 @@ const ContactCardSimple: React.FC<ContactCardSimpleProps> = ({ contact, onMenuCl
 								contactId={contact.id}
 								fillColor="bg-[#E76835]"
 								className="w-15"
-								editable={true}
 							/>
 						))}
 						{hiddenCount > 0 && (
