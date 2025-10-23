@@ -242,7 +242,6 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
                   key={subject.id} 
                   subject={subject} 
                   contactId={contact.id}
-                  editable={true}
                 />
               ))}
               {showOverflow && (
