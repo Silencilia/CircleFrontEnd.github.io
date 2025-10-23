@@ -555,7 +555,8 @@ export class SupabaseDataService implements DataService {
       subject_ids: contactSubjectsMap.get(contact.id) || [],
       relationship_ids: contactRelationshipsMap.get(contact.id) || [],
       note_ids: contactNotesMap.get(contact.id) || [],
-      is_trashed: contact.is_trashed
+      is_trashed: contact.is_trashed,
+      created_at: contact.created_at
     })) || [];
 
     const convertedNotes = notes?.map(note => {

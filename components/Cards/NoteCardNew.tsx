@@ -18,6 +18,9 @@ import useCardNavigation from '../../hooks/useCardNavigation';
 import { extractContactIdsFromText } from '../../utils/api/extractContactIds';
 import { detectContactNames } from '../../utils/contactNameDetection';
 import { destroyUnusedSentiments } from '../../utils/entityCleanup';
+import { useContactAutocomplete } from '../../hooks/useContactAutocomplete';
+import ContactAutocomplete from '../ContactAutocomplete';
+import { formatTextWithContactReferences, convertHtmlToUuidFormat } from '../../utils/contactReference';
 
 const Type: CardType = 'noteCardDetail';
 
@@ -68,20 +71,183 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
 
   // Text editing state using utility
   const textEditingState = createInlineEditingState(currentNote.text);
-  const textEditingHandlers = createInlineEditingHandlers(
-    textEditingState,
-    currentNote.text,
-    async (value: string) => {
-      // Extract contact IDs from the text (handles both UUID format and HTML spans)
-      const contact_ids = extractContactIdsFromText(value);
-      if (isTemporaryNote) {
-        setTempNoteData(prev => prev ? { ...prev, text: value, contact_ids } : null);
-      } else {
-        await updateNote(note.id, { text: value, contact_ids });
+
+  // Track when we're in the middle of contact selection to prevent blur handling
+  const [isSelectingContact, setIsSelectingContact] = useState(false);
+
+  // Contact autocomplete functionality
+  const contactAutocomplete = useContactAutocomplete({
+    contacts: state.contacts,
+    onContactSelect: async (contact) => {
+      setIsSelectingContact(true);
+
+      // The hook handles text replacement with {{contact:id}} format
+      // Get the updated HTML from the contentEditable element
+      if (textEditingState.contentEditableRef.current) {
+        const currentHtml = textEditingState.contentEditableRef.current.innerHTML || '';
+
+        // Convert HTML back to UUID format for storage
+        const updatedText = convertHtmlToUuidFormat(currentHtml);
+
+        // Convert the UUID format to HTML format for display during editing
+        const htmlText = formatTextWithContactReferences(updatedText, state.contacts);
+
+        // Update the editing state with the HTML formatted text
+        textEditingState.setEditValue(htmlText);
+
+        // Extract contact IDs from the updated text
+        const contact_ids = extractContactIdsFromText(updatedText);
+
+        // Update the note data with the UUID format (for storage)
+        if (isTemporaryNote) {
+          setTempNoteData(prev => prev ? { ...prev, text: updatedText, contact_ids } : null);
+        } else {
+          await updateNote(note.id, { text: updatedText, contact_ids });
+        }
+
+        // Ensure focus remains in the text editor after contact selection
+        setTimeout(() => {
+          if (textEditingState.contentEditableRef.current) {
+            textEditingState.contentEditableRef.current.focus();
+          }
+          setIsSelectingContact(false);
+        }, 0);
+      }
+    },
+    textContentEditableRef: textEditingState.contentEditableRef
+  });
+
+  // Custom text editing handlers that handle contact references properly
+  const textEditingHandlers = {
+    handleEditClick: () => {
+      textEditingState.setIsEditing(true);
+      // Convert UUID format to HTML format with clickable spans for editing
+      const htmlText = formatTextWithContactReferences(currentNote.text, state.contacts);
+      textEditingState.setEditValue(htmlText);
+      textEditingState.setOriginalValue(currentNote.text);
+      
+      // Focus the editable element
+      setTimeout(() => {
+        if (textEditingState.contentEditableRef.current) {
+          textEditingState.contentEditableRef.current.focus();
+          const range = document.createRange();
+          const selection = window.getSelection();
+          range.selectNodeContents(textEditingState.contentEditableRef.current);
+          range.collapse(false);
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+      }, 10);
+    },
+
+    handleSave: async () => {
+      const currentHtml = textEditingState.contentEditableRef.current?.innerHTML ?? textEditingState.editValue;
+      // Convert HTML back to UUID format for saving
+      const uuidText = convertHtmlToUuidFormat(currentHtml);
+      
+      if (uuidText !== currentNote.text) {
+        try {
+          textEditingState.setIsSaving(true);
+          // Extract contact IDs from the converted text
+          const contact_ids = extractContactIdsFromText(uuidText);
+          
+          if (isTemporaryNote) {
+            setTempNoteData(prev => prev ? { ...prev, text: uuidText, contact_ids } : null);
+          } else {
+            await updateNote(note.id, { text: uuidText, contact_ids });
+          }
+        } catch (error) {
+          console.error('Save failed:', error);
+          textEditingState.setEditValue(textEditingState.originalValue);
+          return; // Don't exit editing mode on error
+        } finally {
+          textEditingState.setIsSaving(false);
+        }
+      }
+      textEditingState.setIsEditing(false);
+    },
+
+    handleCancel: () => {
+      textEditingState.setEditValue(currentNote.text);
+      textEditingState.setIsEditing(false);
+    },
+
+    handleKeyDown: (e: React.KeyboardEvent) => {
+      if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        textEditingHandlers.handleSave();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        textEditingHandlers.handleCancel();
+      }
+    },
+
+    handleKeyUp: (e: React.KeyboardEvent) => {
+      if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
+
+    handleBlur: () => {
+      setTimeout(() => {
+        if (textEditingState.isEditing) {
+          textEditingHandlers.handleSave();
+        }
+      }, 100);
+    }
+  };
+
+  // Custom blur handler that prevents save when selecting contacts
+  const customBlurHandler = () => {
+    if (!isSelectingContact) {
+      textEditingHandlers.handleBlur();
+    }
+  };
+
+  // Handle clicks on contact references in edit mode
+  const handleContentEditableClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.getAttribute('data-contact-ref') === 'true') {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const contactId = target.getAttribute('data-contact-id');
+      if (contactId && onOpenContactDetail) {
+        const contact = state.contacts.find(c => c.id === contactId);
+        if (contact) {
+          // Add CardIndex to global array - represents the current NoteCardDetail
+          const cardIndex = createSourceRecord('noteCardDetail', currentNote.id);
+          addToCardIndexArray(cardIndex);
+          onOpenContactDetail(contact, cardIndex);
+        }
       }
     }
-  );
+  };
+
   useInlineEditingSync(textEditingState, currentNote.text, textEditingState.isEditing);
+
+  // Handle clicks outside autocomplete dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contactAutocomplete.showAutocomplete) {
+        const target = event.target as Element;
+        // Check if click is outside the autocomplete dropdown and text editor
+        // Use mousedown instead of click to prevent interference with autocomplete selection
+        if (!target.closest('.autocomplete-dropdown') && 
+            !target.closest('[contenteditable="true"]')) {
+          contactAutocomplete.setShowAutocomplete(false);
+        }
+      }
+    };
+
+    if (contactAutocomplete.showAutocomplete) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [contactAutocomplete.showAutocomplete, contactAutocomplete.setShowAutocomplete]);
 
   if (currentNote.is_trashed) {
     return null;
@@ -433,11 +599,18 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 <ContentEditable
                   innerRef={textEditingState.contentEditableRef}
                   html={textEditingState.editValue}
-                  onChange={(e) => textEditingState.setEditValue(e.target.value)}
-                  onKeyDown={textEditingHandlers.handleKeyDown}
+                  onChange={(e) => {
+                    textEditingState.setEditValue(e.target.value);
+                    contactAutocomplete.handleTextChange(e);
+                  }}
+                  onKeyDown={(e) => {
+                    textEditingHandlers.handleKeyDown(e);
+                    contactAutocomplete.handleKeyDown(e);
+                  }}
                   onKeyDownCapture={textEditingHandlers.handleKeyDown}
                   onKeyUp={textEditingHandlers.handleKeyUp}
-                  onBlur={textEditingHandlers.handleBlur}
+                  onBlur={customBlurHandler}
+                  onClick={handleContentEditableClick}
                   className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary flex-1`}
                   style={{
                     minHeight: '20px',
@@ -490,6 +663,16 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
               )}
             </div>
           </ScrollContainer>
+
+          {/* Contact Autocomplete Dropdown */}
+          <ContactAutocomplete
+            showAutocomplete={contactAutocomplete.showAutocomplete}
+            contacts={state.contacts}
+            autocompleteQuery={contactAutocomplete.autocompleteQuery}
+            autocompletePosition={contactAutocomplete.autocompletePosition}
+            onContactSelect={contactAutocomplete.handleContactSelect}
+            maxSuggestions={5}
+          />
 
           {/* Sentiment Tags */}
           <div className="w-fit h-fit flex flex-row items-center gap-sm p-0">

@@ -53,7 +53,13 @@ const ContactBook: React.FC<ContactBookProps> = ({
       );
     }
 
-    return filtered;
+    // Sort by created_at timestamp (most recent first)
+    return filtered.sort((a, b) => {
+      if (!a.created_at && !b.created_at) return 0;
+      if (!a.created_at) return 1; // Put contacts without timestamps at the end
+      if (!b.created_at) return -1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   }, [contacts, searchQuery, relationshipFilterIds, state.occupations, state.organizations, state.subjects]);
 
   const handleOpenDetail = (contact: Contact) => {

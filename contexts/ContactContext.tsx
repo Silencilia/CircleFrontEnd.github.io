@@ -125,6 +125,7 @@ export interface Contact {
   relationship_ids: string[];
   note_ids: string[];
   is_trashed?: boolean;
+  created_at?: string;
 }
 
 // State interface
