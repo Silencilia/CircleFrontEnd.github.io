@@ -12,7 +12,6 @@ import NoteCardDetail from './NoteCardDetail';
 import { CalendarIcon, NoteIcon } from '../icons';
 import { EDITING_MODE_PADDING } from '../../data/variables';
 import { ConfirmButton, CancelButton } from '../Button';
-import { createInlineEditingState, createInlineEditingHandlers, useInlineEditingSync } from '../../utils/inlineEditingUtils';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
 import NewSubject from '../Dialogs/NewSubject';
@@ -66,20 +65,12 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   // Get the latest contact data from context state, or temp data for temporary contacts
   const currentContact = isTemporaryContact ? (tempContactData || contact) : (state.contacts.find(c => c.id === contact.id) || contact);
   
-  // Name editing state using utility
-  const nameEditingState = createInlineEditingState(currentContact.name);
-  const nameEditingHandlers = createInlineEditingHandlers(
-    nameEditingState,
-    currentContact.name,
-    async (value: string) => {
-      if (isTemporaryContact) {
-        setTempContactData(prev => prev ? { ...prev, name: value } : null);
-      } else {
-        await updateContact(currentContact.id, { name: value });
-      }
-    }
-  );
-  useInlineEditingSync(nameEditingState, currentContact.name, nameEditingState.isEditing);
+  // Name editing state
+  const [isNameEditing, setIsNameEditing] = useState(false);
+  const [editName, setEditName] = useState(currentContact.name);
+  const [originalName, setOriginalName] = useState(currentContact.name); // Store original for rollback
+  const [isNameSaving, setIsNameSaving] = useState(false); // Add loading state
+  const nameContentEditableRef = useRef<HTMLElement>(null);
   const [noteDetail, setNoteDetail] = useState<Note | null>(null);
   const [noteDetailCaller, setNoteDetailCaller] = useState<CardIndex | null>(null);
 
@@ -153,63 +144,15 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     setIsBirthDatePickerOpen(false);
   };
 
-  // Occupation editing state using utility
-  const occupationEditingState = createInlineEditingState(occupation?.title || '');
-  const occupationEditingHandlers = createInlineEditingHandlers(
-    occupationEditingState,
-    occupation?.title || '',
-    async (value: string) => {
-      if (isTemporaryContact) {
-        setTempContactData(prev => prev ? {
-          ...prev,
-          occupation_id: value === '' ? undefined : value
-        } : null);
-      } else {
-        if (value === '') {
-          await updateContact(currentContact.id, { occupation_id: undefined });
-        } else {
-          let existingOccupation = state.occupations.find(o => o.title === value);
-          if (!existingOccupation) {
-            const newOcc = await addOccupation({ title: value });
-            existingOccupation = newOcc;
-          }
-          if (existingOccupation) {
-            await updateContact(currentContact.id, { occupation_id: existingOccupation.id });
-          }
-        }
-      }
-    }
-  );
-  useInlineEditingSync(occupationEditingState, occupation?.title || '', occupationEditingState.isEditing);
+  // Occupation editing state - moved after occupation is declared
+  const [isOccupationEditing, setIsOccupationEditing] = useState(false);
+  const [editOccupation, setEditOccupation] = useState(occupation?.title || '');
+  const occupationContentEditableRef = useRef<HTMLElement>(null);
 
-  // Organization editing state using utility
-  const organizationEditingState = createInlineEditingState(organization?.name || '');
-  const organizationEditingHandlers = createInlineEditingHandlers(
-    organizationEditingState,
-    organization?.name || '',
-    async (value: string) => {
-      if (isTemporaryContact) {
-        setTempContactData(prev => prev ? {
-          ...prev,
-          organization_id: value === '' ? undefined : value
-        } : null);
-      } else {
-        if (value === '') {
-          await updateContact(currentContact.id, { organization_id: undefined });
-        } else {
-          let existingOrganization = state.organizations.find(org => org.name === value);
-          if (!existingOrganization) {
-            const newOrg = await addOrganization({ name: value });
-            existingOrganization = newOrg;
-          }
-          if (existingOrganization) {
-            await updateContact(currentContact.id, { organization_id: existingOrganization.id });
-          }
-        }
-      }
-    }
-  );
-  useInlineEditingSync(organizationEditingState, organization?.name || '', organizationEditingState.isEditing);
+  // Organization editing state
+  const [isOrganizationEditing, setIsOrganizationEditing] = useState(false);
+  const [editOrganization, setEditOrganization] = useState(organization?.name || '');
+  const organizationContentEditableRef = useRef<HTMLElement>(null);
 
   // Format birth date without timezone conversion
   const formatBirthDate = (birth?: Contact['birth_date']): string => {
@@ -265,12 +208,329 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   // Track editing state for mouse drag functionality
   useEffect(() => {
     // Disable mouse drag when name, occupation, or organization is being edited
-    if (nameEditingState.isEditing || occupationEditingState.isEditing || organizationEditingState.isEditing) {
+    if (isNameEditing || isOccupationEditing || isOrganizationEditing) {
       setIsAnyNoteEditing(true);
     } else {
       setIsAnyNoteEditing(false);
     }
-  }, [nameEditingState.isEditing, occupationEditingState.isEditing, organizationEditingState.isEditing]);
+  }, [isNameEditing, isOccupationEditing, isOrganizationEditing]);
+
+  // Update editName when contact name changes
+  useEffect(() => {
+    setEditName(currentContact.name);
+  }, [currentContact.name]);
+
+  // Update editOccupation when occupation changes
+  useEffect(() => {
+    // Only update if not currently editing to prevent flashing during user input
+    if (!isOccupationEditing) {
+      setEditOccupation(occupation?.title || '');
+    }
+  }, [occupation?.title, isOccupationEditing]);
+
+  // Update editOrganization when organization changes
+  useEffect(() => {
+    // Only update if not currently editing to prevent flashing during user input
+    if (!isOrganizationEditing) {
+      setEditOrganization(organization?.name || '');
+    }
+  }, [organization?.name, isOrganizationEditing]);
+
+  // Name editing handlers
+  const handleNameEditClick = () => {
+    setIsNameEditing(true);
+    setEditName(currentContact.name);
+    setOriginalName(currentContact.name); // Store original name
+    // Focus the contenteditable element after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      if (nameContentEditableRef.current) {
+        nameContentEditableRef.current.focus();
+        // Place cursor at the end of the text
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(nameContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleNameSave = async () => {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = nameContentEditableRef.current?.innerHTML ?? editName;
+    // Clean the input value to remove any HTML tags and trim whitespace
+    const cleanName = currentHtml.replace(/<[^>]*>/g, '').trim();
+    console.log('Saving name:', cleanName, 'Current name:', currentContact.name);
+    if (cleanName !== currentContact.name) {
+      console.log('Updating contact with ID:', currentContact.id);
+
+      try {
+        setIsNameSaving(true);
+        if (isTemporaryContact) {
+          // Update local state for temporary contacts
+          setTempContactData(prev => prev ? { ...prev, name: cleanName } : null);
+        } else {
+          // Update database for saved contacts
+          await updateContact(currentContact.id, { name: cleanName });
+        }
+        console.log('Name updated successfully');
+      } catch (error) {
+        console.error('Failed to update name:', error);
+        // Revert to original value on error
+        setEditName(originalName);
+      } finally {
+        setIsNameSaving(false);
+      }
+    } else {
+      console.log('No changes to save');
+    }
+    setIsNameEditing(false);
+  };
+
+  const handleNameCancel = () => {
+    setEditName(currentContact.name);
+    setIsNameEditing(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleNameSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleNameCancel();
+    }
+  };
+
+  const handleNameKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleNameBlur = (e: React.FocusEvent) => {
+    // Prevent auto-save if user is clicking on confirm or cancel buttons
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (relatedTarget && (
+      relatedTarget.closest('[aria-label="Save name"]') ||
+      relatedTarget.closest('[aria-label="Cancel name edit"]')
+    )) {
+      return;
+    }
+
+    // Use setTimeout to allow click events to fire first
+    setTimeout(() => {
+      if (isNameEditing) {
+        handleNameSave();
+      }
+    }, 100);
+  };
+
+  // Occupation editing handlers
+  const handleOccupationEditClick = () => {
+    setIsOccupationEditing(true);
+    setEditOccupation(occupation?.title || '');
+    // Focus the contenteditable element after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      if (occupationContentEditableRef.current) {
+        occupationContentEditableRef.current.focus();
+        // Place cursor at the end of the text
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(occupationContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleOccupationSave = async () => {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = occupationContentEditableRef.current?.innerHTML ?? editOccupation;
+    // Clean the input value to remove any HTML tags
+    const cleanOccupation = currentHtml.replace(/<[^>]*>/g, '').trim();
+    console.log('Saving occupation:', cleanOccupation, 'Current occupation:', occupation?.title);
+
+    if (cleanOccupation !== (occupation?.title || '')) {
+      console.log('Updating contact occupation with ID:', currentContact.id);
+
+      try {
+        if (isTemporaryContact) {
+          // For temporary contacts, store occupation title locally
+          // We'll resolve occupation_id when saving the contact
+          setTempContactData(prev => prev ? {
+            ...prev,
+            occupation_id: cleanOccupation === '' ? undefined : cleanOccupation
+          } : null);
+        } else {
+          // For saved contacts, handle occupation creation/updating normally
+          if (cleanOccupation === '') {
+            // Clear the occupation - use undefined instead of null
+            await updateContact(currentContact.id, { occupation_id: undefined });
+          } else {
+            // Check if occupation already exists, if not create new one
+            let existingOccupation = state.occupations.find(o => o.title === cleanOccupation);
+
+            if (!existingOccupation) {
+              const newOcc = await addOccupation({ title: cleanOccupation });
+              existingOccupation = newOcc;
+            }
+
+            if (existingOccupation) {
+              await updateContact(currentContact.id, { occupation_id: existingOccupation.id });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save occupation:', error);
+        // Revert to original value
+        setEditOccupation(occupation?.title || '');
+        return; // Don't exit editing mode on error
+      }
+    } else {
+      console.log('No changes to save');
+    }
+    setIsOccupationEditing(false);
+  };
+
+  const handleOccupationCancel = () => {
+    setEditOccupation(occupation?.title || '');
+    setIsOccupationEditing(false);
+  };
+
+  const handleOccupationKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOccupationSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOccupationCancel();
+    }
+  };
+
+  const handleOccupationKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleOccupationBlur = () => {
+    // Use setTimeout to allow click events to fire first
+    setTimeout(() => {
+      if (isOccupationEditing) {
+        handleOccupationSave();
+      }
+    }, 100);
+  };
+
+  // Organization editing handlers
+  const handleOrganizationEditClick = () => {
+    setIsOrganizationEditing(true);
+    setEditOrganization(organization?.name || '');
+    // Focus the contenteditable element after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      if (organizationContentEditableRef.current) {
+        organizationContentEditableRef.current.focus();
+        // Place cursor at the end of the text
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(organizationContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleOrganizationSave = async () => {
+    // Read directly from the editable DOM to avoid any event ordering issues
+    const currentHtml = organizationContentEditableRef.current?.innerHTML ?? editOrganization;
+    // Clean the input value to remove any HTML tags
+    const cleanOrganization = currentHtml.replace(/<[^>]*>/g, '').trim();
+    console.log('Saving organization:', cleanOrganization, 'Current organization:', organization?.name);
+    
+    if (cleanOrganization !== (organization?.name || '')) {
+      console.log('Updating contact organization with ID:', currentContact.id);
+      
+      try {
+        if (isTemporaryContact) {
+          // For temporary contacts, store organization name locally
+          // We'll resolve organization_id when saving the contact
+          setTempContactData(prev => prev ? {
+            ...prev,
+            organization_id: cleanOrganization === '' ? undefined : cleanOrganization
+          } : null);
+        } else {
+          // For saved contacts, handle organization creation/updating normally
+          if (cleanOrganization === '') {
+            // Clear the organization - use undefined instead of null
+            await updateContact(currentContact.id, { organization_id: undefined });
+          } else {
+            // Check if organization already exists, if not create new one
+            let existingOrganization = state.organizations.find(org => org.name === cleanOrganization);
+
+            if (!existingOrganization) {
+              const newOrg = await addOrganization({ name: cleanOrganization });
+              existingOrganization = newOrg;
+            }
+
+            if (existingOrganization) {
+              await updateContact(currentContact.id, { organization_id: existingOrganization.id });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save organization:', error);
+        // Revert to original value
+        setEditOrganization(organization?.name || '');
+        return; // Don't exit editing mode on error
+      }
+    } else {
+      console.log('No changes to save');
+    }
+    setIsOrganizationEditing(false);
+  };
+
+  const handleOrganizationCancel = () => {
+    setEditOrganization(organization?.name || '');
+    setIsOrganizationEditing(false);
+  };
+
+  const handleOrganizationKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOrganizationSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOrganizationCancel();
+    }
+  };
+
+  const handleOrganizationKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleOrganizationBlur = () => {
+    // Use setTimeout to allow click events to fire first
+    setTimeout(() => {
+      if (isOrganizationEditing) {
+        handleOrganizationSave();
+      }
+    }, 100);
+  };
 
   // Delete contact handler
   const handleDeleteContact = async () => {
@@ -432,15 +692,15 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               <span className="w-fit h-fit font-circletitlemedium text-circle-primary">Create new contact</span>
               {/* Name input */}
               <div className="w-fit h-fit flex items-center gap-2">
-              {nameEditingState.isEditing ? (
+              {isNameEditing ? (
                 <ContentEditable
-                  innerRef={nameEditingState.contentEditableRef}
-                  html={nameEditingState.editValue}
-                  onChange={(e) => nameEditingState.setEditValue(e.target.value)}
-                  onKeyDown={nameEditingHandlers.handleKeyDown}
-                  onKeyDownCapture={nameEditingHandlers.handleKeyDown}
-                  onKeyUp={nameEditingHandlers.handleKeyUp}
-                  onBlur={nameEditingHandlers.handleBlur}
+                  innerRef={nameContentEditableRef}
+                  html={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={handleNameKeyDown}
+                  onKeyDownCapture={handleNameKeyDown}
+                  onKeyUp={handleNameKeyUp}
+                  onBlur={handleNameBlur}
                   className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circletitlemedium text-circle-primary`}
                   style={{
                     minHeight: '20px',
@@ -450,7 +710,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                 />
               ) : (
                 <div
-                  onClick={nameEditingHandlers.handleEditClick}
+                  onClick={handleNameEditClick}
                   className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200"
                   title="Click to edit"
                 >
@@ -467,15 +727,15 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               )}
               
               {/* Name edit controls - show when editing, positioned to the right */}
-              {nameEditingState.isEditing && (
+              {isNameEditing && (
                 <div className="flex gap-[2px]">
                   <CancelButton 
-                    onClick={nameEditingHandlers.handleCancel} 
+                    onClick={handleNameCancel} 
                     ariaLabel="Cancel name edit"
                   />
                   <ConfirmButton 
-                    onClick={nameEditingHandlers.handleSave} 
-                    ariaLabel={nameEditingState.isSaving ? 'Saving...' : 'Save name'}
+                    onClick={handleNameSave} 
+                    ariaLabel={isNameSaving ? 'Saving...' : 'Save name'}
                   />
                 </div>
               )}
@@ -502,15 +762,15 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
           {/* Occupation and Organization */}
           <div className="w-fit h-fit flex flex-col gap-0">
             <div className="w-fit h-[20px] flex items-center gap-2">
-              {occupationEditingState.isEditing ? (
+              {isOccupationEditing ? (
                 <ContentEditable
-                  innerRef={occupationEditingState.contentEditableRef}
-                  html={occupationEditingState.editValue}
-                  onChange={(e) => occupationEditingState.setEditValue(e.target.value)}
-                  onKeyDown={occupationEditingHandlers.handleKeyDown}
-                  onKeyDownCapture={occupationEditingHandlers.handleKeyDown}
-                  onKeyUp={occupationEditingHandlers.handleKeyUp}
-                  onBlur={occupationEditingHandlers.handleBlur}
+                  innerRef={occupationContentEditableRef}
+                  html={editOccupation}
+                  onChange={(e) => setEditOccupation(e.target.value)}
+                  onKeyDown={handleOccupationKeyDown}
+                  onKeyDownCapture={handleOccupationKeyDown}
+                  onKeyUp={handleOccupationKeyUp}
+                  onBlur={handleOccupationBlur}
                   className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary`}
                   style={{
                     minHeight: '20px',
@@ -520,7 +780,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                 />
               ) : (
                 <div 
-                  onClick={occupationEditingHandlers.handleEditClick}
+                  onClick={handleOccupationEditClick}
                   className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium ${
                     occupation?.title && occupation.title.trim() !== '' 
                       ? 'text-circle-primary' 
@@ -533,14 +793,14 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               )}
               
               {/* Occupation edit controls - show when editing, positioned to the right */}
-              {occupationEditingState.isEditing && (
+              {isOccupationEditing && (
                 <div className="flex gap-[2px]">
                   <CancelButton 
-                    onClick={occupationEditingHandlers.handleCancel}
+                    onClick={handleOccupationCancel}
                     ariaLabel="Cancel occupation edit"
                   />
                   <ConfirmButton 
-                    onClick={occupationEditingHandlers.handleSave} 
+                    onClick={handleOccupationSave} 
                     ariaLabel="Save occupation"
                   />
                 </div>
@@ -548,18 +808,18 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
             </div>
             
             {/* Add conditional gap when occupation is editing */}
-            {occupationEditingState.isEditing && <div className="h-[10px]"></div>}
+            {isOccupationEditing && <div className="h-[10px]"></div>}
             
             <div className="w-fit h-[20px] flex items-center gap-2">
-              {organizationEditingState.isEditing ? (
+              {isOrganizationEditing ? (
                 <ContentEditable
-                  innerRef={organizationEditingState.contentEditableRef}
-                  html={organizationEditingState.editValue}
-                  onChange={(e) => organizationEditingState.setEditValue(e.target.value)}
-                  onKeyDown={organizationEditingHandlers.handleKeyDown}
-                  onKeyDownCapture={organizationEditingHandlers.handleKeyDown}
-                  onKeyUp={organizationEditingHandlers.handleKeyUp}
-                  onBlur={organizationEditingHandlers.handleBlur}
+                  innerRef={organizationContentEditableRef}
+                  html={editOrganization}
+                  onChange={(e) => setEditOrganization(e.target.value)}
+                  onKeyDown={handleOrganizationKeyDown}
+                  onKeyDownCapture={handleOrganizationKeyDown}
+                  onKeyUp={handleOrganizationKeyUp}
+                  onBlur={handleOrganizationBlur}
                   className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary`}
                   style={{
                     minHeight: '20px',
@@ -569,7 +829,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                 />
               ) : (
                 <div 
-                  onClick={organizationEditingHandlers.handleEditClick}
+                  onClick={handleOrganizationEditClick}
                   className={`cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium ${
                     organization?.name 
                       ? 'text-circle-primary' 
@@ -582,14 +842,14 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               )}
               
               {/* Organization edit controls - show when editing, positioned to the right */}
-              {organizationEditingState.isEditing && (
+              {isOrganizationEditing && (
                 <div className="flex gap-[2px]">
                   <CancelButton 
-                    onClick={organizationEditingHandlers.handleCancel}
+                    onClick={handleOrganizationCancel}
                     ariaLabel="Cancel organization edit"
                   />
                   <ConfirmButton 
-                    onClick={organizationEditingHandlers.handleSave} 
+                    onClick={handleOrganizationSave} 
                     ariaLabel="Save organization"
                   />
                 </div>
@@ -650,6 +910,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                 key={subject.id}
                 subject={subject}
                 contactId={currentContact.id}
+                editable={true}
               />
             ))
           ) : (

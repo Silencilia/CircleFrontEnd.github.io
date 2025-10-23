@@ -53,18 +53,33 @@ export function findContactReferences(text: string): ContactReferenceMatch[] {
 
 /**
  * Extract contact IDs from text containing contact references
+ * Handles both UUID format ({{contact:id}}) and HTML spans
  */
 export function extractContactIdsFromText(text: string): string[] {
   if (!text) return [];
   
   const contactIds = new Set<string>();
-  const matches = findContactReferences(text);
   
-  matches.forEach(match => {
+  // First, extract from UUID format
+  const uuidMatches = findContactReferences(text);
+  uuidMatches.forEach(match => {
     if (match.contactId) {
       contactIds.add(match.contactId);
     }
   });
+  
+  // Then, extract from HTML spans
+  const spanRegex = /<span[^>]*data-contact-ref="true"[^>]*data-contact-id="([^"]*)"[^>]*>/g;
+  let spanMatch: RegExpExecArray | null;
+  
+  // Reset regex lastIndex to ensure consistent results
+  spanRegex.lastIndex = 0;
+  
+  while ((spanMatch = spanRegex.exec(text)) !== null) {
+    if (spanMatch[1]) {
+      contactIds.add(spanMatch[1].trim());
+    }
+  }
   
   return Array.from(contactIds);
 }

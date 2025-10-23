@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Subject, useContacts } from '../../contexts/ContactContext';
-import ContentEditable from 'react-contenteditable';
 import { DeleteTagButton } from './index';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
 
@@ -13,8 +12,6 @@ interface SubjectTagProps {
   deleteButtonColor?: string;
   iconStrokeColor?: string;
   onClick?: (subject: Subject) => void;
-  editable?: boolean;
-  onEditComplete?: () => void;
 }
 
 const SubjectTag: React.FC<SubjectTagProps> = ({
@@ -26,99 +23,21 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
   deleteButtonColor = 'bg-circle-secondary',
   iconStrokeColor = 'rgb(255 255 255)',
   onClick,
-  editable = false,
-  onEditComplete,
 }) => {
-  const { state, updateSubject, updateContact } = useContacts();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(subject.label);
+  const { state, updateContact } = useContacts();
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const contentEditableRef = useRef<HTMLElement>(null);
 
   // Get current contact data
   const currentContact = state.contacts.find(c => c.id === contactId);
-  
-  useEffect(() => {
-    setEditValue(subject.label);
-  }, [subject.label]);
 
-  useEffect(() => {
-    if (isEditing && contentEditableRef.current) {
-      contentEditableRef.current.focus();
-      // Place cursor at the end of the text
-      const range = document.createRange();
-      const selection = window.getSelection();
-      range.selectNodeContents(contentEditableRef.current);
-      range.collapse(false);
-      selection?.removeAllRanges();
-      selection?.addRange(range);
-    }
-  }, [isEditing]);
-
-  const handleEditClick = () => {
-    if (editable) {
-      setIsEditing(true);
-    } else if (onClick) {
-      // If not editable, trigger the onClick handler
+  const handleTagClick = () => {
+    if (onClick) {
       onClick(subject);
     } else {
       // Toggle delete button visibility
       setShowDeleteButton(!showDeleteButton);
     }
-  };
-
-  const handleEdit = async (newLabel: string) => {
-    try {
-      // Update the subject label in the contact context
-      if (currentContact && newLabel.trim() !== subject.label) {
-        // Create a new subject with updated label
-        const updatedSubject = { ...subject, label: newLabel.trim() };
-        
-        // Update the subject in the context state
-        await updateSubject(subject.id, { label: newLabel.trim() });
-        
-        if (onEditComplete) {
-          onEditComplete();
-        }
-      }
-    } catch (error) {
-      console.error('Failed to edit subject:', error);
-      // Revert to original value on error
-      setEditValue(subject.label);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSave();
-    } else if (e.key === 'Escape') {
-      handleCancel();
-    }
-  };
-
-  const handleSave = () => {
-    if (isEditing) {
-      setIsEditing(false);
-      if (editValue.trim() !== subject.label) {
-        handleEdit(editValue);
-      }
-    }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditValue(subject.label);
-  };
-
-  const handleBlur = () => {
-    // Delay to allow click events (e.g., delete) to register before saving
-    setTimeout(() => {
-      if (isEditing) {
-        handleSave();
-      }
-    }, 100);
   };
 
   const handleDelete = async () => {
@@ -139,40 +58,25 @@ const SubjectTag: React.FC<SubjectTagProps> = ({
   };
 
   const baseClasses = 'tg flex items-center flex-shrink-0';
-  const interactiveClasses = (onClick || editable || true) ? 'cursor-pointer hover:opacity-80 transition-opacity' : '';
+  const interactiveClasses = 'cursor-pointer hover:opacity-80 transition-opacity';
   const combinedClasses = `${baseClasses} ${fillColor} ${interactiveClasses} ${className}`;
 
   return (
     <>
       <div className={combinedClasses}>
-        {isEditing ? (
-          <ContentEditable
-            innerRef={contentEditableRef}
-            html={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
-            className={`text-center ${textColor} outline-none flex-1`}
-            style={{
-              wordWrap: 'break-word',
-              whiteSpace: 'pre-wrap'
-            }}
-          />
-        ) : (
-          <span 
-            className={`text-center ${textColor}`}
-            onClick={handleEditClick}
-          >
-            {subject.label}
-          </span>
-        )}
+        <span 
+          className={`text-center ${textColor}`}
+          onClick={handleTagClick}
+        >
+          {subject.label}
+        </span>
         
-        {/* Delete button - show when editing OR when clicked */}
-        {(isEditing || showDeleteButton) && (
+        {/* Delete button - only show when clicked */}
+        {showDeleteButton && (
           <DeleteTagButton
-            buttonColor={isEditing ? "#FFFFFF" : deleteButtonColor}
-            iconStrokeColor={isEditing ? "#E76835" : iconStrokeColor}
-            className={isEditing ? "hover:bg-gray-100" : "hover:opacity-80"}
+            buttonColor="#FBF7F3"
+            iconStrokeColor="#E76835"
+            className="hover:opacity-80"
             onDelete={() => setShowDeleteConfirm(true)}
           />
         )}

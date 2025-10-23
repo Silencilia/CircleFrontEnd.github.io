@@ -13,7 +13,6 @@ import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
 import TimePicker from '../Dialogs/TimePicker';
 import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import { EDITING_MODE_PADDING } from '../../data/variables';
-import { createInlineEditingState, createInlineEditingHandlers, useInlineEditingSync } from '../../utils/inlineEditingUtils';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { extractContactIdsFromText } from '../../utils/api/extractContactIds';
 import { detectContactNames } from '../../utils/contactNameDetection';
@@ -51,37 +50,19 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const [timeValue, setTimeValue] = useState<TimeValue>({ hour: null, minute: null });
 
 
-  // Title editing state using utility
-  const titleEditingState = createInlineEditingState(currentNote.title);
-  const titleEditingHandlers = createInlineEditingHandlers(
-    titleEditingState,
-    currentNote.title,
-    async (value: string) => {
-      if (isTemporaryNote) {
-        setTempNoteData(prev => prev ? { ...prev, title: value } : null);
-      } else {
-        await updateNote(note.id, { title: value });
-      }
-    }
-  );
-  useInlineEditingSync(titleEditingState, currentNote.title, titleEditingState.isEditing);
+  // Title editing state
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(currentNote.title);
+  const [originalTitle, setOriginalTitle] = useState(currentNote.title);
+  const [isTitleSaving, setIsTitleSaving] = useState(false);
+  const titleContentEditableRef = useRef<HTMLElement>(null);
 
-  // Text editing state using utility
-  const textEditingState = createInlineEditingState(currentNote.text);
-  const textEditingHandlers = createInlineEditingHandlers(
-    textEditingState,
-    currentNote.text,
-    async (value: string) => {
-      // Extract contact IDs from the text (handles both UUID format and HTML spans)
-      const contact_ids = extractContactIdsFromText(value);
-      if (isTemporaryNote) {
-        setTempNoteData(prev => prev ? { ...prev, text: value, contact_ids } : null);
-      } else {
-        await updateNote(note.id, { text: value, contact_ids });
-      }
-    }
-  );
-  useInlineEditingSync(textEditingState, currentNote.text, textEditingState.isEditing);
+  // Text editing state
+  const [isTextEditing, setIsTextEditing] = useState(false);
+  const [editText, setEditText] = useState(currentNote.text);
+  const [originalText, setOriginalText] = useState(currentNote.text);
+  const [isTextSaving, setIsTextSaving] = useState(false);
+  const textContentEditableRef = useRef<HTMLElement>(null);
 
   if (currentNote.is_trashed) {
     return null;
@@ -249,7 +230,174 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
     // Don't save the note - just close the dialog so user can continue editing
   };
 
-  // Format the date (from note.date)
+  // Update edit values when note changes
+  useEffect(() => {
+      setEditTitle(currentNote.title);
+      setEditText(currentNote.text);
+  }, [currentNote.title, currentNote.text]);
+
+
+  // Title editing handlers
+  const handleTitleEditClick = () => {
+    setIsTitleEditing(true);
+    setEditTitle(currentNote.title);
+    setOriginalTitle(currentNote.title);
+    setTimeout(() => {
+      if (titleContentEditableRef.current) {
+        titleContentEditableRef.current.focus();
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(titleContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleTitleSave = async () => {
+    const currentHtml = titleContentEditableRef.current?.innerHTML ?? editTitle;
+    const cleanTitle = currentHtml.replace(/<[^>]*>/g, '').trim();
+    if (cleanTitle !== currentNote.title) {
+      try {
+        setIsTitleSaving(true);
+        if (isTemporaryNote) {
+          // Update local state for temporary notes
+          setTempNoteData(prev => prev ? { ...prev, title: cleanTitle } : null);
+        } else {
+          // Update database for saved notes
+          await updateNote(note.id, { title: cleanTitle });
+        }
+      } catch (error) {
+        console.error('Failed to update title:', error);
+        setEditTitle(originalTitle);
+      } finally {
+        setIsTitleSaving(false);
+      }
+    }
+    setIsTitleEditing(false);
+  };
+
+  const handleTitleCancel = () => {
+    setEditTitle(currentNote.title);
+    setIsTitleEditing(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTitleCancel();
+    }
+  };
+
+  const handleTitleKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleTitleBlur = (e: React.FocusEvent) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (relatedTarget && (
+      relatedTarget.closest('[aria-label="Save title"]') ||
+      relatedTarget.closest('[aria-label="Cancel title edit"]')
+    )) {
+      return;
+    }
+    setTimeout(() => {
+      if (isTitleEditing) {
+        handleTitleSave();
+      }
+    }, 100);
+  };
+
+  // Text editing handlers
+  const handleTextEditClick = () => {
+    setIsTextEditing(true);
+    setEditText(currentNote.text);
+    setOriginalText(currentNote.text);
+    setTimeout(() => {
+      if (textContentEditableRef.current) {
+        textContentEditableRef.current.focus();
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(textContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleTextSave = async () => {
+    const currentHtml = textContentEditableRef.current?.innerHTML ?? editText;
+    const cleanText = currentHtml.replace(/<[^>]*>/g, '').trim();
+    if (cleanText !== currentNote.text) {
+      try {
+        setIsTextSaving(true);
+        // Extract contact IDs from the new text
+        const contact_ids = extractContactIdsFromText(cleanText);
+        if (isTemporaryNote) {
+          // Update local state for temporary notes
+          setTempNoteData(prev => prev ? { ...prev, text: cleanText, contact_ids } : null);
+        } else {
+          // Update database for saved notes
+          await updateNote(note.id, { text: cleanText, contact_ids });
+        }
+      } catch (error) {
+        console.error('Failed to update text:', error);
+        setEditText(originalText);
+      } finally {
+        setIsTextSaving(false);
+      }
+    }
+    setIsTextEditing(false);
+  };
+
+  const handleTextCancel = () => {
+    setEditText(currentNote.text);
+    setIsTextEditing(false);
+  };
+
+  const handleTextKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTextSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTextCancel();
+    }
+  };
+
+  const handleTextKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleTextBlur = (e: React.FocusEvent) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (relatedTarget && (
+      relatedTarget.closest('[aria-label="Save text"]') ||
+      relatedTarget.closest('[aria-label="Cancel text edit"]')
+    )) {
+      return;
+    }
+    setTimeout(() => {
+      if (isTextEditing) {
+        handleTextSave();
+      }
+    }, 100);
+  };
 
 
 
@@ -266,15 +414,15 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 <div className="w-fit h-fit flex flex-col items-start gap-md p-0">
                   <span className="w-fit h-fit font-circletitlemedium text-circle-primary">Create new note</span>
                   <div className="w-fit h-fit flex items-center gap-2">
-                    {titleEditingState.isEditing ? (
+                    {isTitleEditing ? (
                       <ContentEditable
-                        innerRef={titleEditingState.contentEditableRef}
-                        html={titleEditingState.editValue}
-                        onChange={(e) => titleEditingState.setEditValue(e.target.value)}
-                        onKeyDown={titleEditingHandlers.handleKeyDown}
-                        onKeyDownCapture={titleEditingHandlers.handleKeyDown}
-                        onKeyUp={titleEditingHandlers.handleKeyUp}
-                        onBlur={titleEditingHandlers.handleBlur}
+                        innerRef={titleContentEditableRef}
+                        html={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={handleTitleKeyDown}
+                        onKeyDownCapture={handleTitleKeyDown}
+                        onKeyUp={handleTitleKeyUp}
+                        onBlur={handleTitleBlur}
                         className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circletitlemedium text-circle-primary`}
                         style={{
                           minHeight: '20px',
@@ -284,7 +432,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                       />
                     ) : (
                       <div
-                        onClick={titleEditingHandlers.handleEditClick}
+                        onClick={handleTitleEditClick}
                         className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circletitlemedium text-circle-primary"
                         title="Click to edit"
                       >
@@ -297,15 +445,15 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                     )}
 
                     {/* Title edit controls - show when editing */}
-                    {titleEditingState.isEditing && (
+                    {isTitleEditing && (
                       <div className="flex gap-[2px]">
                         <CancelButton
-                          onClick={titleEditingHandlers.handleCancel}
+                          onClick={handleTitleCancel}
                           ariaLabel="Cancel title edit"
                         />
                         <ConfirmButton
-                          onClick={titleEditingHandlers.handleSave}
-                          ariaLabel={titleEditingState.isSaving ? 'Saving...' : 'Save title'}
+                          onClick={handleTitleSave}
+                          ariaLabel={isTitleSaving ? 'Saving...' : 'Save title'}
                         />
                       </div>
                     )}
@@ -429,15 +577,15 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
             vertical={true}
           >
             <div className="w-fit font-circlebodymedium text-circle-primary text-left">
-              {textEditingState.isEditing ? (
+              {isTextEditing ? (
                 <ContentEditable
-                  innerRef={textEditingState.contentEditableRef}
-                  html={textEditingState.editValue}
-                  onChange={(e) => textEditingState.setEditValue(e.target.value)}
-                  onKeyDown={textEditingHandlers.handleKeyDown}
-                  onKeyDownCapture={textEditingHandlers.handleKeyDown}
-                  onKeyUp={textEditingHandlers.handleKeyUp}
-                  onBlur={textEditingHandlers.handleBlur}
+                  innerRef={textContentEditableRef}
+                  html={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={handleTextKeyDown}
+                  onKeyDownCapture={handleTextKeyDown}
+                  onKeyUp={handleTextKeyUp}
+                  onBlur={handleTextBlur}
                   className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[20px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circlebodymedium text-circle-primary flex-1`}
                   style={{
                     minHeight: '20px',
@@ -447,7 +595,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 />
               ) : (
                 <div
-                  onClick={textEditingHandlers.handleEditClick}
+                  onClick={handleTextEditClick}
                   className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium text-circle-primary flex-1"
                   title="Click to edit"
                 >
@@ -476,15 +624,15 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
               )}
 
               {/* Text edit controls - show when editing */}
-              {textEditingState.isEditing && (
+              {isTextEditing && (
                 <div className="flex gap-[2px] flex-shrink-0">
                   <CancelButton
-                    onClick={textEditingHandlers.handleCancel}
+                    onClick={handleTextCancel}
                     ariaLabel="Cancel text edit"
                   />
                   <ConfirmButton
-                    onClick={textEditingHandlers.handleSave}
-                    ariaLabel={textEditingState.isSaving ? 'Saving...' : 'Save text'}
+                    onClick={handleTextSave}
+                    ariaLabel={isTextSaving ? 'Saving...' : 'Save text'}
                   />
                 </div>
               )}

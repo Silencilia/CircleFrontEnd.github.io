@@ -16,7 +16,6 @@ import { CardIndex, createSourceRecord, CardType, addToCardIndexArray, clearCard
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { destroyUnusedSentiments } from '../../utils/entityCleanup';
 import { EDITING_MODE_PADDING } from '../../data/variables';
-import { createInlineEditingState, createInlineEditingHandlers, useInlineEditingSync } from '../../utils/inlineEditingUtils';
 import { formatTextWithContactReferences, convertHtmlToUuidFormat, CONTACT_REFERENCE_STYLES } from '../../utils/contactReference';
 
 // Force Tailwind to include contact reference highlight classes
@@ -52,32 +51,35 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
   const [isTitleSaving, setIsTitleSaving] = useState(false);
   const titleContentEditableRef = useRef<HTMLElement>(null);
 
-  // Text editing state using utility with custom save handler for contact references
-  const textEditingState = createInlineEditingState(currentNote.text);
-  const textEditingHandlers = createInlineEditingHandlers(
-    textEditingState,
-    currentNote.text,
-    async (value: string) => {
-      // For contact references, we need to get the HTML content and convert it properly
-      const currentHtml = textEditingState.contentEditableRef.current?.innerHTML ?? value;
-      const cleanValue = convertHtmlToUuidFormat(currentHtml).trim();
-      await updateNote(currentNote.id, { text: cleanValue });
-    }
-  );
-  useInlineEditingSync(textEditingState, currentNote.text, textEditingState.isEditing);
+  // Text editing state
+  const [isTextEditing, setIsTextEditing] = useState(false);
+  const [editText, setEditText] = useState(currentNote.text);
+  const [originalText, setOriginalText] = useState(currentNote.text);
+  const [isTextSaving, setIsTextSaving] = useState(false);
   const [wasTextEditingBeforeContactOpen, setWasTextEditingBeforeContactOpen] = useState(false);
+  const textContentEditableRef = useRef<HTMLElement>(null);
 
+
+  // Update editTitle when note title changes
+  useEffect(() => {
+    setEditTitle(currentNote.title);
+  }, [currentNote.title]);
+
+  // Update editText when note text changes
+  useEffect(() => {
+    setEditText(currentNote.text);
+  }, [currentNote.text]);
 
   // Restore text editing mode if it was active before opening a contact detail
   useEffect(() => {
-    if (wasTextEditingBeforeContactOpen && !textEditingState.isEditing) {
+    if (wasTextEditingBeforeContactOpen && !isTextEditing) {
       // Small delay to ensure the component has fully rendered
       setTimeout(() => {
-        textEditingState.setIsEditing(true);
+        setIsTextEditing(true);
         setWasTextEditingBeforeContactOpen(false);
       }, 100);
     }
-  }, [wasTextEditingBeforeContactOpen, textEditingState.isEditing]);
+  }, [wasTextEditingBeforeContactOpen, isTextEditing]);
 
   // Handle sentiment selection from dialog
   const handleSentimentSelect = async (selectedSentiment: any) => {
@@ -189,12 +191,81 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
     }, 100);
   };
 
+  // Text editing handlers
+  const handleTextEditClick = () => {
+    setIsTextEditing(true);
+    setEditText(currentNote.text);
+    setOriginalText(currentNote.text);
+    setTimeout(() => {
+      if (textContentEditableRef.current) {
+        textContentEditableRef.current.focus();
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(textContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleTextSave = async () => {
+    const currentHtml = textContentEditableRef.current?.innerHTML ?? editText;
+    // Convert HTML back to UUID format before saving
+    const cleanText = convertHtmlToUuidFormat(currentHtml).trim();
+    
+    if (cleanText !== currentNote.text) {
+      try {
+        setIsTextSaving(true);
+        await updateNote(currentNote.id, { text: cleanText });
+      } catch (error) {
+        console.error('Failed to update text:', error);
+        setEditText(originalText);
+      } finally {
+        setIsTextSaving(false);
+      }
+    }
+    setIsTextEditing(false);
+  };
+
+  const handleTextCancel = () => {
+    setEditText(currentNote.text);
+    setIsTextEditing(false);
+  };
+
+  const handleTextKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTextSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTextCancel();
+    }
+  };
+
+  const handleTextKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleTextBlur = () => {
+    setTimeout(() => {
+      if (isTextEditing) {
+        handleTextSave();
+      }
+    }, 100);
+  };
+
   // Handle contact click during text editing
   const handleContactClick = (contactId: string) => {
     const contact = state.contacts.find(c => c.id === contactId);
     if (contact && onOpenContactDetail) {
       // Remember that we were in text editing mode
-      setWasTextEditingBeforeContactOpen(textEditingState.isEditing);
+      setWasTextEditingBeforeContactOpen(isTextEditing);
       const cardIndex = createSourceRecord('noteCardDetail', currentNote.id);
       addToCardIndexArray(cardIndex);
       onOpenContactDetail(contact, cardIndex);
@@ -442,19 +513,15 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
           </div>
         </div>
         {/* Text */}
-        <div className={`w-full h-fit min-h-0 bg-circle-neutral-variant rounded-sm p-md flex flex-col ${textEditingState.isEditing ? 'gap-xs' : ''}`}>
-          {textEditingState.isEditing ? (
+        <div className={`w-full h-fit min-h-0 bg-circle-neutral-variant rounded-sm p-md flex flex-col ${isTextEditing ? 'gap-xs' : ''}`}>
+          {isTextEditing ? (
             <>
               <div className="w-full h-fit min-h-0 flex flex-row justify-start items-start overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden cursor-text border border-circle-primary rounded focus-within:ring-2 focus-within:ring-inset focus-within:ring-circle-primary focus-within:ring-opacity-50">
                 <div className="w-fit font-circlebodymedium text-circle-primary text-left">
                   <ContentEditable
-                    innerRef={textEditingState.contentEditableRef}
-                    html={formatTextWithContactReferences(textEditingState.editValue, state.contacts)}
-                    onChange={e => {
-                      // For contact references, we need to preserve HTML formatting
-                      // Don't update the editValue state with stripped HTML
-                      // The actual content is managed by the ContentEditable's innerHTML
-                    }}
+                    innerRef={textContentEditableRef}
+                    html={formatTextWithContactReferences(editText, state.contacts)}
+                    onChange={e => setEditText(e.target.value)}
                     onKeyDownCapture={(e) => {
                       // Handle deletion of contact spans
                       if (e.key === 'Backspace' || e.key === 'Delete') {
@@ -466,7 +533,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                           // Check if we're trying to delete a contact span
                           let elementToCheck = container.nodeType === Node.TEXT_NODE ? container.parentElement : container as Element;
                           
-                          while (elementToCheck && elementToCheck !== textEditingState.contentEditableRef.current) {
+                          while (elementToCheck && elementToCheck !== textContentEditableRef.current) {
                             if (elementToCheck.getAttribute(CONTACT_REFERENCE_STYLES.attributes.contactRef) === 'true') {
                               e.preventDefault();
                               e.stopPropagation();
@@ -480,17 +547,17 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                       }
                       
                       // Call the original keydown handler
-                      textEditingHandlers.handleKeyDown(e);
+                      handleTextKeyDown(e);
                     }}
-                    onKeyUp={textEditingHandlers.handleKeyUp}
-                    onBlur={textEditingHandlers.handleBlur}
+                    onKeyUp={handleTextKeyUp}
+                    onBlur={handleTextBlur}
                     className={`outline-none ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[100px] font-circlebodymedium text-circle-primary cursor-text`}
-                    style={{
+              style={{
                       minHeight: '100px',
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                      whiteSpace: 'pre-wrap'
-                    }}
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}
                     onClick={(e) => {
                       // Handle clicks on contact reference spans
                       const target = e.target as HTMLElement;
@@ -508,12 +575,12 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
               </div>
               <div className="flex gap-[2px] justify-end">
                 <CancelButton
-                  onClick={textEditingHandlers.handleCancel}
+                  onClick={handleTextCancel}
                   ariaLabel="Cancel text edit"
                 />
                 <ConfirmButton
-                  onClick={textEditingHandlers.handleSave}
-                  ariaLabel={textEditingState.isSaving ? 'Saving...' : 'Save text'}
+                  onClick={handleTextSave}
+                  ariaLabel={isTextSaving ? 'Saving...' : 'Save text'}
                 />
               </div>
             </>
@@ -527,25 +594,25 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                 <div
                   onClick={e => {
                     e.stopPropagation();
-                    textEditingHandlers.handleEditClick();
+                    handleTextEditClick();
                   }}
                   className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circlebodymedium text-circle-primary"
                   title="Click to edit"
                   style={{ pointerEvents: 'auto' }}
                 >
-                  {contactReference(
-                    currentNote.text,
-                    state.contacts,
-                    contact => {
-                      if (!contact) return;
-                      const cardIndex = createSourceRecord('noteCardDetail', currentNote.id);
-                      addToCardIndexArray(cardIndex);
-                      if (onOpenContactDetail) {
-                        onOpenContactDetail(contact, cardIndex);
-                      }
-                    }
-                  )}
-                </div>
+              {contactReference(
+                currentNote.text,
+                state.contacts,
+                contact => {
+                  if (!contact) return;
+                  const cardIndex = createSourceRecord('noteCardDetail', currentNote.id);
+                  addToCardIndexArray(cardIndex);
+                  if (onOpenContactDetail) {
+                    onOpenContactDetail(contact, cardIndex);
+                  }
+                }
+              )}
+            </div>
               </div>
             </ScrollContainer>
           )}

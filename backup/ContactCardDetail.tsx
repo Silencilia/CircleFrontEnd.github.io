@@ -514,13 +514,13 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               {/* Name edit controls - show when editing, positioned to the right */}
               {isNameEditing && (
                 <div className="flex gap-xs">
+                  <ConfirmButton 
+                    onClick={handleNameSave} 
+                    ariaLabel={isNameSaving ? 'Saving...' : 'Save name'}
+                  />
                   <CancelButton 
                     onClick={handleNameCancel} 
                     ariaLabel="Cancel name edit"
-                  />
-                   <ConfirmButton 
-                    onClick={handleNameSave} 
-                    ariaLabel={isNameSaving ? 'Saving...' : 'Save name'}
                   />
                 </div>
               )}
