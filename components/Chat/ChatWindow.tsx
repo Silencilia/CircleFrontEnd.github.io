@@ -1,14 +1,20 @@
 'use client';
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { renderComponent } from './registry';
 import UserMessageCard from './UserMessageCard';
 import SystemMessageCard from './SystemMessageCard';
 import ThinkingIndicator from './ThinkingIndicator';
+import ContactCardDetail from '../Cards/ContactCardDetail';
+import NoteCardDetail from '../Cards/NoteCardDetail';
+import { createPortal } from 'react-dom';
+import { createSourceRecord } from '../../data/sourceRecord';
+import { useContacts, Contact, Note } from '../../contexts/ContactContext';
+import useCardNavigation from '../../hooks/useCardNavigation';
 
 // Memoized message component to prevent unnecessary re-renders
-const MessageComponent = React.memo(({ entry }: { entry: any }) => {
+const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDetail, onContactMenuClick }: { entry: any; onOpenContactDetail: (c: Contact, src: any) => void; onOpenNoteDetail: (n: Note, src: any) => void; onContactMenuClick: (contactId: string) => void }) => {
   const isUser = entry.role === 'user';
   const bubble = isUser ? (
     <UserMessageCard text={entry.text ?? ''} />
@@ -34,7 +40,10 @@ const MessageComponent = React.memo(({ entry }: { entry: any }) => {
           <div className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto">
             {contactParts.map((p: any, idx: number) => (
               <div key={`c-${idx}`} className="shrink-0">
-                {renderComponent(p.kind, p.props)}
+                {renderComponent(p.kind, {
+                  ...p.props,
+                  onMenuClick: () => onContactMenuClick(p.props?.id as string),
+                })}
               </div>
             ))}
           </div>
@@ -43,7 +52,11 @@ const MessageComponent = React.memo(({ entry }: { entry: any }) => {
           <div className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto">
             {noteParts.map((p: any, idx: number) => (
               <div key={`n-${idx}`} className="shrink-0">
-                {renderComponent(p.kind, p.props)}
+                {renderComponent(p.kind, {
+                  ...p.props,
+                  onOpenNoteDetail: (note: Note, src: any) => onOpenNoteDetail(note, src),
+                  onOpenContactDetail: (contact: Contact, src: any) => onOpenContactDetail(contact, src),
+                })}
               </div>
             ))}
           </div>
@@ -58,12 +71,45 @@ MessageComponent.displayName = 'MessageComponent';
 const ChatWindow: React.FC = () => {
   const { entries, isThinking } = useChat();
   const endRef = useRef<HTMLDivElement>(null);
+  const { state } = useContacts();
+  const [contactForDetail, setContactForDetail] = useState<Contact | null>(null);
+  const [noteForDetail, setNoteForDetail] = useState<Note | null>(null);
+  const [caller, setCaller] = useState<any>(null);
+  const { openContactDetail, openNoteDetail, handleBack } = useCardNavigation({
+    openContact: (c, src) => {
+      setCaller(src);
+      setContactForDetail(c);
+      setNoteForDetail(null);
+    },
+    openNote: (n, src) => {
+      setCaller(src);
+      setNoteForDetail(n);
+      setContactForDetail(null);
+    },
+    closeCurrent: () => {
+      setContactForDetail(null);
+      setNoteForDetail(null);
+    },
+  });
 
   // Memoize message elements to prevent unnecessary re-renders
   const messageElements = useMemo(() => 
     entries.map((entry) => (
-      <MessageComponent key={entry.id} entry={entry} />
-    )), [entries]
+      <MessageComponent
+        key={entry.id}
+        entry={entry}
+        onOpenContactDetail={(c) => openContactDetail(c, createSourceRecord('contactCardDetail', c.id))}
+        onOpenNoteDetail={(n) => openNoteDetail(n, createSourceRecord('noteCardDetail', n.id))}
+        onContactMenuClick={(contactId: string) => {
+          const contact = state.contacts.find((c) => c.id === contactId);
+          if (contact) {
+            setCaller(createSourceRecord('contactCardDetail', contact.id));
+            setContactForDetail(contact);
+            setNoteForDetail(null);
+          }
+        }}
+      />
+    )), [entries, openContactDetail, openNoteDetail, state.contacts]
   );
 
   useEffect(() => {
@@ -92,6 +138,55 @@ const ChatWindow: React.FC = () => {
         )}
         <div ref={endRef} />
       </div>
+
+      {typeof window !== 'undefined' && (contactForDetail || noteForDetail) && createPortal(
+        (
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
+            onClick={(e) => {
+              if (e.target !== e.currentTarget) return;
+              setContactForDetail(null);
+              setNoteForDetail(null);
+            }}
+          >
+            {contactForDetail ? (
+              <ContactCardDetail
+                contact={contactForDetail}
+                caller={caller}
+                onOpenNote={(n, src) => {
+                  setCaller(src);
+                  setContactForDetail(null);
+                  setNoteForDetail(n);
+                }}
+                onOpenContactDetail={(c, src) => {
+                  setCaller(src);
+                  setNoteForDetail(null);
+                  setContactForDetail(c);
+                }}
+                onMinimize={() => {
+                  setContactForDetail(null);
+                  setNoteForDetail(null);
+                }}
+              />
+            ) : noteForDetail ? (
+              <NoteCardDetail
+                note={noteForDetail}
+                caller={caller}
+                onOpenContactDetail={(c, src) => {
+                  setCaller(src);
+                  setNoteForDetail(null);
+                  setContactForDetail(c);
+                }}
+                onMinimize={() => {
+                  setContactForDetail(null);
+                  setNoteForDetail(null);
+                }}
+              />
+            ) : null}
+          </div>
+        ),
+        document.body
+      )}
     </div>
   );
 };

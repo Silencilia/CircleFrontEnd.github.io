@@ -7,20 +7,28 @@ import NoteCard from '../Cards/NoteCard';
 
 type Renderer = (props: any) => React.ReactNode;
 
-const ContactRef: Renderer = ({ id }: { id: string }) => {
+const ContactRef: Renderer = ({ id, onMenuClick }: { id: string; onMenuClick?: () => void }) => {
   const { state } = useContacts();
   const contact = state.contacts.find((c) => c.id === id);
   console.log('[Registry] ContactCard render', { id, found: !!contact });
   if (!contact) return null;
-  return <ContactCard contact={contact} onMenuClick={() => {}} />;
+  return <ContactCard contact={contact} onMenuClick={onMenuClick || (() => {})} />;
 };
 
-const NoteRef: Renderer = ({ id }: { id: string }) => {
+const NoteRef: Renderer = ({ id, onOpenNoteDetail, onOpenContactDetail, isNestedInContactDetail, currentContactId }: { id: string; onOpenNoteDetail?: (note: any, source: any) => void; onOpenContactDetail?: (contact: any, source: any) => void; isNestedInContactDetail?: boolean; currentContactId?: string }) => {
   const { state } = useContacts();
   const note = state.notes.find((n) => n.id === id);
   console.log('[Registry] NoteCard render', { id, found: !!note });
   if (!note) return null;
-  return <NoteCard note={note} />;
+  return (
+    <NoteCard
+      note={note}
+      onOpenNoteDetail={onOpenNoteDetail}
+      onOpenContactDetail={onOpenContactDetail}
+      isNestedInContactDetail={!!isNestedInContactDetail}
+      currentContactId={currentContactId}
+    />
+  );
 };
 
 const renderers: Record<ComponentKind, Renderer> = {

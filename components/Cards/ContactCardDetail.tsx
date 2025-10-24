@@ -547,7 +547,10 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
               
               {/* Minimize button */}
               <MinimizeButton
-                onClick={() => handleBack('contactCardDetail', contact.id)}
+                onClick={() => {
+                  clearCardIndexArray();
+                  onMinimize?.();
+                }}
                 ariaLabel="Minimize contact detail"
               />
             </div>
@@ -693,7 +696,6 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
                 onOpenNoteDetail={(n, source) => {
                   const src = source || createSourceRecord('contactCardDetail', contact.id);
                   navOpenNoteDetail(n, src);
-                  onMinimize?.();
                 }}
                 onOpenContactDetail={(nextContact, source) => {
                   // Delegate to parent overlay manager if provided
