@@ -7,7 +7,8 @@ import recordEventPrompt from '@/app/api/prompts/record-event';
 import searchInfoPrompt from '@/app/api/prompts/search-info';
 import askAdvisePrompt from '@/app/api/prompts/ask-advise';
 import { getRelevantContext } from '@/app/api/utils/retrieveRelevantData';
-import { identifyIntentTool } from '@/app/api/utils/functionTools';
+import { identifyIntentTool, referenceContactsTool, referenceNotesTool, extractReferencesFromToolCalls, referenceEntitiesTool, extractEntitiesFromToolCalls } from '@/app/api/utils/functionTools';
+import type { ChatMessagePart } from '@/types/chat';
 
 type IntentEnum = 'record' | 'search' | 'advice';
 
@@ -104,7 +105,7 @@ async function fetchChatStack(chatId: string) {
   return data || [];
 }
 
-async function insertSystemMessage(chatId: string, text: string) {
+async function insertSystemMessage(chatId: string, payload: { text?: string; parts?: ChatMessagePart[] }) {
   const { createClient } = await import('@supabase/supabase-js');
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
   const anon = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -116,8 +117,8 @@ async function insertSystemMessage(chatId: string, text: string) {
   const { error } = await supabase.from('chat_messages').insert({
     chat_id: chatId,
     role: 'system',
-    text,
-    parts: null,
+    text: payload.text ?? null,
+    parts: payload.parts ?? null,
     status: 'final',
   });
   if (error) {
@@ -191,21 +192,67 @@ export async function POST(req: NextRequest) {
     // 4) Dispatch to scenario handler WITH context
     const step4Start = Date.now();
     let scenarioMessages: Array<{ role: 'system'|'user'|'assistant'; content: string }> = [];
+    let scenarioContent = '';
+    let parts: ChatMessagePart[] | undefined;
+
+    console.log('[INTENT]', intentStr, { latestUserMessage: latestUserMessage.slice(0, 200) });
     if (intentStr === 'record') {
       scenarioMessages = recordEventPrompt(stack, dbContext);
+      scenarioContent = await callOpenAI(scenarioMessages, 0.2);
     } else if (intentStr === 'search') {
+      // Pass 1: natural-language answer (no tools enforced)
       scenarioMessages = searchInfoPrompt(stack, dbContext);
+      scenarioContent = await callOpenAI(scenarioMessages, 0.2);
+
+      // Pass 2: force citations using a single unified tool
+      const citationMessages: Array<{ role: 'system'|'user'|'assistant'; content: string }> = [
+        {
+          role: 'system',
+          content:
+            'You are a strict citation tool. Based on the user question, the database context, and the assistant answer, ' +
+            'you MUST call reference_entities with ALL UUIDs (contacts, notes) that support the answer.\n' +
+            '- The database context may include lines that end with an explicit tag like [id:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx].\n' +
+            '- ONLY use those explicit [id:...] UUIDs.\n' +
+            '- NEVER use display indices like 1., 2., 3. as IDs.\n' +
+            '- If you cannot find any explicit [id:...] tags, return empty arrays.\n' +
+            'Return ONLY the tool call and NO prose.',
+        },
+        ...(dbContext ? [{ role: 'system' as const, content: `=== USER'S DATABASE ===\n${dbContext}` }] : []),
+        { role: 'user', content: stack[stack.length - 1]?.content || '' },
+        { role: 'assistant', content: scenarioContent || '' },
+      ];
+
+      const citationData = await callOpenAIWithTools({
+        messages: citationMessages,
+        tools: [referenceEntitiesTool],
+        tool_choice: { type: 'function', function: { name: 'reference_entities' } },
+        temperature: 0,
+      });
+      console.log('[SEARCH:CITATIONS] raw response', JSON.stringify(citationData?.choices?.[0]?.message, null, 2));
+      const toolCallsForced = citationData?.choices?.[0]?.message?.tool_calls ?? [];
+      const { contacts, notes } = extractEntitiesFromToolCalls(toolCallsForced);
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validContacts = (contacts || []).filter((id) => uuidRegex.test(String(id)));
+      const validNotes = (notes || []).filter((id) => uuidRegex.test(String(id)));
+      if ((contacts?.length || 0) !== validContacts.length || (notes?.length || 0) !== validNotes.length) {
+        console.warn('[CITATIONS] Some IDs were discarded as non-UUIDs', { contacts, notes, validContacts, validNotes });
+      }
+      parts = [
+        ...validContacts.map((id) => ({ type: 'component', kind: 'ContactCard', props: { id } } as ChatMessagePart)),
+        ...validNotes.map((id) => ({ type: 'component', kind: 'NoteCard', props: { id } } as ChatMessagePart)),
+      ];
+      console.log('[SEARCH] scenarioContent length', scenarioContent?.length || 0, 'parts', parts?.length || 0);
     } else {
       scenarioMessages = askAdvisePrompt(stack, dbContext);
+      scenarioContent = await callOpenAI(scenarioMessages, 0.2);
     }
-
-    const scenarioContent = await callOpenAI(scenarioMessages, 0.2);
     const step4Time = Date.now() - step4Start;
     console.log(`[PERF] Step 4 - Scenario processing (${intentStr}): ${step4Time}ms`);
 
     // 5) Insert system message (will skip if offline/no DB)
     const step5Start = Date.now();
-    await insertSystemMessage(chatId, scenarioContent || '(no content)');
+    console.log('[DB] inserting system message', { hasText: !!scenarioContent, partsCount: parts?.length || 0 });
+    await insertSystemMessage(chatId, { text: scenarioContent || '(no content)', parts });
     const step5Time = Date.now() - step5Start;
     console.log(`[PERF] Step 5 - Database insert: ${step5Time}ms`);
 
@@ -213,7 +260,16 @@ export async function POST(req: NextRequest) {
     console.log(`[PERF] Total pipeline time: ${totalTime}ms (${totalTime/1000}s)`);
 
     // Return the response content for offline clients to store locally
-    return NextResponse.json({ ok: true, intent: intentStr, content: scenarioContent || '(no content)' });
+    console.log('[RESPONSE] returning to client', { intent: intentStr, hasText: !!scenarioContent, partsCount: parts?.length || 0 });
+    return NextResponse.json({
+      ok: true,
+      intent: intentStr,
+      content: scenarioContent || '(no content)',
+      references: parts ? {
+        contacts: parts.filter((p: any) => p.type === 'component' && p.kind === 'ContactCard').map((p: any) => p.props.id),
+        notes: parts.filter((p: any) => p.type === 'component' && p.kind === 'NoteCard').map((p: any) => p.props.id),
+      } : { contacts: [], notes: [] },
+    });
   } catch (err: any) {
     const totalTime = Date.now() - startTime;
     console.error(`[PERF] Pipeline failed after ${totalTime}ms:`, err?.message);

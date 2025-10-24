@@ -16,29 +16,38 @@ const MessageComponent = React.memo(({ entry }: { entry: any }) => {
     <SystemMessageCard text={entry.text ?? ''} />
   );
   
-  const parts = (entry.parts || []).map((p: any, idx: number) => {
-    if (p.type === 'text') {
-      return (
-        <div key={idx} className="w-full">
-          <SystemMessageCard text={p.text} />
-        </div>
-      );
-    }
-    if (p.type === 'component') {
-      return (
-        <div key={idx} className="w-full">
-          {renderComponent(p.kind, p.props)}
-        </div>
-      );
-    }
-    return null;
-  });
+  const componentParts = (entry.parts || []).filter((p: any) => p.type === 'component');
+  const textParts = (entry.parts || []).filter((p: any) => p.type === 'text');
+  const contactParts = componentParts.filter((p: any) => p.kind === 'ContactCard');
+  const noteParts = componentParts.filter((p: any) => p.kind === 'NoteCard');
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} w-full`}>
       <div className={`flex flex-col ${isUser ? 'items-end max-w-[75%]' : 'items-stretch w-full'} gap-md`}>
         {entry.text ? bubble : null}
-        {parts}
+        {textParts.map((p: any, idx: number) => (
+          <div key={`t-${idx}`} className="w-full">
+            <SystemMessageCard text={p.text} />
+          </div>
+        ))}
+        {!isUser && contactParts.length > 0 && (
+          <div className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto">
+            {contactParts.map((p: any, idx: number) => (
+              <div key={`c-${idx}`} className="shrink-0">
+                {renderComponent(p.kind, p.props)}
+              </div>
+            ))}
+          </div>
+        )}
+        {!isUser && noteParts.length > 0 && (
+          <div className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto">
+            {noteParts.map((p: any, idx: number) => (
+              <div key={`n-${idx}`} className="shrink-0">
+                {renderComponent(p.kind, p.props)}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -59,6 +68,15 @@ const ChatWindow: React.FC = () => {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    try {
+      const last = entries[entries.length - 1];
+      if (last) {
+        const parts = last?.parts || [];
+        const compCount = parts.filter((p: any) => p.type === 'component').length;
+        const kinds = parts.filter((p: any) => p.type === 'component').map((p: any) => p.kind);
+        console.log('[ChatWindow] new message', { role: last.role, hasText: !!last.text, partsCount: parts.length, componentCount: compCount, kinds });
+      }
+    } catch {}
   }, [entries.length]);
 
   return (

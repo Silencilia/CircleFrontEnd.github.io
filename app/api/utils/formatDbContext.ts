@@ -195,27 +195,29 @@ export function formatDatabaseContext(
     switch (entityType) {
       case 'contact':
         console.log(`[formatDatabaseContext] Processing contact results, total contacts in allData: ${allData.contacts.length}`);
-        const contacts = sortedResults.map(r => {
+        const contactItems = sortedResults.map(r => {
           const contact = allData.contacts.find(c => c.id === r.entityId);
           console.log(`[formatDatabaseContext] Looking for contact ${r.entityId}:`, {
             found: !!contact,
             contactName: contact?.name,
             searchResultContent: r.content.substring(0, 100)
           });
-          return contact ? formatContact(contact, allData) : r.content;
+          const line = contact ? formatContact(contact, allData) : r.content;
+          return { id: r.entityId, line };
         });
-        if (contacts.length > 0) {
-          sections.push(`=== CONTACTS (${contacts.length} found) ===\n${contacts.map((c, i) => `${i + 1}. ${c}`).join('\n')}`);
+        if (contactItems.length > 0) {
+          sections.push(`=== CONTACTS (${contactItems.length} found) ===\n${contactItems.map((it, i) => `${i + 1}. ${it.line} [id:${it.id}]`).join('\n')}`);
         }
         break;
         
       case 'note':
-        const notes = sortedResults.map(r => {
+        const noteItems = sortedResults.map(r => {
           const note = allData.notes.find(n => n.id === r.entityId);
-          return note ? formatNote(note, allData) : r.content;
+          const line = note ? formatNote(note, allData) : r.content;
+          return { id: r.entityId, line };
         });
-        if (notes.length > 0) {
-          sections.push(`=== NOTES (${notes.length} found) ===\n${notes.map((n, i) => `${i + 1}. ${n}`).join('\n')}`);
+        if (noteItems.length > 0) {
+          sections.push(`=== NOTES (${noteItems.length} found) ===\n${noteItems.map((it, i) => `${i + 1}. ${it.line} [id:${it.id}]`).join('\n')}`);
         }
         break;
         

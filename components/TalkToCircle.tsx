@@ -105,10 +105,18 @@ const TalkToCircle: React.FC<TalkToCircleProps> = ({ forceWrapped, onSend, onMes
             drafts: JSON.parse(localStorage.getItem('drafts') || '[]'),
           };
 
-          identifyRequest(chat.chatId, messageId, (content) => {
-            // Add system message via context for offline mode
-            chat.addSystemText(content);
-          }, localData, chat.setIsThinking);
+          const res = await identifyRequest(chat.chatId, messageId, undefined, localData, chat.setIsThinking);
+          if (res.ok) {
+            if (res.content) await chat.addSystemText(res.content);
+            if (res.intent === 'search' && res.references) {
+              for (const id of res.references.contacts || []) {
+                await chat.addSystemComponent('ContactCard', { id });
+              }
+              for (const id of res.references.notes || []) {
+                await chat.addSystemComponent('NoteCard', { id });
+              }
+            }
+          }
         } else {
           identifyRequest(chat.chatId, messageId, undefined, undefined, chat.setIsThinking);
         }

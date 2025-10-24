@@ -76,6 +76,62 @@ export const identifyIntentTool = {
 
 
 /**
+ * Unified tool for forcing citations in a single call (both contacts and notes)
+ */
+export const referenceEntitiesTool = {
+  type: 'function' as const,
+  function: {
+    name: 'reference_entities',
+    description: 'Return ALL UUIDs (contacts and notes) that support the assistant\'s answer. Arrays can be empty.',
+    parameters: {
+      type: 'object',
+      properties: {
+        contacts: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of contact UUIDs referenced by the answer',
+        },
+        notes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of note UUIDs referenced by the answer',
+        },
+      },
+      required: ['contacts', 'notes'],
+      additionalProperties: false,
+    },
+  },
+};
+
+export function extractEntitiesFromToolCalls(toolCalls: any[]): { contacts: string[]; notes: string[] } {
+  let contacts: string[] = [];
+  let notes: string[] = [];
+  if (!Array.isArray(toolCalls)) return { contacts, notes };
+  for (const toolCall of toolCalls) {
+    try {
+      if (toolCall?.function?.name !== 'reference_entities') continue;
+      const argsJson = toolCall?.function?.arguments;
+      if (!argsJson) continue;
+      const args = JSON.parse(argsJson);
+      const c = Array.isArray(args?.contacts) ? args.contacts : [];
+      const n = Array.isArray(args?.notes) ? args.notes : [];
+      contacts = c;
+      notes = n;
+    } catch (error) {
+      console.error('Error parsing reference_entities tool call:', error);
+    }
+  }
+  console.log('[toolcalls] extractEntitiesFromToolCalls summary', {
+    toolCallsCount: Array.isArray(toolCalls) ? toolCalls.length : 0,
+    contactsCount: contacts.length,
+    notesCount: notes.length,
+    contacts,
+    notes,
+  });
+  return { contacts, notes };
+}
+
+/**
  * Extract references from OpenAI tool calls
  */
 export function extractReferencesFromToolCalls(toolCalls: any[]): {
@@ -111,5 +167,12 @@ export function extractReferencesFromToolCalls(toolCalls: any[]): {
     }
   }
 
+  console.log('[toolcalls] extractReferencesFromToolCalls summary', {
+    toolCallsCount: Array.isArray(toolCalls) ? toolCalls.length : 0,
+    contactIdsCount: contactIds.length,
+    noteIdsCount: noteIds.length,
+    contactIds,
+    noteIds,
+  });
   return { contactIds, noteIds };
 }

@@ -9,8 +9,10 @@ export default function searchInfoPrompt(
     content:
       'You search within the user\'s existing data and summarize relevant items.\n' +
       (dbContext ? `\n=== USER'S DATABASE ===\n${dbContext}\n\n` : '') +
-      'IMPORTANT: When referencing contacts in your responses, always use their actual names (not contact IDs or tokens). ' +
-      'The database context contains contact names that have been resolved from internal references.\n' +
+      'IMPORTANT:\n' +
+      '- Write your final answer in natural language. Do not include raw IDs in the prose.\n' +
+      '- When your answer relies on specific contacts and/or notes from the database, you MUST call the tools reference_contacts and/or reference_notes with their UUIDs (found in the database context).\n' +
+      '- In the prose, refer to contacts by their actual names (not IDs).\n' +
       'If you need disambiguation, ask one clarifying question.\n' +
       'Keep answers concise and focused on the request.',
   };

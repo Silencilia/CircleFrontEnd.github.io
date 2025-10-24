@@ -16,7 +16,10 @@ export async function identifyRequest(
   onSystemMessage?: (content: string) => void,
   localData?: any,
   onThinkingChange?: (isThinking: boolean) => void
-): Promise<{ ok: boolean; content?: string } | { ok: false; error: string }> {
+): Promise<
+  | { ok: boolean; content?: string; intent?: 'record'|'search'|'advice'; references?: { contacts: string[]; notes: string[] } }
+  | { ok: false; error: string }
+> {
   const startTime = Date.now();
   console.log(`[PERF] Client: Starting API request at ${new Date().toISOString()}`);
   
@@ -56,6 +59,12 @@ export async function identifyRequest(
     }
     
     const data = await res.json().catch(() => ({}));
+    console.log('[Client] identifyRequest response', {
+      ok: data?.ok,
+      intent: data?.intent,
+      hasContent: !!data?.content,
+      references: data?.references,
+    });
 
     // Set thinking to false when request completes
     onThinkingChange?.(false);
@@ -68,7 +77,12 @@ export async function identifyRequest(
     const totalTime = Date.now() - startTime;
     console.log(`[PERF] Client: Total request time ${totalTime}ms (${totalTime/1000}s)`);
 
-    return { ok: !!data?.ok, content: data?.content } as const;
+    return {
+      ok: !!data?.ok,
+      content: data?.content,
+      intent: data?.intent,
+      references: data?.references,
+    } as const;
   } catch (e: any) {
     // Set thinking to false on error
     onThinkingChange?.(false);
