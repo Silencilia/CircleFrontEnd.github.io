@@ -20,6 +20,7 @@ import NewRelationship from '../Dialogs/NewRelationship';
 import { formatYyyyMmDdToLong } from '../../data/strings';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useHashBack } from '../../hooks/useHashBack';
 
 // (Removed global open-contact tracking)
 
@@ -473,6 +474,9 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
     openContact: onOpenContactDetail,
     closeCurrent: onMinimize,
   });
+
+  // Intercept OS/browser back to trigger in-app back for this card
+  useHashBack(() => handleBack('contactCardDetail', contact.id));
 
   return (
     <>

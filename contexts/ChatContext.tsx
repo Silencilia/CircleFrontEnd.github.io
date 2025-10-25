@@ -43,6 +43,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
       const hasUser = !!sessionRes.session?.user?.id;
       setRemoteEnabled(hasUser);
       
+      // Restore isThinking state from localStorage
+      if (chatId && typeof window !== 'undefined') {
+        const thinkingKey = `circle_isThinking_${chatId}`;
+        const savedThinking = localStorage.getItem(thinkingKey);
+        if (savedThinking) {
+          try {
+            setIsThinking(JSON.parse(savedThinking));
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+      
       if (!chatId || !isMounted) return;
       
       // Load chat messages
@@ -184,9 +197,22 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
     }, [insertMessage]
   );
 
+  // Persist isThinking to localStorage whenever it changes
+  useEffect(() => {
+    if (chatId && typeof window !== 'undefined') {
+      const thinkingKey = `circle_isThinking_${chatId}`;
+      localStorage.setItem(thinkingKey, JSON.stringify(isThinking));
+    }
+  }, [isThinking, chatId]);
+
   // Clear isThinking when switching chats
   useEffect(() => {
     setIsThinking(false);
+    // Also clear localStorage value for previous chat
+    if (chatId && typeof window !== 'undefined') {
+      const thinkingKey = `circle_isThinking_${chatId}`;
+      localStorage.removeItem(thinkingKey);
+    }
   }, [chatId]);
 
   // Memoize the context value to avoid unnecessary renders in consumers

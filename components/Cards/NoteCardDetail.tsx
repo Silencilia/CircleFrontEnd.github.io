@@ -21,6 +21,7 @@ import { formatTextWithContactReferences, convertHtmlToUuidFormat, CONTACT_REFER
 import { useContactAutocomplete } from '../../hooks/useContactAutocomplete';
 import ContactAutocomplete from '../ContactAutocomplete';
 import { extractContactIdsFromText } from '../../utils/api/extractContactIds';
+import { useHashBack } from '../../hooks/useHashBack';
 
 // Force Tailwind to include contact reference highlight classes
 const _tailwindContactClasses = 'font-circlebodymedium-highlight font-circlebodysmall-highlight';
@@ -404,6 +405,9 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
     openContact: onOpenContactDetail,
     closeCurrent: onMinimize,
   });
+
+  // Intercept OS/browser back to trigger in-app back for this card
+  useHashBack(() => handleBack('noteCardDetail', currentNote.id));
 
   return (<>
     <div className="crd-dtl">

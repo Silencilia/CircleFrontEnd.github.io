@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom';
 import { createSourceRecord } from '../../data/sourceRecord';
 import { useContacts, Contact, Note } from '../../contexts/ContactContext';
 import useCardNavigation from '../../hooks/useCardNavigation';
+import { useDragScroll } from '../../hooks/useDragScroll';
 
 // Memoized message component to prevent unnecessary re-renders
 const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDetail, onContactMenuClick }: { entry: any; onOpenContactDetail: (c: Contact, src: any) => void; onOpenNoteDetail: (n: Note, src: any) => void; onContactMenuClick: (contactId: string) => void }) => {
@@ -27,6 +28,9 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
   const contactParts = componentParts.filter((p: any) => p.kind === 'ContactCard');
   const noteParts = componentParts.filter((p: any) => p.kind === 'NoteCard');
 
+  const contactScrollRef = useDragScroll<HTMLDivElement>();
+  const noteScrollRef = useDragScroll<HTMLDivElement>();
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} w-full`}>
       <div className={`flex flex-col ${isUser ? 'items-end max-w-[75%]' : 'items-stretch w-full'} gap-md`}>
@@ -37,7 +41,14 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
           </div>
         ))}
         {!isUser && contactParts.length > 0 && (
-          <div className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto">
+          <div 
+            ref={contactScrollRef}
+            className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto scrollbar-hide"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
             {contactParts.map((p: any, idx: number) => (
               <div key={`c-${idx}`} className="shrink-0">
                 {renderComponent(p.kind, {
@@ -49,7 +60,14 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
           </div>
         )}
         {!isUser && noteParts.length > 0 && (
-          <div className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto">
+          <div 
+            ref={noteScrollRef}
+            className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto scrollbar-hide"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
             {noteParts.map((p: any, idx: number) => (
               <div key={`n-${idx}`} className="shrink-0">
                 {renderComponent(p.kind, {

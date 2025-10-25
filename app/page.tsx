@@ -225,6 +225,15 @@ export default function NotePage() {
           pendingMessage: { chatId: newChatId, messageId: inserted.id, text },
           currentChatId: newChatId 
         }));
+
+        // Fire-and-forget: request AI-generated chat title (do not block UI)
+        try {
+          fetch('/api/chats/generate-title', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId: newChatId, text }),
+          }).catch(() => {});
+        } catch {}
       } else {
         // User is not authenticated - create local chat
         const localChatId = crypto.randomUUID();

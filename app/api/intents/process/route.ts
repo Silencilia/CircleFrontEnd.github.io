@@ -243,8 +243,48 @@ export async function POST(req: NextRequest) {
       ];
       console.log('[SEARCH] scenarioContent length', scenarioContent?.length || 0, 'parts', parts?.length || 0);
     } else {
+      // Pass 1: natural-language advice (no tools enforced)
       scenarioMessages = askAdvisePrompt(stack, dbContext);
       scenarioContent = await callOpenAI(scenarioMessages, 0.2);
+
+      // Pass 2: force citations using a single unified tool
+      const citationMessages: Array<{ role: 'system'|'user'|'assistant'; content: string }> = [
+        {
+          role: 'system',
+          content:
+            'You are a strict citation tool. Based on the user question, the database context, and the assistant answer, ' +
+            'you MUST call reference_entities with ALL UUIDs (contacts, notes) that support the answer.\n' +
+            '- The database context may include lines that end with an explicit tag like [id:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx].\n' +
+            '- ONLY use those explicit [id:...] UUIDs.\n' +
+            '- NEVER use display indices like 1., 2., 3. as IDs.\n' +
+            '- If you cannot find any explicit [id:...] tags, return empty arrays.\n' +
+            'Return ONLY the tool call and NO prose.',
+        },
+        ...(dbContext ? [{ role: 'system' as const, content: `=== USER'S DATABASE ===\n${dbContext}` }] : []),
+        { role: 'user', content: stack[stack.length - 1]?.content || '' },
+        { role: 'assistant', content: scenarioContent || '' },
+      ];
+
+      const citationData = await callOpenAIWithTools({
+        messages: citationMessages,
+        tools: [referenceEntitiesTool],
+        tool_choice: { type: 'function', function: { name: 'reference_entities' } },
+        temperature: 0,
+      });
+      console.log('[ADVICE:CITATIONS] raw response', JSON.stringify(citationData?.choices?.[0]?.message, null, 2));
+      const toolCallsForced = citationData?.choices?.[0]?.message?.tool_calls ?? [];
+      const { contacts, notes } = extractEntitiesFromToolCalls(toolCallsForced);
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validContacts = (contacts || []).filter((id) => uuidRegex.test(String(id)));
+      const validNotes = (notes || []).filter((id) => uuidRegex.test(String(id)));
+      if ((contacts?.length || 0) !== validContacts.length || (notes?.length || 0) !== validNotes.length) {
+        console.warn('[CITATIONS] Some IDs were discarded as non-UUIDs', { contacts, notes, validContacts, validNotes });
+      }
+      parts = [
+        ...validContacts.map((id) => ({ type: 'component', kind: 'ContactCard', props: { id } } as ChatMessagePart)),
+        ...validNotes.map((id) => ({ type: 'component', kind: 'NoteCard', props: { id } } as ChatMessagePart)),
+      ];
+      console.log('[ADVICE] scenarioContent length', scenarioContent?.length || 0, 'parts', parts?.length || 0);
     }
     const step4Time = Date.now() - step4Start;
     console.log(`[PERF] Step 4 - Scenario processing (${intentStr}): ${step4Time}ms`);
