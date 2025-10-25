@@ -44,6 +44,7 @@ export interface Sentiment {
 
 export interface Draft {
   id: string;
+  title?: string;
   text: string;
   date: PrecisionDate;
   time: TimeValue;
@@ -275,7 +276,7 @@ interface ContactContextType {
   //  methods with Supabase integration
   loadData: () => Promise<void>;
   updateContact: (id: string, updates: Partial<Contact>) => Promise<void>;
-  addContact: (contact: Omit<Contact, 'id'>) => Promise<void>;
+  addContact: (contact: Omit<Contact, 'id'>) => Promise<Contact>;
   deleteContact: (id: string) => Promise<void>;
   addNote: (note: Omit<Note, 'id' | 'created_at'>) => Promise<void>;
   updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
@@ -296,6 +297,10 @@ interface ContactContextType {
   createNewNote: () => Promise<Note>;
   // Temporary note for editing
   createTemporaryNote: () => Note;
+  // Temporary note creation from text (record flow)
+  createTemporaryNoteFromText: (text: string) => Draft;
+  // Update temporary note (local state)
+  updateTemporaryNote?: (id: string, updates: Partial<Draft>) => void;
 }
 
 // Create context
@@ -390,10 +395,11 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addContact = async (contact: Omit<Contact, 'id'>) => {
+  const addContact = async (contact: Omit<Contact, 'id'>): Promise<Contact> => {
     try {
       const newContact = await dataServiceRef.current.addContact(contact);
       dispatch({ type: 'ADD_CONTACT', payload: newContact });
+      return newContact;
     } catch (error) {
       console.error('Failed to add contact:', error);
       throw error;
@@ -594,6 +600,29 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     return tempNote;
   };
 
+  const updateTemporaryNote = (id: string, updates: Partial<Draft>) => {
+    // Update only in local state for drafts array
+    dispatch({ type: 'SET_DATA', payload: {
+      ...state,
+      drafts: state.drafts.map(d => d.id === id ? { ...d, ...updates } : d)
+    } as any });
+  };
+
+  const createTemporaryNoteFromText = (text: string): Draft => {
+    const now = new Date();
+    const draft: Draft = {
+      id: `draft-${now.getTime()}`,
+      text,
+      date: { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() },
+      time: { hour: now.getHours(), minute: now.getMinutes() },
+    };
+    dispatch({ type: 'SET_DATA', payload: {
+      ...state,
+      drafts: [...state.drafts, draft]
+    } as any });
+    return draft;
+  };
+
 
   const value: ContactContextType = {
     state,
@@ -616,6 +645,8 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     createTemporaryContact,
     createNewNote,
     createTemporaryNote,
+    createTemporaryNoteFromText,
+    updateTemporaryNote,
   };
 
   return (

@@ -4,7 +4,14 @@ import ExtractButton from '../Button/ExtractButton';
 import RecycleButton from '../Button/RecycleButton';
 import MinimizeButton from '../Button/MinimizeButton';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
-import { Draft } from '../../contexts/ContactContext';
+import { Draft, useContacts, PrecisionDate } from '../../contexts/ContactContext';
+import ContentEditable from 'react-contenteditable';
+import { CancelButton, ConfirmButton } from '../Button';
+import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
+import TimePicker from '../Dialogs/TimePicker';
+import { CalendarIcon } from '../icons';
+import { createPortal } from 'react-dom';
+import { EDITING_MODE_PADDING } from '../../data/variables';
 
 interface DraftCardDetailProps {
   draft: Draft;
@@ -19,12 +26,26 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
   onDelete,
   onMinimize
 }) => {
+  const { updateTemporaryNote } = useContacts();
   const textContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  // Title editing
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(draft.title || '');
+  const [originalTitle, setOriginalTitle] = useState(draft.title || '');
+  const [isTitleSaving, setIsTitleSaving] = useState(false);
+  const titleContentEditableRef = useRef<HTMLElement>(null);
+
+  // Date/time pickers
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [dateValue, setDateValue] = useState<DynamicPrecisionDateValue>({ precision: 'none', year: null, month: null, day: null });
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [timeValue, setTimeValue] = useState<{ hour: number | null; minute: number | null }>({ hour: draft.time.hour, minute: draft.time.minute });
 
   // Mount flag to safely use portal on client only
   useEffect(() => {
@@ -153,73 +174,177 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
     return `${hours}:${minutes}`;
   };
 
+  const handleTitleEditClick = () => {
+    setIsTitleEditing(true);
+    setEditTitle(draft.title || '');
+    setOriginalTitle(draft.title || '');
+    setTimeout(() => {
+      if (titleContentEditableRef.current) {
+        titleContentEditableRef.current.focus();
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(titleContentEditableRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 10);
+  };
+
+  const handleTitleSave = () => {
+    setIsTitleSaving(true);
+    const currentHtml = titleContentEditableRef.current?.innerHTML ?? editTitle;
+    const cleanTitle = currentHtml.replace(/<[^>]*>/g, '').trim();
+    updateTemporaryNote?.(draft.id, { title: cleanTitle });
+    setIsTitleSaving(false);
+    setIsTitleEditing(false);
+  };
+
+  const handleTitleCancel = () => {
+    setEditTitle(originalTitle);
+    setIsTitleEditing(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleTitleCancel();
+    }
+  };
+
+  const handleTitleKeyUp = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleTitleBlur = () => {
+    setTimeout(() => {
+      if (isTitleEditing) {
+        handleTitleSave();
+      }
+    }, 100);
+  };
+
   return (
     <>
       <div className="crd-dtl">
         {/* Main container */}
         <div className="flex flex-col w-full h-full gap-lg overflow-hidden">
 
-          {/* Note info row */}
-          <div className="flex flex-row justify-between items-center p-0 gap-md w-full h-fit flex-none order-0 self-stretch flex-grow-0">
+          {/* Title row */}
+          <div className="w-full h-fit flex flex-row justify-between items-start gap-lg p-0">
+            <div className="w-fit h-fit flex items-center gap-xs">
+              {isTitleEditing ? (
+                <ContentEditable
+                  innerRef={titleContentEditableRef}
+                  html={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  onKeyDown={handleTitleKeyDown}
+                  onKeyDownCapture={handleTitleKeyDown}
+                  onKeyUp={handleTitleKeyUp}
+                  onBlur={handleTitleBlur}
+                  className={`outline-none border border-circle-primary rounded ${EDITING_MODE_PADDING.X} ${EDITING_MODE_PADDING.Y} min-h-[24px] focus:ring-2 focus:ring-inset focus:ring-circle-primary focus:ring-opacity-50 font-circletitlemedium text-circle-primary`}
+                  style={{
+                    minHeight: '24px',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                />
+              ) : (
+                <div
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleTitleEditClick();
+                  }}
+                  className="cursor-pointer hover:bg-circle-neutral hover:bg-opacity-20 rounded transition-colors duration-200 font-circletitlemedium text-circle-primary"
+                  title="Click to edit"
+                  style={{ pointerEvents: 'auto' }}
+                >
+                  {draft.title || 'Untitled'}
+                </div>
+              )}
+              {isTitleEditing && (
+                <div className="flex gap-[2px]">
+                  <CancelButton
+                    onClick={handleTitleCancel}
+                    ariaLabel="Cancel title edit"
+                  />
+                  <ConfirmButton
+                    onClick={handleTitleSave}
+                    ariaLabel={isTitleSaving ? 'Saving...' : 'Save title'}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
 
-            {/* Timestamp */}
-            <div className="flex flex-row items-center p-0 gap-md w-fit h-5 flex-none order-0 flex-grow-0">
-              <div className="flex flex-col items-start p-0 w-fit h-5 flex-none order-0 flex-grow-0">
-                <div className="flex flex-row items-center pr-md gap-md w-fit h-5 flex-none order-0 flex-grow-0">
-
-                  {/* Date */}
-                  <div className="w-fit h-5 font-circlebodymedium-draft text-circle-primary opacity-50 flex-none order-0 flex-grow-0">
-                    {formatDate(draft.date)}
-                  </div>
-
-                  {/* Time */}
-                  <div className="w-fit h-5 font-circlebodymedium-draft text-circle-primary opacity-50 flex-none order-1 flex-grow-0">
-                    {formatTime(draft.time)}
-                  </div>
+          {/* Date and Time */}
+          <div className="w-full h-fit flex flex-col items-start gap-sm p-0">
+            <div className="w-full h-fit flex flex-row items-start gap-lg p-0">
+              <div className="w-full h-fit flex flex-col items-start p-0 mx-auto flex-1">
+                {/* Date row */}
+                <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
+                  <CalendarIcon width={16} height={16} className="text-circle-primary" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      let init: DynamicPrecisionDateValue;
+                      if (draft.date && typeof draft.date.year === 'number') {
+                        if (typeof draft.date.month === 'number' && typeof draft.date.day === 'number') {
+                          init = { precision: 'day', year: draft.date.year, month: draft.date.month, day: draft.date.day };
+                        } else if (typeof draft.date.month === 'number') {
+                          init = { precision: 'month', year: draft.date.year, month: draft.date.month, day: null };
+                        } else {
+                          init = { precision: 'year', year: draft.date.year, month: null, day: null };
+                        }
+                      } else {
+                        init = { precision: 'none', year: null, month: null, day: null };
+                      }
+                      setDateValue(init);
+                      setIsDatePickerOpen(true);
+                    }}
+                    className={`w-fit h-fit font-circlebodymedium text-circle-primary flex items-center ${!draft.date?.year ? 'italic opacity-50' : ''}`}
+                    title="Click to edit date"
+                  >
+                    {draft.date?.year ? formatDate(draft.date) : 'no date'}
+                  </button>
+                </div>
+                {/* Time row */}
+                <div className="w-fit h-[20px] flex flex-row items-center gap-lg p-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (draft.time && typeof draft.time.hour === 'number' && typeof draft.time.minute === 'number') {
+                        setTimeValue({ hour: draft.time.hour, minute: draft.time.minute });
+                      } else {
+                        const now = new Date();
+                        setTimeValue({ hour: now.getHours(), minute: now.getMinutes() });
+                      }
+                      setIsTimePickerOpen(true);
+                    }}
+                    className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${draft.time.hour === null ? 'italic opacity-50' : ''}`}
+                    title="Click to edit time"
+                  >
+                    {draft.time.hour !== null ? formatTime(draft.time) : '--:--'}
+                  </button>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Buttons Container */}
-            <div className="flex flex-row items-center gap-md w-fit h-fit p-0 flex-none order-1 flex-grow-0">
-              {/* Extract Button */}
-              <div className="flex flex-row items-center gap-xs w-fit h-fit flex-none order-1 flex-grow-0">
-                <ExtractButton onClick={handleExtractClick} />
-              </div>
-
-              {/* Delete and Minimize Buttons */}
-              <div className="flex flex-row items-center gap-xs w-fit h-fit flex-none order-2 flex-grow-0">
-                {/* Delete Button */}
-                <RecycleButton
-                  onClick={handleDeleteClick}
-                  ariaLabel="Delete draft"
-                />
-
-                {/* Minimize Button */}
-                <button
-                  onClick={handleMinimizeClick}
-                  className="btn-sm hover:bg-circle-neutral-variant transition-colors"
-                  aria-label="Minimize draft"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="text-circle-primary"
-                  >
-                    <path
-                      d="M2.66667 9.33333H6.66667M6.66667 9.33333V13.3333M6.66667 9.33333L2 14M13.3333 6.66667H9.33333M9.33333 6.66667V2.66667M9.33333 6.66667L14 2"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
+          {/* Buttons Container */}
+          <div className="flex flex-row items-center gap-md w-fit h-fit p-0 flex-none">
+            <ExtractButton onClick={handleExtractClick} />
+            <RecycleButton onClick={handleDeleteClick} ariaLabel="Delete draft" />
+            <MinimizeButton onClick={handleMinimizeClick} ariaLabel="Minimize draft" />
           </div>
 
           {/* Text container */}
@@ -228,7 +353,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
             horizontal={false}
             vertical={true}
           >
-            <div className="w-fit font-circlebodymedium-draft text-circle-primary text-left opacity-50">
+            <div className="w-fit font-circlebodymedium text-circle-primary text-left">
               {draft.text}
             </div>
           </ScrollContainer>
@@ -245,6 +370,86 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
           itemName={`Draft from ${formatDate(draft.date)} ${formatTime(draft.time)}`}
         />
       )}
+
+      {/* Date Picker Overlay (portal) */}
+      {typeof window !== 'undefined' && isDatePickerOpen
+        ? createPortal(
+            (
+              <div
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setIsDatePickerOpen(false);
+                }}
+              >
+                <div>
+                  <DatePicker
+                    value={dateValue}
+                    onChange={setDateValue}
+                    label="Draft date"
+                    subtitle="When did this happen?"
+                    onConfirm={async (value) => {
+                      try {
+                        if (!value || value.precision === 'none' || !value.year) {
+                          updateTemporaryNote?.(draft.id, {
+                            date: { year: null, month: null, day: null }
+                          });
+                        } else {
+                          updateTemporaryNote?.(draft.id, {
+                            date: {
+                              year: value.year ?? null,
+                              month: value.precision === 'year' ? null : (value.month ?? null),
+                              day: value.precision === 'day' ? (value.day ?? null) : null,
+                            }
+                          });
+                        }
+                      } catch (err) {
+                        console.error('Failed to update draft date', err);
+                      } finally {
+                        setIsDatePickerOpen(false);
+                      }
+                    }}
+                    onCancel={() => setIsDatePickerOpen(false)}
+                  />
+                </div>
+              </div>
+            ),
+            document.body
+          )
+        : null}
+
+      {/* Time Picker Overlay (portal) */}
+      {typeof window !== 'undefined' && isTimePickerOpen
+        ? createPortal(
+            (
+              <div
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setIsTimePickerOpen(false);
+                }}
+              >
+                <div className="mx-4">
+                  <TimePicker
+                    value={timeValue}
+                    onChange={setTimeValue}
+                    label="Draft time"
+                    subtitle="What time did this happen?"
+                    onConfirm={async (value) => {
+                      try {
+                        updateTemporaryNote?.(draft.id, { time: { hour: value.hour, minute: value.minute } });
+                      } catch (err) {
+                        console.error('Failed to update draft time', err);
+                      } finally {
+                        setIsTimePickerOpen(false);
+                      }
+                    }}
+                    onCancel={() => setIsTimePickerOpen(false)}
+                  />
+                </div>
+              </div>
+            ),
+            document.body
+          )
+        : null}
     </>
   );
 };

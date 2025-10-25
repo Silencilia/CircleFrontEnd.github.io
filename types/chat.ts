@@ -1,4 +1,4 @@
-export type ComponentKind = 'NameConfirm' | 'NoteCard' | 'ContactCard';
+export type ComponentKind = 'NameConfirm' | 'NoteCard' | 'ContactCard' | 'DraftCard';
 
 export type ChatMessagePart =
   | { type: 'text'; text: string }

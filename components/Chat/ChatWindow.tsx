@@ -27,6 +27,7 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
   const textParts = (entry.parts || []).filter((p: any) => p.type === 'text');
   const contactParts = componentParts.filter((p: any) => p.kind === 'ContactCard');
   const noteParts = componentParts.filter((p: any) => p.kind === 'NoteCard');
+  const otherParts = componentParts.filter((p: any) => p.kind !== 'ContactCard' && p.kind !== 'NoteCard');
 
   const contactScrollRef = useDragScroll<HTMLDivElement>();
   const noteScrollRef = useDragScroll<HTMLDivElement>();
@@ -70,6 +71,19 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
           >
             {noteParts.map((p: any, idx: number) => (
               <div key={`n-${idx}`} className="shrink-0">
+                {renderComponent(p.kind, {
+                  ...p.props,
+                  onOpenNoteDetail: (note: Note, src: any) => onOpenNoteDetail(note, src),
+                  onOpenContactDetail: (contact: Contact, src: any) => onOpenContactDetail(contact, src),
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+        {!isUser && otherParts.length > 0 && (
+          <div className="w-full flex flex-col gap-md">
+            {otherParts.map((p: any, idx: number) => (
+              <div key={`o-${idx}`} className="shrink-0">
                 {renderComponent(p.kind, {
                   ...p.props,
                   onOpenNoteDetail: (note: Note, src: any) => onOpenNoteDetail(note, src),

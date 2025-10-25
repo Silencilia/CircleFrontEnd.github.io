@@ -143,6 +143,109 @@ export async function detectContactNames(
   }
 }
 
+// New classification utility to map detected human names to existing contacts or new names
+export interface ClassifiedExistingMatch {
+  contact: Contact;
+  original: string; // original detected string form
+  snippet: string; // short context
+}
+
+export interface ClassifiedNewName {
+  name: string;
+  snippet: string;
+}
+
+export interface ClassifiedNamesResult {
+  existing: ClassifiedExistingMatch[];
+  newOnes: ClassifiedNewName[];
+}
+
+function normalizeName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\./g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokenSet(str: string): Set<string> {
+  return new Set(normalizeName(str).split(' ').filter(Boolean));
+}
+
+function isFuzzyMatch(candidate: string, contactName: string): boolean {
+  const c = normalizeName(candidate);
+  const n = normalizeName(contactName);
+
+  if (c === n) return true;
+  if (n.includes(c) || c.includes(n)) return true;
+
+  // token overlap: first/last only, prefixes
+  const tC = Array.from(tokenSet(c));
+  const tN = Array.from(tokenSet(n));
+  const setN = new Set(tN);
+  const overlap = tC.filter((t) => setN.has(t)).length;
+  if (overlap >= Math.min(1, Math.ceil(Math.min(tC.length, tN.length) / 2))) return true;
+
+  // initials handling, e.g., "J S" vs "John Smith"
+  const initials = tC.every((t) => t.length === 1);
+  if (initials && tC.length <= tN.length) {
+    let matched = 0;
+    for (let i = 0; i < tC.length && i < tN.length; i++) {
+      if (tC[i][0] === tN[i][0]) matched++;
+    }
+    if (matched === tC.length) return true;
+  }
+
+  return false;
+}
+
+export function classifyDetectedNames(
+  detected: Array<{ name: string; occurrences: Array<{ snippet: string }> }>,
+  contacts: Contact[]
+): ClassifiedNamesResult {
+  const existing: ClassifiedExistingMatch[] = [];
+  const newOnes: ClassifiedNewName[] = [];
+
+  for (const d of detected) {
+    const original = d.name;
+    const snippet = d.occurrences?.[0]?.snippet || original;
+
+    // find best fuzzy match
+    let best: Contact | undefined;
+    for (const c of contacts) {
+      if (isFuzzyMatch(original, c.name)) {
+        best = c;
+        break;
+      }
+    }
+
+    if (best) {
+      existing.push({ contact: best, original, snippet });
+    } else {
+      newOnes.push({ name: original, snippet });
+    }
+  }
+
+  // Deduplicate by contact/name preserving order
+  const seenC = new Set<string>();
+  const dedupExisting = existing.filter((e) => {
+    const k = e.contact.id;
+    if (seenC.has(k)) return false;
+    seenC.add(k);
+    return true;
+  });
+
+  const seenN = new Set<string>();
+  const dedupNew = newOnes.filter((n) => {
+    const k = normalizeName(n.name);
+    if (seenN.has(k)) return false;
+    seenN.add(k);
+    return true;
+  });
+
+  return { existing: dedupExisting, newOnes: dedupNew };
+}
+
 /**
  * Alternative simple text-based matching for fallback
  */

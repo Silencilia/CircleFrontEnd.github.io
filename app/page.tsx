@@ -16,6 +16,8 @@ import { useIsMobile } from '../hooks/useIsMobile';
 import { useSpeedMode } from '../hooks/useSpeedMode';
 import { supabase } from '../lib/supabase';
 import { identifyRequest } from '../utils/api/talkToCircleHelpers';
+import { detectHumanNamesWithContext } from '../utils/humanNameDetection';
+import { classifyDetectedNames } from '../utils/contactNameDetection';
 import { useChat } from '../contexts/ChatContext';
 import { useEffect } from 'react';
 import LoadingOverlay from '../components/LoadingOverlay';
@@ -36,6 +38,7 @@ interface InitialMessageHandlerProps {
 
 const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMessage, onMessageHandled }) => {
   const chat = useChat();
+  const contactsCtx = useContacts();
   const processedMessages = useRef(new Set<string>());
 
   useEffect(() => {
@@ -81,6 +84,44 @@ const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMe
             chat.setIsThinking
           );
         }
+        // Client-side record flow: create temp note, detect names, ask for confirmation
+        const lastUserText = pendingMessage.text;
+        console.log('[Record Flow] Starting record flow with text:', lastUserText);
+        if (lastUserText && chat.chatId) {
+          try {
+            console.log('[Record Flow] Creating temporary note...');
+            const draft = contactsCtx.createTemporaryNoteFromText(lastUserText);
+            console.log('[Record Flow] Draft created:', draft.id);
+            
+            console.log('[Record Flow] Detecting human names...');
+            const detected = await detectHumanNamesWithContext(lastUserText);
+            console.log('[Record Flow] Detected names:', detected);
+            
+            console.log('[Record Flow] Classifying names...');
+            const classified = classifyDetectedNames(detected, contactsCtx.state.contacts);
+            console.log('[Record Flow] Classified:', { existing: classified.existing.length, newOnes: classified.newOnes.length });
+
+            console.log('[Record Flow] Adding system text...');
+            await chat.addSystemText('Sounds like you met a few people. Do these look right?');
+            
+            console.log('[Record Flow] Adding NameConfirm component...');
+            await chat.addSystemComponent('NameConfirm', {
+              draftId: draft.id,
+              existing: classified.existing.map(e => ({
+                contactId: e.contact.id,
+                contactName: e.contact.name,
+                original: e.original,
+                snippet: e.snippet,
+              })),
+              newOnes: classified.newOnes,
+            });
+            console.log('[Record Flow] Complete!');
+          } catch (err) {
+            console.error('[Record Flow] Error:', err);
+          }
+        } else {
+          console.log('[Record Flow] Skipped - no text or chatId');
+        }
       } catch (error) {
         console.error('Error processing initial message:', error);
       } finally {
@@ -89,7 +130,7 @@ const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMe
     };
 
     processMessage();
-  }, [pendingMessage?.chatId, pendingMessage?.messageId, chat, onMessageHandled]);
+  }, [pendingMessage?.chatId, pendingMessage?.messageId, chat, contactsCtx, onMessageHandled]);
 
   return null;
 };

@@ -4,6 +4,7 @@ import { ComponentKind } from '../../types/chat';
 import { useContacts } from '../../contexts/ContactContext';
 import ContactCard from '../Cards/ContactCard';
 import NoteCard from '../Cards/NoteCard';
+import DraftCardDetail from '../Cards/DraftCardDetail';
 
 type Renderer = (props: any) => React.ReactNode;
 
@@ -31,10 +32,19 @@ const NoteRef: Renderer = ({ id, onOpenNoteDetail, onOpenContactDetail, isNested
   );
 };
 
+const DraftCardRef: Renderer = ({ id, onMinimize }: { id: string; onMinimize?: () => void }) => {
+  const { state } = useContacts();
+  const draft = state.drafts.find((d: any) => d.id === id);
+  console.log('[Registry] DraftCard render', { id, found: !!draft });
+  if (!draft) return null;
+  return <DraftCardDetail draft={draft} onMinimize={onMinimize} />;
+};
+
 const renderers: Record<ComponentKind, Renderer> = {
   NameConfirm: (props) => <NameConfirm {...props} />,
   NoteCard: NoteRef,
   ContactCard: ContactRef,
+  DraftCard: DraftCardRef,
 };
 
 export function renderComponent(kind: ComponentKind, props: any) {
