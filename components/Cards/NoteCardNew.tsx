@@ -6,7 +6,7 @@ import { Note, useContacts, Contact, parseTimeToTimeValue, TimeValue } from '../
 import { CalendarIcon } from '../icons';
 import { ConfirmButton, CancelButton, NewTagButton } from '../Button';
 import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
-import NameConfirmationDialog from '../Dialogs/NameConfirmationDialog';
+import NameConfirmationModal from '../Dialogs/NameConfirmationModal';
 import NewSentiment from '../Dialogs/NewSentiment';
 import { contactReference } from '../../data/referenceParsing';
 import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
@@ -703,7 +703,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
       />
 
       {/* Name Confirmation Dialog */}
-      <NameConfirmationDialog
+      <NameConfirmationModal
         isOpen={isNameConfirmationOpen}
         onConfirm={handleNameConfirmationConfirm}
         onCancel={handleNameConfirmationCancel}
