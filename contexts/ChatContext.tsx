@@ -9,6 +9,7 @@ interface ChatContextValue {
   addUserMessage: (text: string) => Promise<string>;
   addSystemText: (text: string) => Promise<void>;
   addSystemComponent: (kind: ComponentKind, props: unknown) => Promise<void>;
+  updateComponentProps: (messageId: string, newProps: unknown) => Promise<void>;
   chatId: string | null;
   isThinking: boolean;
   setIsThinking: (thinking: boolean) => void;
@@ -115,6 +116,18 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
                 parts: row.parts ?? undefined,
                 createdAt: row.created_at,
               }]);
+            } else if (payload.eventType === 'UPDATE') {
+              const row: any = payload.new;
+              setEntries((prev) => prev.map(e => 
+                e.id === row.id
+                  ? {
+                      ...e,
+                      role: row.role,
+                      text: row.text ?? undefined,
+                      parts: row.parts ?? undefined,
+                    }
+                  : e
+              ));
             }
           })
           .subscribe();
@@ -197,6 +210,66 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
     }, [insertMessage]
   );
 
+  // Update component props in an existing message
+  const updateComponentProps = useCallback(
+    async (messageId: string, newProps: unknown) => {
+      if (!chatIdRef.current) throw new Error('No active chat');
+      
+      if (remoteEnabled) {
+        // Find the message and merge props
+        const entry = entries.find(e => e.id === messageId);
+        if (!entry?.parts) return;
+        
+        const updatedParts = entry.parts.map(part => 
+          part.type === 'component' 
+            ? { ...part, props: { ...(part.props as object), ...(newProps as object) } }
+            : part
+        );
+        
+        const { error } = await supabase
+          .from('chat_messages')
+          .update({ parts: updatedParts })
+          .eq('id', messageId);
+        
+        if (error) {
+          console.error('Failed to update message props', error);
+          throw error;
+        }
+        
+        // Update local state optimistically
+        setEntries(prev => prev.map(e => 
+          e.id === messageId 
+            ? { ...e, parts: updatedParts }
+            : e
+        ));
+      } else {
+        // Local-only fallback
+        setEntries((prev) => {
+          const updated = prev.map(e => {
+            if (e.id === messageId && e.parts) {
+              return {
+                ...e,
+                parts: e.parts.map(part =>
+                  part.type === 'component'
+                    ? { ...part, props: { ...(part.props as object), ...(newProps as object) } }
+                    : part
+                )
+              };
+            }
+            return e;
+          });
+          
+          // Persist to localStorage
+          if (typeof window !== 'undefined' && chatIdRef.current) {
+            const key = `circle_chat_messages_${chatIdRef.current}`;
+            localStorage.setItem(key, JSON.stringify(updated));
+          }
+          return updated;
+        });
+      }
+    }, [remoteEnabled, entries]
+  );
+
   // Persist isThinking to localStorage whenever it changes
   useEffect(() => {
     if (chatId && typeof window !== 'undefined') {
@@ -221,10 +294,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ chatId, children }) 
     addUserMessage,
     addSystemText,
     addSystemComponent,
+    updateComponentProps,
     chatId: chatIdRef.current ?? null,
     isThinking,
     setIsThinking,
-  }), [entries, addUserMessage, addSystemText, addSystemComponent, chatIdRef.current, isThinking, setIsThinking]);
+  }), [entries, addUserMessage, addSystemText, addSystemComponent, updateComponentProps, chatIdRef.current, isThinking, setIsThinking]);
 
   // Provide children with chat state and message actions for in-line editing, etc.
   return (

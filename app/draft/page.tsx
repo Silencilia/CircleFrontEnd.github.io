@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Title from '../../components/Headers/Title';
 import NavigationBar from '../../components/NavigationBar';
 import DraftGallery from '../../components/Gallery/DraftGallery';
-import DraftCardDetail from '../../components/Cards/DraftCardDetail';
+import DraftDialog from '../../components/Dialogs/DraftDialog';
 import { useContacts } from '../../contexts/ContactContext';
 import { Draft } from '../../contexts/ContactContext';
 
@@ -62,14 +62,14 @@ export default function DraftPage() {
       {/* NavigationBar - positioned at very bottom */}
       <NavigationBar currentPage="draft" />
 
-      {/* Grey-out overlay and DraftCardDetail */}
+      {/* Grey-out overlay and DraftDialog */}
       {isDraftDetailOpen && selectedDraft && (
         <>
           {/* Grey-out overlay - covers everything including header and navigation */}
           <div className="fixed inset-0 bg-circle-primary/50 z-[60] flex items-center justify-center">
-            {/* DraftCardDetail - positioned above overlay */}
+            {/* DraftDialog - positioned above overlay */}
             <div className="relative z-[70] w-full h-full sm:w-auto sm:h-auto">
-              <DraftCardDetail
+              <DraftDialog
                 draft={selectedDraft}
                 onExtract={handleExtractDraft}
                 onDelete={handleDeleteDraft}

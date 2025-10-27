@@ -15,7 +15,7 @@ import useCardNavigation from '../../hooks/useCardNavigation';
 import { useDragScroll } from '../../hooks/useDragScroll';
 
 // Memoized message component to prevent unnecessary re-renders
-const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDetail, onContactMenuClick }: { entry: any; onOpenContactDetail: (c: Contact, src: any) => void; onOpenNoteDetail: (n: Note, src: any) => void; onContactMenuClick: (contactId: string) => void }) => {
+const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDetail, onContactMenuClick, state }: { entry: any; onOpenContactDetail: (c: Contact, src: any) => void; onOpenNoteDetail: (n: Note, src: any) => void; onContactMenuClick: (contactId: string) => void; state: any }) => {
   const isUser = entry.role === 'user';
   const bubble = isUser ? (
     <UserMessageCard text={entry.text ?? ''} />
@@ -29,6 +29,30 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
   const noteParts = componentParts.filter((p: any) => p.kind === 'NoteCard');
   const otherParts = componentParts.filter((p: any) => p.kind !== 'ContactCard' && p.kind !== 'NoteCard');
 
+  // Separate valid and missing contacts
+  const { validContactParts, missingContactCount } = useMemo(() => {
+    const valid = contactParts.filter((p: any) => {
+      const contact = state.contacts.find((c: Contact) => c.id === p.props?.id);
+      return contact && !contact.is_trashed;
+    });
+    return {
+      validContactParts: valid,
+      missingContactCount: contactParts.length - valid.length
+    };
+  }, [contactParts, state.contacts]);
+
+  // Separate valid and missing notes
+  const { validNoteParts, missingNoteCount } = useMemo(() => {
+    const valid = noteParts.filter((p: any) => {
+      const note = state.notes.find((n: Note) => n.id === p.props?.id);
+      return note && !note.is_trashed;
+    });
+    return {
+      validNoteParts: valid,
+      missingNoteCount: noteParts.length - valid.length
+    };
+  }, [noteParts, state.notes]);
+
   const contactScrollRef = useDragScroll<HTMLDivElement>();
   const noteScrollRef = useDragScroll<HTMLDivElement>();
 
@@ -41,7 +65,12 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
             <SystemMessageCard text={p.text} />
           </div>
         ))}
-        {!isUser && contactParts.length > 0 && (
+        {!isUser && missingContactCount > 0 && (
+          <div className="w-full">
+            <SystemMessageCard text={`Ooops. That contact is already gone. Did you delete it after we chatted?`} />
+          </div>
+        )}
+        {!isUser && validContactParts.length > 0 && (
           <div 
             ref={contactScrollRef}
             className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto scrollbar-hide"
@@ -50,17 +79,22 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
               msOverflowStyle: 'none',
             }}
           >
-            {contactParts.map((p: any, idx: number) => (
+            {validContactParts.map((p: any, idx: number) => (
               <div key={`c-${idx}`} className="shrink-0">
                 {renderComponent(p.kind, {
                   ...p.props,
                   onMenuClick: () => onContactMenuClick(p.props?.id as string),
-                })}
+                }, entry.id)}
               </div>
             ))}
           </div>
         )}
-        {!isUser && noteParts.length > 0 && (
+        {!isUser && missingNoteCount > 0 && (
+          <div className="w-full">
+            <SystemMessageCard text={`Ooops. That note is already gone. Did you delete it after we chatted?`} />
+          </div>
+        )}
+        {!isUser && validNoteParts.length > 0 && (
           <div 
             ref={noteScrollRef}
             className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto scrollbar-hide"
@@ -69,13 +103,13 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
               msOverflowStyle: 'none',
             }}
           >
-            {noteParts.map((p: any, idx: number) => (
+            {validNoteParts.map((p: any, idx: number) => (
               <div key={`n-${idx}`} className="shrink-0">
                 {renderComponent(p.kind, {
                   ...p.props,
                   onOpenNoteDetail: (note: Note, src: any) => onOpenNoteDetail(note, src),
                   onOpenContactDetail: (contact: Contact, src: any) => onOpenContactDetail(contact, src),
-                })}
+                }, entry.id)}
               </div>
             ))}
           </div>
@@ -88,7 +122,7 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
                   ...p.props,
                   onOpenNoteDetail: (note: Note, src: any) => onOpenNoteDetail(note, src),
                   onOpenContactDetail: (contact: Contact, src: any) => onOpenContactDetail(contact, src),
-                })}
+                }, entry.id)}
               </div>
             ))}
           </div>
@@ -130,6 +164,7 @@ const ChatWindow: React.FC = () => {
       <MessageComponent
         key={entry.id}
         entry={entry}
+        state={state}
         onOpenContactDetail={(c) => openContactDetail(c, createSourceRecord('contactCardDetail', c.id))}
         onOpenNoteDetail={(n) => openNoteDetail(n, createSourceRecord('noteCardDetail', n.id))}
         onContactMenuClick={(contactId: string) => {
@@ -141,7 +176,7 @@ const ChatWindow: React.FC = () => {
           }
         }}
       />
-    )), [entries, openContactDetail, openNoteDetail, state.contacts]
+    )), [entries, openContactDetail, openNoteDetail, state]
   );
 
   useEffect(() => {

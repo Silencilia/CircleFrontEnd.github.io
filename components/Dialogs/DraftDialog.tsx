@@ -3,36 +3,50 @@ import ScrollContainer from 'react-indiana-drag-scroll';
 import ExtractButton from '../Button/ExtractButton';
 import RecycleButton from '../Button/RecycleButton';
 import MinimizeButton from '../Button/MinimizeButton';
-import DeleteConfirmationDialog from '../Dialogs/DeleteConfirmationDialog';
-import { Draft, useContacts, PrecisionDate } from '../../contexts/ContactContext';
+import DeleteConfirmationDialog from './DeleteConfirmationDialog';
+import { Draft, useContacts, PrecisionDate, Contact } from '../../contexts/ContactContext';
 import ContentEditable from 'react-contenteditable';
 import { CancelButton, ConfirmButton } from '../Button';
-import DatePicker, { DynamicPrecisionDateValue } from '../Dialogs/DatePicker';
-import TimePicker from '../Dialogs/TimePicker';
+import DatePicker, { DynamicPrecisionDateValue } from './DatePicker';
+import TimePicker from './TimePicker';
 import { CalendarIcon } from '../icons';
 import { createPortal } from 'react-dom';
 import { EDITING_MODE_PADDING } from '../../data/variables';
+import { useChat } from '../../contexts/ChatContext';
+import { extractContactIdsFromText } from '../../utils/api/extractContactIds';
+import { summarizeDraft } from '../../utils/api/summarizeDraft';
+import { contactReference } from '../../data/referenceParsing';
 
-interface DraftCardDetailProps {
+interface DraftDialogProps {
   draft: Draft;
   onExtract?: (draft: Draft) => void;
   onDelete?: (draft: Draft) => void;
   onMinimize?: () => void;
+  onOpenContactDetail?: (contact: Contact, src: any) => void;
+  messageId?: string;
+  locked?: 'confirm' | 'cancel' | 'extract' | null;
 }
 
-const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
+const DraftDialog: React.FC<DraftDialogProps> = ({
   draft,
   onExtract,
   onDelete,
-  onMinimize
+  onMinimize,
+  onOpenContactDetail,
+  messageId,
+  locked: initialLocked = null
 }) => {
-  const { updateTemporaryNote } = useContacts();
+  const { updateTemporaryNote, addNote, addSentiment, state } = useContacts();
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  const chat = useChat();
   const textContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [locked, setLocked] = useState<null | 'confirm' | 'cancel' | 'extract'>(initialLocked);
 
   // Title editing
   const [isTitleEditing, setIsTitleEditing] = useState(false);
@@ -52,6 +66,18 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
     setIsMounted(true);
   }, []);
 
+  // Helper to update locked state persistently
+  const setLockedPersistent = useCallback(async (value: 'confirm' | 'cancel' | 'extract') => {
+    setLocked(value);
+    if (messageId) {
+      try {
+        await chat.updateComponentProps(messageId, { locked: value });
+      } catch (error) {
+        console.error('Failed to persist locked state:', error);
+      }
+    }
+  }, [messageId, chat]);
+
   const handleDeleteClick = useCallback(() => {
     setDeleteDialogOpen(true);
   }, []);
@@ -67,17 +93,155 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
     setDeleteDialogOpen(false);
   }, []);
 
-  const handleExtractClick = useCallback(() => {
-    if (onExtract) {
-      onExtract(draft);
+  const handleExtractClick = useCallback(async () => {
+    if (locked) {
+      console.log('[DraftDialog] Extract click ignored because locked', { draftId: draft.id, locked });
+      return;
     }
-  }, [draft, onExtract]);
+    console.log('[DraftDialog] Extract click start', { draftId: draft.id, hasTitle: !!draft.title, textLength: draft.text?.length || 0 });
+    await setLockedPersistent('extract');
+    console.log('[DraftDialog] Locked set to extract');
+    chat.setIsThinking(true);
+    try {
+      // Call summarization API with existing sentiments
+      console.log('[DraftDialog] Calling summarizeDraft', { existingSentimentsCount: state.sentiments?.length || 0 });
+      const selectedIds = extractContactIdsFromText(draft.text);
+      const selectedContacts = state.contacts
+        .filter(c => selectedIds.includes(c.id))
+        .map(c => ({ id: c.id, name: c.name }));
+      const summary = await summarizeDraft({
+        title: draft.title || '',
+        text: draft.text,
+        existingSentiments: state.sentiments.map(s => ({ id: s.id, label: s.label, category: s.category })),
+        selectedContacts,
+      });
+      console.log('[DraftDialog] summarizeDraft result', {
+        titleLen: (summary.title || '').length,
+        textLen: (summary.text || '').length,
+        existingSentimentIds: summary.sentiments.existing_ids?.length || 0,
+        newSentimentLabels: summary.sentiments.new_labels?.length || 0,
+      });
 
-  const handleMinimizeClick = useCallback(() => {
-    if (onMinimize) {
-      onMinimize();
+      // Create any new sentiments first (limit to keep total ≤ 3 already enforced server-side)
+      const createdIds: string[] = [];
+      for (const label of summary.sentiments.new_labels) {
+        try {
+          console.log('[DraftDialog] Creating new sentiment', { label });
+          const created = await addSentiment({ label, category: 'general' });
+          console.log('[DraftDialog] Created sentiment', { id: created.id, label: created.label });
+          createdIds.push(created.id);
+        } catch (e) {
+          console.error('Failed to create new sentiment:', label, e);
+        }
+      }
+
+      // Fallback: ensure tokens for selected contacts if names slipped through
+      let ensuredText = summary.text;
+      for (const sc of selectedContacts) {
+        const token = `{{contact:${sc.id}}}`;
+        if (!ensuredText.includes(token) && sc.name) {
+          try {
+            const esc = sc.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            ensuredText = ensuredText.replace(new RegExp(`\\b${esc}\\b`, 'g'), token);
+          } catch {}
+        }
+      }
+      summary.text = ensuredText;
+
+      const sentiment_ids = [...summary.sentiments.existing_ids, ...createdIds];
+      console.log('[DraftDialog] Final sentiment_ids', { count: sentiment_ids.length, sentiment_ids });
+      const contact_ids = extractContactIdsFromText(summary.text);
+      console.log('[DraftDialog] Extracted contact_ids from summarized text', { count: contact_ids.length, contact_ids });
+
+      // Reuse confirm pathway to create note and announce
+      console.log('[DraftDialog] Creating note from summary with carried date/time');
+      await addNote({
+        title: summary.title || (draft.title || ''),
+        text: summary.text,
+        date: draft.date,
+        time_value: draft.time,
+        sentiment_ids,
+        contact_ids,
+        is_trashed: false,
+      });
+      console.log('[DraftDialog] addNote completed');
+
+      // Find created note and announce (poll state since addNote updates async)
+      let newNote = stateRef.current.notes.find(n => n.text === summary.text && n.title === (summary.title || (draft.title || '')));
+      for (let i = 0; !newNote && i < 20; i++) {
+        await new Promise(r => setTimeout(r, 100));
+        newNote = stateRef.current.notes.find(n => n.text === summary.text && n.title === (summary.title || (draft.title || '')));
+        if (!newNote) console.log('[DraftDialog] Waiting for note to appear in state...', { attempt: i + 1 });
+      }
+      if (newNote) {
+        console.log('[DraftDialog] Found newly created note in state', { id: newNote.id });
+        await chat.addSystemText('Great! Here is your note:');
+        await chat.addSystemComponent('NoteCard', { id: newNote.id });
+        console.log('[DraftDialog] Mounted NoteCard for new note');
+      } else {
+        console.warn('[DraftDialog] Could not find newly created note in state after polling');
+      }
+
+      if (onMinimize) onMinimize();
+      console.log('[DraftDialog] Extract flow finished, dialog minimized');
+    } catch (error) {
+      console.error('Summarize draft failed:', error);
+    } finally {
+      chat.setIsThinking(false);
+      console.log('[DraftDialog] isThinking set to false');
     }
-  }, [onMinimize]);
+  }, [draft, onExtract, locked, setLockedPersistent, chat, state.sentiments]);
+
+  const handleCancelClick = useCallback(async () => {
+    if (locked) return;
+    await setLockedPersistent('cancel');
+    try {
+      await chat.addSystemText("Cool. We can discard this note and start over. What can I do for you then?");
+      if (onMinimize) {
+        onMinimize();
+      }
+    } catch (error) {
+      console.error('Failed to add cancel message:', error);
+    }
+  }, [chat, onMinimize, locked, setLockedPersistent]);
+
+  const handleConfirmClick = useCallback(async () => {
+    if (locked) return;
+    await setLockedPersistent('confirm');
+    try {
+      // Extract contact IDs from the draft text
+      const contact_ids = extractContactIdsFromText(draft.text);
+      
+      // Create a new note and add it to the database
+      await addNote({
+        title: draft.title || '',
+        text: draft.text,
+        date: draft.date,
+        time_value: draft.time,
+        sentiment_ids: [],
+        contact_ids,
+        is_trashed: false
+      });
+
+      // Find the newly created note (it will be the most recent one with matching text)
+      const newNote = state.notes.find(n => n.text === draft.text && n.title === (draft.title || ''));
+
+      if (newNote) {
+        // Add system message
+        await chat.addSystemText("Great! Here is your note:");
+        
+        // Add the note card to chat
+        await chat.addSystemComponent('NoteCard', { id: newNote.id });
+      }
+
+      // Minimize the draft card
+      if (onMinimize) {
+        onMinimize();
+      }
+    } catch (error) {
+      console.error('Failed to create note:', error);
+    }
+  }, [draft, addNote, chat, onMinimize, state.notes, locked, setLockedPersistent]);
 
   // Mouse wheel scrolling
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -175,6 +339,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
   };
 
   const handleTitleEditClick = () => {
+    if (locked) return;
     setIsTitleEditing(true);
     setEditTitle(draft.title || '');
     setOriginalTitle(draft.title || '');
@@ -234,7 +399,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
 
   return (
     <>
-      <div className="crd-dtl">
+      <div className={`dlg-chat ${locked ? 'opacity-60 pointer-events-none' : ''}`}>
         {/* Main container */}
         <div className="flex flex-col w-full h-full gap-lg overflow-hidden">
 
@@ -296,6 +461,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
                   <button
                     type="button"
                     onClick={() => {
+                      if (locked) return;
                       let init: DynamicPrecisionDateValue;
                       if (draft.date && typeof draft.date.year === 'number') {
                         if (typeof draft.date.month === 'number' && typeof draft.date.day === 'number') {
@@ -313,6 +479,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
                     }}
                     className={`w-fit h-fit font-circlebodymedium text-circle-primary flex items-center ${!draft.date?.year ? 'italic opacity-50' : ''}`}
                     title="Click to edit date"
+                    disabled={!!locked}
                   >
                     {draft.date?.year ? formatDate(draft.date) : 'no date'}
                   </button>
@@ -322,6 +489,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
                   <button
                     type="button"
                     onClick={() => {
+                      if (locked) return;
                       if (draft.time && typeof draft.time.hour === 'number' && typeof draft.time.minute === 'number') {
                         setTimeValue({ hour: draft.time.hour, minute: draft.time.minute });
                       } else {
@@ -332,6 +500,7 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
                     }}
                     className={`w-fit h-[20px] font-circlebodymedium text-circle-primary flex items-center ${draft.time.hour === null ? 'italic opacity-50' : ''}`}
                     title="Click to edit time"
+                    disabled={!!locked}
                   >
                     {draft.time.hour !== null ? formatTime(draft.time) : '--:--'}
                   </button>
@@ -340,12 +509,6 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
             </div>
           </div>
 
-          {/* Buttons Container */}
-          <div className="flex flex-row items-center gap-md w-fit h-fit p-0 flex-none">
-            <ExtractButton onClick={handleExtractClick} />
-            <RecycleButton onClick={handleDeleteClick} ariaLabel="Delete draft" />
-            <MinimizeButton onClick={handleMinimizeClick} ariaLabel="Minimize draft" />
-          </div>
 
           {/* Text container */}
           <ScrollContainer
@@ -353,10 +516,39 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
             horizontal={false}
             vertical={true}
           >
-            <div className="w-fit font-circlebodymedium text-circle-primary text-left">
-              {draft.text}
+            <div className="w-fit font-circlebodymedium text-circle-primary text-left whitespace-pre-wrap break-words">
+              {contactReference(draft.text, state.contacts, (contact) => {
+                console.log('[DraftDialog] contact span clicked', { id: contact?.id, name: contact?.name });
+                if (!contact || !onOpenContactDetail) return;
+                onOpenContactDetail(contact, null);
+              })}
             </div>
           </ScrollContainer>
+
+           {/* Buttons Container */}
+           <div className="flex flex-row items-center gap-md justify-end w-full h-fit p-0 flex-none">
+            <ExtractButton 
+              onClick={handleExtractClick} 
+              disabled={!!locked}
+              className={locked === 'extract' ? '!bg-circle-neutral-variant' : ''}
+            >
+              Summarize
+            </ExtractButton>
+              <div className="flex flex-row items-center gap-xs">
+              <CancelButton 
+                onClick={handleCancelClick} 
+                ariaLabel="Cancel draft" 
+                disabled={!!locked}
+                className={locked === 'cancel' ? '!bg-circle-neutral-variant' : ''}
+              />
+              <ConfirmButton 
+                onClick={handleConfirmClick} 
+                ariaLabel="Confirm draft" 
+                disabled={!!locked}
+                className={locked === 'confirm' ? '!bg-circle-neutral-variant' : ''}
+              />
+              </div>
+          </div>
         </div>
       </div>
 
@@ -454,4 +646,5 @@ const DraftCardDetail: React.FC<DraftCardDetailProps> = ({
   );
 };
 
-export default DraftCardDetail;
+export default DraftDialog;
+

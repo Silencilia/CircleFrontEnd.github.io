@@ -8,7 +8,7 @@ type UserMessageCardProps = {
 
 const UserMessageCard: React.FC<UserMessageCardProps> = ({ text }) => {
   return (
-    <div className="rounded-md  px-md py-md bg-circle-primary text-circle-white whitespace-pre-wrap break-words">
+    <div className="rounded-md  px-md py-md bg-circle-primary text-circle-white whitespace-pre-wrap break-words select-text">
       {text ?? ''}
     </div>
   );

@@ -9,8 +9,8 @@ export const CONTACT_REFERENCE_REGEX = /\{\{\s*contact\s*:([^}]+)\s*\}\}/g;
 
 // Contact Reference Styling Constants
 export const CONTACT_REFERENCE_STYLES = {
-  base: 'font-circlebodymedium-highlight text-circle-primary cursor-pointer rounded-sm',
-  mobile: 'font-circlebodysmall-highlight text-circle-primary cursor-pointer rounded-sm',
+  base: 'font-circlebodymedium-highlight text-circle-primary cursor-pointer rounded-sm select-text',
+  mobile: 'font-circlebodysmall-highlight text-circle-primary cursor-pointer rounded-sm select-text',
   editable: 'data-contact-ref="true" contenteditable="false"',
   attributes: {
     contactRef: 'data-contact-ref',

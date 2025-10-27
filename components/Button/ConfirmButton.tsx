@@ -5,17 +5,20 @@ interface ConfirmButtonProps {
   onClick?: () => void;
   className?: string;
   ariaLabel?: string;
+  disabled?: boolean;
 }
 
 const ConfirmButton: React.FC<ConfirmButtonProps> = ({ 
   onClick, 
   className = '', 
-  ariaLabel = 'Confirm' 
+  ariaLabel = 'Confirm',
+  disabled = false
 }) => {
   return (
     <button
       onClick={onClick}
-      className={`btn-sm bg-transparent hover:bg-circle-neutral-variant focus:outline-none focus:ring-2 focus:ring-inset focus:ring-circle-primary transition-colors group ${className}`}
+      disabled={disabled}
+      className={`btn-sm bg-transparent ${!disabled ? 'hover:bg-circle-neutral-variant' : ''} focus:outline-none transition-colors group ${className}`}
       aria-label={ariaLabel}
     >
         <ConfirmIcon

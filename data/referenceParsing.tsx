@@ -24,7 +24,7 @@ export function contactReference(
       const beforeText = text.slice(lastIndex, match.index);
       // Wrap plain text in an editable span so container clicks can target only these chunks
       parts.push(
-        <span key={`text-${lastIndex}`} data-editable="true">
+        <span key={`text-${lastIndex}`} data-editable="true" className="select-text">
           {beforeText}
         </span>
       );
@@ -36,7 +36,7 @@ export function contactReference(
     parts.push(
       <span
         key={`contact-${contactId}-${match.index}`}
-        className={isMobile ? CONTACT_REFERENCE_STYLES.mobile : CONTACT_REFERENCE_STYLES.base}
+        className={`${isMobile ? CONTACT_REFERENCE_STYLES.mobile : CONTACT_REFERENCE_STYLES.base} select-text`}
         data-contact-ref="true"
         role="button"
         tabIndex={0}

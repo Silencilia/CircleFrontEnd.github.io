@@ -752,6 +752,27 @@ module.exports = {
           'flex-direction': 'column',
           'border-radius': '12px'
         },
+
+        
+        '.dlg-chat': {
+          width: '100%',
+          height: '100%',
+          'max-height': '720px',
+          overflow: 'hidden',
+          'background-color': '#FFFFFF',
+          padding: '15px',
+          // Add safe-area awareness so mobile browser UI doesn’t overlap
+          'padding-top': 'calc(15px + env(safe-area-inset-top))',
+          'padding-bottom': 'calc(15px + env(safe-area-inset-bottom))',
+          display: 'flex',
+          'flex-direction': 'column',
+          // Desktop styles at 640px+
+          [`@media (min-width: 640px)`]: {
+            width: '600px',
+            height: 'fit-content',
+            'border-radius': '12px',
+          },
+        },
       };
 
       addUtilities(dialogUtilities);

@@ -4,11 +4,11 @@ import { ComponentKind } from '../../types/chat';
 import { useContacts } from '../../contexts/ContactContext';
 import ContactCard from '../Cards/ContactCard';
 import NoteCard from '../Cards/NoteCard';
-import DraftCardDetail from '../Cards/DraftCardDetail';
+import DraftDialog from '../Dialogs/DraftDialog';
 
-type Renderer = (props: any) => React.ReactNode;
+type Renderer = (props: any, messageId: string) => React.ReactNode;
 
-const ContactRef: Renderer = ({ id, onMenuClick }: { id: string; onMenuClick?: () => void }) => {
+const ContactRef: Renderer = ({ id, onMenuClick }: { id: string; onMenuClick?: () => void }, messageId: string) => {
   const { state } = useContacts();
   const contact = state.contacts.find((c) => c.id === id);
   console.log('[Registry] ContactCard render', { id, found: !!contact });
@@ -16,7 +16,7 @@ const ContactRef: Renderer = ({ id, onMenuClick }: { id: string; onMenuClick?: (
   return <ContactCard contact={contact} onMenuClick={onMenuClick || (() => {})} />;
 };
 
-const NoteRef: Renderer = ({ id, onOpenNoteDetail, onOpenContactDetail, isNestedInContactDetail, currentContactId }: { id: string; onOpenNoteDetail?: (note: any, source: any) => void; onOpenContactDetail?: (contact: any, source: any) => void; isNestedInContactDetail?: boolean; currentContactId?: string }) => {
+const NoteRef: Renderer = ({ id, onOpenNoteDetail, onOpenContactDetail, isNestedInContactDetail, currentContactId }: { id: string; onOpenNoteDetail?: (note: any, source: any) => void; onOpenContactDetail?: (contact: any, source: any) => void; isNestedInContactDetail?: boolean; currentContactId?: string }, messageId: string) => {
   const { state } = useContacts();
   const note = state.notes.find((n) => n.id === id);
   console.log('[Registry] NoteCard render', { id, found: !!note });
@@ -32,25 +32,23 @@ const NoteRef: Renderer = ({ id, onOpenNoteDetail, onOpenContactDetail, isNested
   );
 };
 
-const DraftCardRef: Renderer = ({ id, onMinimize }: { id: string; onMinimize?: () => void }) => {
-  const { state } = useContacts();
-  const draft = state.drafts.find((d: any) => d.id === id);
-  console.log('[Registry] DraftCard render', { id, found: !!draft });
+const DraftCardRef: Renderer = ({ draft, onMinimize, onOpenContactDetail, locked }: { draft: any; onMinimize?: () => void; onOpenContactDetail?: (contact: any, src: any) => void; locked?: 'confirm' | 'cancel' | 'extract' | null }, messageId: string) => {
+  console.log('[Registry] DraftCard render with embedded draft', { id: draft?.id, found: !!draft, locked });
   if (!draft) return null;
-  return <DraftCardDetail draft={draft} onMinimize={onMinimize} />;
+  return <DraftDialog draft={draft} onMinimize={onMinimize} onOpenContactDetail={onOpenContactDetail} messageId={messageId} locked={locked} />;
 };
 
 const renderers: Record<ComponentKind, Renderer> = {
-  NameConfirm: (props) => <NameConfirm {...props} />,
+  NameConfirm: (props, messageId) => <NameConfirm {...props} messageId={messageId} />,
   NoteCard: NoteRef,
   ContactCard: ContactRef,
   DraftCard: DraftCardRef,
 };
 
-export function renderComponent(kind: ComponentKind, props: any) {
+export function renderComponent(kind: ComponentKind, props: any, messageId: string) {
   const renderer = renderers[kind];
   if (!renderer) return null;
-  return renderer(props);
+  return renderer(props, messageId);
 }
 
 

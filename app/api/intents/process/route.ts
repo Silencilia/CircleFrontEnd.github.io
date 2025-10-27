@@ -197,8 +197,8 @@ export async function POST(req: NextRequest) {
 
     console.log('[INTENT]', intentStr, { latestUserMessage: latestUserMessage.slice(0, 200) });
     if (intentStr === 'record') {
-      scenarioMessages = recordEventPrompt(stack, dbContext);
-      scenarioContent = await callOpenAI(scenarioMessages, 0.2);
+      // Skip server-side response for record intent - client handles the flow
+      scenarioContent = '';
     } else if (intentStr === 'search') {
       // Pass 1: natural-language answer (no tools enforced)
       scenarioMessages = searchInfoPrompt(stack, dbContext);
@@ -289,10 +289,13 @@ export async function POST(req: NextRequest) {
     const step4Time = Date.now() - step4Start;
     console.log(`[PERF] Step 4 - Scenario processing (${intentStr}): ${step4Time}ms`);
 
-    // 5) Insert system message (will skip if offline/no DB)
+    // 5) Insert system message (will skip if offline/no DB or if record intent with no content)
     const step5Start = Date.now();
     console.log('[DB] inserting system message', { hasText: !!scenarioContent, partsCount: parts?.length || 0 });
-    await insertSystemMessage(chatId, { text: scenarioContent || '(no content)', parts });
+    // Skip inserting empty messages for record intent (client handles the flow)
+    if (intentStr !== 'record' || scenarioContent || (parts && parts.length > 0)) {
+      await insertSystemMessage(chatId, { text: scenarioContent || undefined, parts });
+    }
     const step5Time = Date.now() - step5Start;
     console.log(`[PERF] Step 5 - Database insert: ${step5Time}ms`);
 

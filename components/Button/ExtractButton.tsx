@@ -6,20 +6,23 @@ interface ExtractButtonProps {
   className?: string;
   ariaLabel?: string;
   children?: React.ReactNode;
+  disabled?: boolean;
 }
 
 const ExtractButton: React.FC<ExtractButtonProps> = ({
   onClick,
   className = '',
   ariaLabel = 'Extract info',
-  children = 'extract info'
+  children = 'extract info',
+  disabled = false
 }) => {
   return (
     <>
       {/* Desktop Version */}
       <button
         onClick={onClick}
-        className={`hidden md:flex flex-row w-fit h-[24px] px-xs gap-xs rounded-[12px] items-center justify-center bg-circle-secondary hover:bg-circle-primary transition-colors duration-200 ${className}`}
+        disabled={disabled}
+        className={`hidden md:flex flex-row w-fit h-[24px] px-xs gap-xs rounded-[12px] items-center justify-center bg-circle-secondary hover:bg-circle-primary transition-colors duration-200 ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
         aria-label={ariaLabel}
       >
         {/* Text */}
@@ -39,7 +42,8 @@ const ExtractButton: React.FC<ExtractButtonProps> = ({
       {/* Mobile Version */}
       <button
         onClick={onClick}
-        className={`flex flex-row md:hidden flex-row w-fit h-[20px] px-xs gap-xs rounded-[10px] items-center justify-center bg-circle-secondary hover:bg-circle-primary transition-colors duration-200 ${className}`}
+        disabled={disabled}
+        className={`flex flex-row md:hidden flex-row w-fit h-[20px] px-xs gap-xs rounded-[10px] items-center justify-center bg-circle-secondary hover:bg-circle-primary transition-colors duration-200 ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
         aria-label={ariaLabel}
       >
         {/* Text */}

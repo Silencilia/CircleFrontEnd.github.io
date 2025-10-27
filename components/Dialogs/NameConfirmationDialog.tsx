@@ -4,6 +4,7 @@ import { CancelButton, ConfirmButton } from '../Button';
 import { CONTACT_REFERENCE_STYLES } from '../../utils/contactReference';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { useChat } from '../../contexts/ChatContext';
+import Checkbox from '../Checkbox';
 
 interface ExistingEntry {
 	contactId: string;
@@ -21,17 +22,44 @@ interface Props {
 	draftId: string;
 	existing: ExistingEntry[];
 	newOnes: NewEntry[];
+	locked?: 'confirm' | 'cancel' | null;
+	messageId: string;
+	selectedExisting?: Record<string, boolean>;
+	selectedNew?: Record<string, boolean>;
 }
 
-const NameConfirmationDialog: React.FC<Props> = ({ draftId, existing, newOnes }) => {
+const NameConfirmationDialog: React.FC<Props> = ({ 
+	draftId, 
+	existing, 
+	newOnes, 
+	locked: initialLocked = null, 
+	messageId,
+	selectedExisting: initialSelectedExisting = {},
+	selectedNew: initialSelectedNew = {}
+}) => {
+	console.log('[NameConfirmationDialog] Rendering with:', { draftId, existingCount: existing.length, newCount: newOnes.length, locked: initialLocked, messageId });
 	const { state, addContact, updateTemporaryNote } = useContacts();
 	const chat = useChat();
 	const { openContactDetail } = useCardNavigation({
 		openContact: (contact) => {},
 	});
-	const [locked, setLocked] = useState<null | 'confirm' | 'cancel'>(null);
-	const [selectedExisting, setSelectedExisting] = useState<Record<string, boolean>>(() => ({}));
-	const [selectedNew, setSelectedNew] = useState<Record<string, boolean>>(() => ({}));
+	const [locked, setLocked] = useState<null | 'confirm' | 'cancel'>(initialLocked);
+	const [selectedExisting, setSelectedExisting] = useState<Record<string, boolean>>(() => initialSelectedExisting);
+	const [selectedNew, setSelectedNew] = useState<Record<string, boolean>>(() => initialSelectedNew);
+
+	// Helper to update locked state persistently
+	const setLockedPersistent = React.useCallback(async (value: 'confirm' | 'cancel') => {
+		setLocked(value);
+		try {
+			await chat.updateComponentProps(messageId, { 
+				locked: value,
+				selectedExisting,
+				selectedNew
+			});
+		} catch (error) {
+			console.error('Failed to persist locked state:', error);
+		}
+	}, [messageId, chat, selectedExisting, selectedNew]);
 
 	const toggleExisting = (id: string) => {
 		if (locked) return;
@@ -44,15 +72,15 @@ const NameConfirmationDialog: React.FC<Props> = ({ draftId, existing, newOnes })
 
 	const onCancel = async () => {
 		if (locked) return;
-		setLocked('cancel');
+		await setLockedPersistent('cancel');
 		try {
-			await chat.addSystemText("Cool. We won’t link any of them to this.");
+			await chat.addSystemText("Cool. We won't link any of them to this.");
 		} catch {}
 	};
 
 	const onConfirm = async () => {
 		if (locked) return;
-		setLocked('confirm');
+		await setLockedPersistent('confirm');
 		try {
 			// Build replacement list: existing + newly created contacts
 			const selectedExistingIds = existing.filter(e => selectedExisting[e.contactId]).map(e => e.contactId);
@@ -95,13 +123,26 @@ const NameConfirmationDialog: React.FC<Props> = ({ draftId, existing, newOnes })
 		const newTokens = createdContacts.map(c => `{{contact:${c.id}}}`).join(', ');
 		let summary = 'Very well. You selected these people you know:';
 		summary += existingTokens ? `\n${existingTokens}` : '\n(none)';
-		summary += '\nYou also met some new friends:';
-		summary += newTokens ? `\n${newTokens}` : '\n(none)';
+		if (newTokens) {
+			summary += '\nYou also met some new friends:';
+			summary += `\n${newTokens}`;
+		}
 		await chat.addSystemText(summary);
 
-		// Insert draft preview
-		await chat.addSystemText('Here is a draft of your new note: Let me know if you want to reorganize them for key information');
-		await chat.addSystemComponent('DraftCard', { id: draftId });
+		// Insert draft preview - USE updatedText to avoid stale state
+		if (draft) {
+			await chat.addSystemText('Here is a draft of your new note. Let me know if you want to save it or summarize it for key information.');
+			const payload = { 
+				draft: {
+					id: draft.id,
+					title: draft.title,
+					text: updatedText,
+					date: draft.date,
+				time: draft.time
+			}
+		};
+		await chat.addSystemComponent('DraftCard', payload);
+		}
 		} catch (e) {
 			// swallow; dialog remains locked but state should be consistent
 		}
@@ -113,9 +154,9 @@ const NameConfirmationDialog: React.FC<Props> = ({ draftId, existing, newOnes })
 		return (
 			<div key={e.contactId} className={`flex items-center justify-between p-sm rounded-sm ${selected ? 'bg-circle-neutral-variant' : ''} ${locked ? 'opacity-60 pointer-events-none' : ''}`}>
 				<div className="flex items-center gap-sm">
-					<span className="font-circlebodymedium text-circle-primary opacity-50">{e.snippet}</span>
+					<span className="font-circlebodymedium text-circle-primary opacity-50 select-text">{e.snippet}</span>
 					<span
-						className={CONTACT_REFERENCE_STYLES.base}
+						className={`${CONTACT_REFERENCE_STYLES.base} select-text`}
 						data-contact-ref="true"
 						data-contact-id={e.contactId}
 						role="button"
@@ -127,7 +168,7 @@ const NameConfirmationDialog: React.FC<Props> = ({ draftId, existing, newOnes })
 						{e.contactName}
 					</span>
 				</div>
-				<input type="checkbox" checked={selected} onChange={() => toggleExisting(e.contactId)} />
+				<Checkbox checked={selected} onChange={() => toggleExisting(e.contactId)} disabled={!!locked} />
 			</div>
 		);
 	};
@@ -137,34 +178,40 @@ const NameConfirmationDialog: React.FC<Props> = ({ draftId, existing, newOnes })
 		return (
 			<div key={n.name} className={`flex items-center justify-between p-sm rounded-sm ${selected ? 'bg-circle-neutral-variant' : ''} ${locked ? 'opacity-60 pointer-events-none' : ''}`}>
 				<div className="flex items-center gap-sm">
-					<span className="font-circlebodymedium text-circle-primary opacity-50">{n.snippet}</span>
-					<span className="font-circlebodymedium-highlight text-circle-primary">{n.name}</span>
+					<span className="font-circlebodymedium text-circle-primary opacity-50 select-text">{n.snippet}</span>
+					<span className="font-circlebodymedium-highlight text-circle-primary select-text">{n.name}</span>
 				</div>
-				<input type="checkbox" checked={selected} onChange={() => toggleNew(n.name)} />
+				<Checkbox checked={selected} onChange={() => toggleNew(n.name)} disabled={!!locked} />
 			</div>
 		);
 	};
 
 	return (
-		<div className="crd-dtl">
+		<div className="dlg-chat">
 			<div className="flex flex-col gap-md">
-				<div className="font-circlebodymedium text-circle-primary">Existing contact:</div>
+				<div className="font-circlebodymedium text-circle-primary select-text">People you know:</div>
 				<div className="flex flex-col gap-xs">
 					{existing.map(renderExistingRow)}
 				</div>
-				<div className="font-circlebodymedium text-circle-primary">Add new contact:</div>
-				<div className="flex flex-col gap-xs">
-					{newOnes.map(renderNewRow)}
-				</div>
+				{newOnes.length > 0 && (
+					<>
+						<div className="font-circlebodymedium text-circle-primary select-text">People you just met:</div>
+						<div className="flex flex-col gap-xs">
+							{newOnes.map(renderNewRow)}
+						</div>
+					</>
+				)}
 				<div className="flex gap-[2px] justify-end">
 					<CancelButton
 						onClick={onCancel}
-						className={locked === 'cancel' ? 'bg-circle-neutral-variant' : ''}
+						disabled={!!locked}
+						className={locked === 'cancel' ? '!bg-circle-neutral-variant' : ''}
 						ariaLabel="Cancel"
 					/>
 					<ConfirmButton
 						onClick={onConfirm}
-						className={locked === 'confirm' ? 'bg-circle-neutral-variant' : ''}
+						disabled={!!locked}
+						className={locked === 'confirm' ? '!bg-circle-neutral-variant' : ''}
 						ariaLabel="Confirm"
 					/>
 				</div>
