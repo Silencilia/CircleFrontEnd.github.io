@@ -25,7 +25,10 @@ const TitleCircle: React.FC<TitleCircleProps> = ({ title, isAccountPage = false,
       <div
         className="title w-full bg-circle-neutral flex items-center justify-center relative"
       >
-     
+        {/* Centered title text */}
+        <div className="font-circledisplayxsmall text-center text-circle-primary select-none">
+          {title}
+        </div>
 
         {/* Right actions: NewChatButton and AccountButton */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-fit h-fit flex flex-row items-center px-lg gap-sm">
@@ -54,7 +57,7 @@ const TitleCircle: React.FC<TitleCircleProps> = ({ title, isAccountPage = false,
           <ChatsButton onClick={() => router.push('/chats')} />
           <div className="flex flex-row items-center gap-sm">
           <SpeedSwitch isSpeedMode={isSpeedMode} onToggle={toggleSpeedMode} />
-          <span className="font-circlelabelsmall text-circle-primary">{isSpeedMode ? 'speed mode' : 'talk mode'}</span>
+          <span className="font-circlelabelsmall text-circle-primary select-none">{isSpeedMode ? 'speed mode' : 'talk mode'}</span>
           </div>
         </div>
       </div>
@@ -69,11 +72,11 @@ const TitleCircle: React.FC<TitleCircleProps> = ({ title, isAccountPage = false,
         <div className="absolute left-0 top-1/2 -translate-y-1/2 flex flex-row items-center px-xl gap-md">
           <ChatsButton onClick={() => router.push('/chats')} />
           <SpeedSwitch isSpeedMode={isSpeedMode} onToggle={toggleSpeedMode} />
-          <span className="font-circlelabelmedium text-circle-primary">{isSpeedMode ? 'speed mode' : 'talk mode'}</span>
+          <span className="font-circlelabelmedium text-circle-primary select-none">{isSpeedMode ? 'speed mode' : 'talk mode'}</span>
         </div>
 
         {/* Center: title text */}
-        <div className="font-circledisplaysmall text-center text-circle-primary">
+        <div className="font-circledisplaysmall text-center text-circle-primary select-none">
           {title}
         </div>
 

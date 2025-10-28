@@ -19,7 +19,7 @@ const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, hideAccount
         className="title w-full bg-circle-neutral flex items-center justify-center relative"
       >
         {/* Centered title text */}
-        <div className="font-circledisplayxsmall text-center text-circle-primary">
+        <div className="font-circledisplayxsmall text-center text-circle-primary select-none">
           {title}
         </div>
 
@@ -38,7 +38,7 @@ const Title: React.FC<TitleProps> = ({ title, isAccountPage = false, hideAccount
         className="title w-full bg-circle-neutral flex items-center justify-center relative"
       >
         {/* Center: title text */}
-        <div className="font-circledisplaysmall text-center text-circle-primary">
+        <div className="font-circledisplaysmall text-center text-circle-primary select-none">
           {title}
         </div>
 

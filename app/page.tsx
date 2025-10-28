@@ -29,6 +29,8 @@ import {
   NAV_BAR_HEIGHT_MOBILE,
   NAV_BAR_HEIGHT_DESKTOP,
 } from '../utils/designConstants';
+import WelcomeDialog from '../components/Dialogs/WelcomeDialog';
+import { LS_KEYS, SESSION_KEYS } from '../data/localStorageKeys';
 
 // Simplified component to handle initial message API calls
 interface InitialMessageHandlerProps {
@@ -57,15 +59,15 @@ const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMe
         if (isOffline) {
           // Gather local storage data for offline mode
           const localData = {
-            contacts: JSON.parse(localStorage.getItem('contacts') || '[]'),
-            notes: JSON.parse(localStorage.getItem('notes') || '[]'),
-            subjects: JSON.parse(localStorage.getItem('subjects') || '[]'),
-            relationships: JSON.parse(localStorage.getItem('relationships') || '[]'),
-            organizations: JSON.parse(localStorage.getItem('organizations') || '[]'),
-            occupations: JSON.parse(localStorage.getItem('occupations') || '[]'),
-            sentiments: JSON.parse(localStorage.getItem('sentiments') || '[]'),
-            commitments: JSON.parse(localStorage.getItem('commitments') || '[]'),
-            drafts: JSON.parse(localStorage.getItem('drafts') || '[]'),
+            contacts: JSON.parse(localStorage.getItem(LS_KEYS.CONTACTS) || '[]'),
+            notes: JSON.parse(localStorage.getItem(LS_KEYS.NOTES) || '[]'),
+            subjects: JSON.parse(localStorage.getItem(LS_KEYS.SUBJECTS) || '[]'),
+            relationships: JSON.parse(localStorage.getItem(LS_KEYS.RELATIONSHIPS) || '[]'),
+            organizations: JSON.parse(localStorage.getItem(LS_KEYS.ORGANIZATIONS) || '[]'),
+            occupations: JSON.parse(localStorage.getItem(LS_KEYS.OCCUPATIONS) || '[]'),
+            sentiments: JSON.parse(localStorage.getItem(LS_KEYS.SENTIMENTS) || '[]'),
+            commitments: JSON.parse(localStorage.getItem(LS_KEYS.COMMITMENTS) || '[]'),
+            drafts: [],
           };
 
           await identifyRequest(
@@ -152,6 +154,7 @@ export default function NotePage() {
   
   // Deterministic initial greeting for SSR; randomize after mount on client only
   const [greeting, setGreeting] = useState<string>(GREETINGS[0]);
+  const [isInitialVisit, setIsInitialVisit] = useState<boolean>(true);
 
   useEffect(() => {
     // Randomize greeting after hydration to avoid SSR/client mismatch
@@ -162,6 +165,11 @@ export default function NotePage() {
       const { data: userRes } = await supabase.auth.getUser();
       setAppState(prev => ({ ...prev, isAuthenticated: !!userRes.user?.id }));
     })();
+    // Initialize initial-visit flag from sessionStorage (default true)
+    try {
+      const s = sessionStorage.getItem(SESSION_KEYS.IS_INITIAL_VISIT);
+      setIsInitialVisit(s !== 'false');
+    } catch {}
   }, []);
 
   // Load currentChatId from localStorage on mount
@@ -334,7 +342,7 @@ export default function NotePage() {
           {!appState.isAuthenticated && (
                     <div className="left-0 right-0 top-0 w-full text-center h-fit bg-circle-neutral">
                       <p className="font-circlemedium text-circle-primary/60 font-circletitlesmall">
-                        Offline now. Sign in for stored data.
+                        Signed out now. Sign in for stored data.
                       </p>
                     </div>
                   )}  
@@ -404,6 +412,11 @@ export default function NotePage() {
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Welcome dialog - first visit this session and signed out */}
+      {!appState.isAuthenticated && isInitialVisit && (
+        <WelcomeDialog isOpen onClose={() => setIsInitialVisit(false)} />
       )}
       
       

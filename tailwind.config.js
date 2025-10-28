@@ -761,6 +761,7 @@ module.exports = {
           overflow: 'hidden',
           'background-color': '#FFFFFF',
           padding: '15px',
+          'border-radius': '12px',
           // Add safe-area awareness so mobile browser UI doesn’t overlap
           'padding-top': 'calc(15px + env(safe-area-inset-top))',
           'padding-bottom': 'calc(15px + env(safe-area-inset-bottom))',
@@ -770,7 +771,6 @@ module.exports = {
           [`@media (min-width: 640px)`]: {
             width: '600px',
             height: 'fit-content',
-            'border-radius': '12px',
           },
         },
       };
