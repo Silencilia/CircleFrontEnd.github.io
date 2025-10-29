@@ -55,7 +55,7 @@ const TitleCircle: React.FC<TitleCircleProps> = ({ title, isAccountPage = false,
         {/* Left actions: Chats button, SpeedSwitch and label */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-fit h-fit flex flex-row items-start px-lg gap-sm">
           <ChatsButton onClick={() => router.push('/chats')} />
-          <div className="flex flex-row items-center gap-sm">
+          <div className="flex flex-col items-start gap-sm">
           <SpeedSwitch isSpeedMode={isSpeedMode} onToggle={toggleSpeedMode} />
           <span className="font-circlelabelsmall text-circle-primary select-none">{isSpeedMode ? 'speed mode' : 'talk mode'}</span>
           </div>
