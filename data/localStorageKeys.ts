@@ -13,6 +13,7 @@ export const LS_KEYS = {
 
 export const SESSION_KEYS = {
   IS_INITIAL_VISIT: 'circle_isInitialVisit',
+  WELCOME_DIALOG_PAGE: 'circle_welcomeDialogPage',
 } as const;
 
 

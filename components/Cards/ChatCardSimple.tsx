@@ -26,14 +26,42 @@ const ChatCardSimple: React.FC<ChatCardSimpleProps> = ({ chatId }) => {
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      const { data, error } = await supabase
-        .from('chats')
-        .select('id, title, created_at, updated_at')
-        .eq('id', chatId)
-        .single();
-      if (!isMounted) return;
-      if (error) return;
-      setChat(data as ChatRow);
+      try {
+        const { data: sessionRes } = await supabase.auth.getSession();
+        const userId = sessionRes.session?.user?.id;
+        if (userId) {
+          // Authenticated: load from Supabase
+          const { data, error } = await supabase
+            .from('chats')
+            .select('id, title, created_at, updated_at')
+            .eq('id', chatId)
+            .single();
+          if (!isMounted) return;
+          if (error) return;
+          setChat(data as ChatRow);
+          return;
+        }
+      } catch {}
+
+      // Offline/local fallback: derive from localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          const key = `circle_chat_messages_${chatId}`;
+          const stored = localStorage.getItem(key);
+          if (stored) {
+            const messages = JSON.parse(stored);
+            const storedTitle = localStorage.getItem(`circle_chat_title_${chatId}`);
+            let title = storedTitle || '';
+            if (!title) {
+              const firstUserMsg = messages.find((m: any) => m.role === 'user');
+              title = firstUserMsg?.text?.substring(0, 50) || 'Local Chat';
+            }
+            const created_at = messages[0]?.createdAt || new Date().toISOString();
+            const updated_at = messages[messages.length - 1]?.createdAt || created_at;
+            if (isMounted) setChat({ id: chatId, title, created_at, updated_at });
+          }
+        } catch {}
+      }
     })();
     return () => { isMounted = false; };
   }, [chatId]);
@@ -95,7 +123,16 @@ const ChatCardSimple: React.FC<ChatCardSimpleProps> = ({ chatId }) => {
         onCancel={() => setShowDeleteDialog(false)}
         onConfirm={async () => {
           try {
-            await supabase.from('chats').delete().eq('id', chatId);
+            const { data: sessionRes } = await supabase.auth.getSession();
+            const userId = sessionRes.session?.user?.id;
+            if (userId) {
+              await supabase.from('chats').delete().eq('id', chatId);
+            } else {
+              // Local deletion
+              try { localStorage.removeItem(`circle_chat_messages_${chatId}`); } catch {}
+              try { localStorage.removeItem(`circle_chat_title_${chatId}`); } catch {}
+              try { localStorage.removeItem(`circle_isThinking_${chatId}`); } catch {}
+            }
             setIsDeleted(true);
             // Clear currentChatId from localStorage if this was the current chat
             const currentChatId = localStorage.getItem('currentChatId');

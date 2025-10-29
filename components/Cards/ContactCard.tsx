@@ -63,13 +63,14 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
   };
 
   // Prefer showing a relationship that matches the active filter (if any)
-  const primaryRelationship = useMemo(() => {
-    if (!relationships || relationships.length === 0) return undefined;
+  const relationshipsToShow = useMemo(() => {
+    const rels = (relationships as Relationship[]) || [];
+    if (rels.length === 0) return [] as Relationship[];
     if (relationshipFilterIds && relationshipFilterIds.length > 0) {
-      const matched = (relationships as Relationship[]).find(r => relationshipFilterIds.includes(r.id));
-      if (matched) return matched;
+      const matched = rels.filter(r => relationshipFilterIds.includes(r.id));
+      if (matched.length > 0) return matched;
     }
-    return relationships[0] as Relationship | undefined;
+    return rels;
   }, [relationships, relationshipFilterIds]);
   
   // Measure how many subjects actually fit in 2 rows
@@ -208,13 +209,16 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onMenuClick, relatio
       {/* Bottom Section - Relationship and Subjects */}
       <div className="flex flex-col gap-sm w-full">
         {/* Relationship Tag */}
-        {primaryRelationship && (
-          <div className="flex flex-row flex-wrap items-start content-start gap-0 w-full">
-            <RelationshipTag 
-              relationship={primaryRelationship} 
-              contactId={contact.id}
-              editable={true}
-            />
+        {relationshipsToShow && relationshipsToShow.length > 0 && (
+          <div className="flex flex-row flex-wrap items-start content-start gap-[5px] w-full">
+            {relationshipsToShow.map((rel: Relationship) => (
+              <RelationshipTag 
+                key={rel.id}
+                relationship={rel}
+                contactId={contact.id}
+                editable={true}
+              />
+            ))}
           </div>
         )}
 

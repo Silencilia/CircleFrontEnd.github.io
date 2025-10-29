@@ -45,9 +45,13 @@ const ChatsGallery: React.FC<ChatsGalleryProps> = ({ query = '' }) => {
                 const stored = localStorage.getItem(key);
                 if (stored) {
                   const messages = JSON.parse(stored);
-                  // Use first user message as title or fallback to "Local Chat"
-                  const firstUserMsg = messages.find((m: any) => m.role === 'user');
-                  const title = firstUserMsg?.text?.substring(0, 50) || 'Local Chat';
+                  // Prefer stored title if available; else derive from first user message
+                  const storedTitle = localStorage.getItem(`circle_chat_title_${chatId}`);
+                  let title = storedTitle || '';
+                  if (!title) {
+                    const firstUserMsg = messages.find((m: any) => m.role === 'user');
+                    title = firstUserMsg?.text?.substring(0, 50) || 'Local Chat';
+                  }
                   // Get last message timestamp
                   const lastMsg = messages[messages.length - 1];
                   const updated_at = lastMsg?.createdAt || new Date().toISOString();
