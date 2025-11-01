@@ -189,10 +189,14 @@ const NameConfirmationDialog: React.FC<Props> = ({
 	return (
 		<div className="dlg-chat">
 			<div className="flex flex-col gap-md">
-				<div className="font-circlebodymedium text-circle-primary select-text">People you know:</div>
-				<div className="flex flex-col gap-xs">
-					{existing.map(renderExistingRow)}
-				</div>
+				{existing.length > 0 && (
+					<>
+						<div className="font-circlebodymedium text-circle-primary select-text">People you know:</div>
+						<div className="flex flex-col gap-xs">
+							{existing.map(renderExistingRow)}
+						</div>
+					</>
+				)}
 				{newOnes.length > 0 && (
 					<>
 						<div className="font-circlebodymedium text-circle-primary select-text">People you just met:</div>

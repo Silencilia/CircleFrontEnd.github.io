@@ -398,9 +398,30 @@ We agreed to keep an eye on the weather next weekend for another walk, maybe wit
 ];
 
 export const demoCommitments: Commitment[] = [
-  { id: 'cm:01', text: 'Follow up with Alice on design doc', time: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString(), contact_ids: ['c:01'], is_trashed: false },
-  { id: 'cm:02', text: 'Book flights with Grace', time: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(), contact_ids: ['c:07'], is_trashed: false },
-  { id: 'cm:03', text: 'Schedule checkup with Eva', time: new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString(), contact_ids: ['c:05'], is_trashed: false },
+  { 
+    id: 'cm:01', 
+    text: 'Follow up with Alice on design doc', 
+    due_date: new Date(Date.now() + 2 * 24 * 3600 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    due_time: new Date(Date.now() + 2 * 24 * 3600 * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    contact_ids: ['c:01'], 
+    is_trashed: false 
+  },
+  { 
+    id: 'cm:02', 
+    text: 'Book flights with Grace', 
+    due_date: new Date(Date.now() + 7 * 24 * 3600 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    due_time: new Date(Date.now() + 7 * 24 * 3600 * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    contact_ids: ['c:07'], 
+    is_trashed: false 
+  },
+  { 
+    id: 'cm:03', 
+    text: 'Schedule checkup with Eva', 
+    due_date: new Date(Date.now() + 10 * 24 * 3600 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    due_time: new Date(Date.now() + 10 * 24 * 3600 * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    contact_ids: ['c:05'], 
+    is_trashed: false 
+  },
 ];
 
 function seedDemoChat(): void {

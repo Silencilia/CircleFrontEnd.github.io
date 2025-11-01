@@ -576,7 +576,8 @@ export class SupabaseDataService implements DataService {
     const convertedCommitments = commitments?.map(commitment => ({
       id: commitment.id,
       text: commitment.text,
-      time: commitment.time,
+      due_date: commitment.due_date || '',
+      due_time: commitment.due_time || '',
       contact_ids: commitmentContactsMap.get(commitment.id) || [],
       is_trashed: commitment.is_trashed
     })) || [];
@@ -681,7 +682,31 @@ export class SupabaseDataService implements DataService {
   }
 
   private async getCommitmentWithRelations(commitmentId: string): Promise<Commitment> {
-    // Implementation for getting a single commitment with all relations
-    throw new Error('Not implemented');
+    // Get commitment data
+    const { data: commitmentData, error: commitmentError } = await supabase
+      .from('commitments')
+      .select('*')
+      .eq('id', commitmentId)
+      .single();
+
+    if (commitmentError) throw commitmentError;
+
+    // Get related contacts
+    const { data: contactData } = await supabase
+      .from('commitment_contacts')
+      .select('contact_id')
+      .eq('commitment_id', commitmentId);
+
+    // Convert to Commitment interface
+    const commitment: Commitment = {
+      id: commitmentData.id,
+      text: commitmentData.text,
+      due_date: commitmentData.due_date || '',
+      due_time: commitmentData.due_time || '',
+      contact_ids: contactData?.map(c => c.contact_id) || [],
+      is_trashed: commitmentData.is_trashed || false
+    };
+
+    return commitment;
   }
 }

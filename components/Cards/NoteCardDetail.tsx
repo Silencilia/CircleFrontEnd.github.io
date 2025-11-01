@@ -447,7 +447,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
                       title="Click to edit"
                       style={{ pointerEvents: 'auto' }}
                     >
-                      {currentNote.title}
+                      {currentNote.title || 'Untitled'}
                     </div>
                   )}
                   {isTitleEditing && (
@@ -728,7 +728,7 @@ const NoteCardDetail: React.FC<NoteCardDetailProps> = ({ note, onMinimize, calle
         onCancel={() => setShowDeleteDialog(false)}
         onConfirm={handleDelete}
         itemType="note"
-        itemName={note.title}
+        itemName={note.title || 'Untitled'}
       />
 
       {/* New Sentiment Dialog (portal) */}

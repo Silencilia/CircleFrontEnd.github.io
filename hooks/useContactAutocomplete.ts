@@ -79,28 +79,90 @@ export const useContactAutocomplete = ({ contacts, onContactSelect, textContentE
     if (!selection || selection.rangeCount === 0) return;
 
     const range = selection.getRangeAt(0);
-    const textNode = range.startContainer;
+    const element = textContentEditableRef.current;
     
-    if (textNode.nodeType !== Node.TEXT_NODE) return;
-
-    // Replace the current word with contact reference
-    const text = textNode.textContent || '';
-    const beforeWord = text.slice(0, wordStartIndex);
-    const afterWord = text.slice(wordStartIndex + currentWord.length);
+    // Get the full text content
+    const fullText = element.textContent || '';
+    
+    // Create ranges to find the word boundaries in the DOM
+    const beforeRange = document.createRange();
+    const afterRange = document.createRange();
+    
+    // Find the start position
+    let charCount = 0;
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+    
+    let textNode: Node | null = null;
+    let startNode: Node | null = null;
+    let startOffset = 0;
+    let endNode: Node | null = null;
+    let endOffset = 0;
+    
+    // Find the text node and offset for the start of the word
+    while (textNode = walker.nextNode()) {
+      const nodeText = textNode.textContent || '';
+      const nodeLength = nodeText.length;
+      
+      if (charCount + nodeLength >= wordStartIndex) {
+        startNode = textNode;
+        startOffset = wordStartIndex - charCount;
+        break;
+      }
+      charCount += nodeLength;
+    }
+    
+    // Find the text node and offset for the end of the word
+    charCount = 0;
+    walker.currentNode = element;
+    const wordEnd = wordStartIndex + currentWord.length;
+    
+    while (textNode = walker.nextNode()) {
+      const nodeText = textNode.textContent || '';
+      const nodeLength = nodeText.length;
+      
+      if (charCount + nodeLength >= wordEnd) {
+        endNode = textNode;
+        endOffset = wordEnd - charCount;
+        break;
+      }
+      charCount += nodeLength;
+    }
+    
+    if (!startNode || !endNode) return;
+    
+    // Create range for the word to replace
+    const wordRange = document.createRange();
+    wordRange.setStart(startNode, startOffset);
+    wordRange.setEnd(endNode, endOffset);
+    
+    // Replace the word with contact reference
     const contactReference = `{{contact:${contact.id}}}`;
-    
-    const newText = beforeWord + contactReference + afterWord;
-    textNode.textContent = newText;
+    const newTextNode = document.createTextNode(contactReference);
+    wordRange.deleteContents();
+    wordRange.insertNode(newTextNode);
     
     // Position cursor after the contact reference
     const newRange = document.createRange();
-    newRange.setStart(textNode, wordStartIndex + contactReference.length);
+    newRange.setStartAfter(newTextNode);
     newRange.collapse(true);
     selection.removeAllRanges();
     selection.addRange(newRange);
     
     setShowAutocomplete(false);
-    onContactSelect(contact);
+    
+    // Trigger input event so ContentEditable's onChange fires
+    // This ensures the component state updates with the new HTML
+    const inputEvent = new Event('input', { bubbles: true });
+    element.dispatchEvent(inputEvent);
+    
+    // Call onContactSelect which will handle the HTML conversion and formatting
+    setTimeout(() => {
+      onContactSelect(contact);
+    }, 0);
   }, [currentWord, wordStartIndex, onContactSelect, textContentEditableRef]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {

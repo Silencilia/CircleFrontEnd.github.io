@@ -1,44 +1,31 @@
 import React, { useMemo } from 'react';
-import { Commitment } from '../../contexts/ContactContext';
+import { Commitment, useContacts, Contact } from '../../contexts/ContactContext';
 import { RecycleButton, MaximizeButton } from '../Button';
+import { contactReference } from '../../data/referenceParsing';
+import { CardIndex, createSourceRecord } from '../../data/sourceRecord';
 
 interface CommitmentCardProps {
   commitment: Commitment;
+  onMaximize?: () => void;
+  onOpenContactDetail?: (contact: Contact, caller: CardIndex) => void;
 }
 
-const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
+const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment, onMaximize, onOpenContactDetail }) => {
+  const { state } = useContacts();
 
   if (commitment.is_trashed) {
     return null;
   }
 
   const { date, time } = useMemo(() => {
-    try {
-      const d = new Date(commitment.time);
-      if (isNaN(d.getTime())) {
-        // Fallback: try to split the time string like "Dec 16, 2024 09:00"
-        const match = commitment.time.match(/(\w+ \d{1,2}, \d{4})\s+(\d{1,2}:\d{2})/);
-        if (match) {
-          return { date: match[1], time: match[2] };
-        }
-        return { date: commitment.time, time: '' };
-      }
-
-      const dateStr = d.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-      const timeStr = d.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-      return { date: dateStr, time: timeStr };
-    } catch (e) {
-      return { date: commitment.time, time: '' };
-    }
-  }, [commitment.time]);
+    // Use due_date and due_time directly from the commitment
+    // due_date format: "Dec 20, 2024"
+    // due_time format: "16:00"
+    return { 
+      date: commitment.due_date || '', 
+      time: commitment.due_time || '' 
+    };
+  }, [commitment.due_date, commitment.due_time]);
 
   const checkTextOverflow = (text: string, maxHeight: number = 60) => {
     const lineHeight = 20; // matches text leading
@@ -61,8 +48,6 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
     () => checkTextOverflow(commitment.text),
     [commitment.text]
   );
-
-  // Maximize button does not change card height; reserved for future detailed view
 
   return (
     <div className="w-[240px] h-fit bg-circle-neutral-variant rounded-[12px] p-[10px] flex flex-col gap-[15px]">
@@ -92,6 +77,7 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
           />
 
           <MaximizeButton
+            onClick={onMaximize}
             ariaLabel="Maximize commitment"
           />
         </div>
@@ -103,7 +89,18 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment }) => {
           'w-[220px] font-circlebodymedium text-circle-primary text-left h-[60px] overflow-hidden'
         }
       >
-        {truncatedText}
+        {contactReference(
+          truncatedText,
+          state.contacts,
+          contact => {
+            if (!contact) return;
+            if (onOpenContactDetail) {
+              // Create a source record for navigation tracking
+              const cardIndex = createSourceRecord('commitmentCardDetail', commitment.id);
+              onOpenContactDetail(contact, cardIndex);
+            }
+          }
+        )}
       </div>
     </div>
   );

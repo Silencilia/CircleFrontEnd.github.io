@@ -115,10 +115,20 @@ export function formatNote(note: Note, relatedData: FormattedContext): string {
 export function formatCommitment(commitment: Commitment, relatedData: FormattedContext): string {
   const contacts = relatedData.contacts.filter(c => commitment.contact_ids?.includes(c.id));
   
+  // Format due date and time
+  const formatDueDateTime = (commitment: Commitment): string => {
+    const parts = [];
+    if (commitment.due_date) parts.push(commitment.due_date);
+    if (commitment.due_time) parts.push(commitment.due_time);
+    return parts.length > 0 ? parts.join(' ') : '';
+  };
+  
+  const dueDateTimeStr = formatDueDateTime(commitment);
+  
   const parts = [
     commitment.text,
     contacts.length > 0 ? `With: ${contacts.map(c => c.name).join(', ')}` : '',
-    commitment.time ? `Due: ${commitment.time}` : '',
+    dueDateTimeStr ? `Due: ${dueDateTimeStr}` : '',
     commitment.is_trashed ? `Status: trashed` : 'Status: active'
   ].filter(Boolean);
   

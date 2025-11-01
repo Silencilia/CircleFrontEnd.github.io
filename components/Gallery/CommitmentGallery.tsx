@@ -1,9 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ScrollContainer from 'react-indiana-drag-scroll';
+import { createPortal } from 'react-dom';
 import CommitmentCard from '../Cards/CommitmentCard';
-import { Commitment } from '../../contexts/ContactContext';
+import CommitmentCardDetail from '../Cards/CommitmentCardDetail';
+import ContactCardDetail from '../Cards/ContactCardDetail';
+import { Commitment, Contact } from '../../contexts/ContactContext';
 import DownIcon from '../icons/DownIcon';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { CardIndex, createSourceRecord } from '../../data/sourceRecord';
 
 interface CommitmentGalleryProps {
   commitments: Commitment[];
@@ -11,6 +15,7 @@ interface CommitmentGalleryProps {
   isCollapsed?: boolean;
   onToggle?: () => void;
   onHeightChange?: (h: number) => void;
+  onOpenContactDetail?: (contact: Contact, caller: CardIndex) => void;
 }
 
 // Visual metrics used to size the space reserved for CommitmentGallery on pages
@@ -18,10 +23,14 @@ interface CommitmentGalleryProps {
 export let COMMITMENT_GALLERY_TARGET_HEIGHT = 20 + 32 + 30 + 155 + 10; // 247px (mutable for live updates)
 
 // Horizontally scrollable row of CommitmentCard items
-const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, title = 'Upcoming commitments', isCollapsed = false, onToggle, onHeightChange }) => {
+const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, title = 'Upcoming commitments', isCollapsed = false, onToggle, onHeightChange, onOpenContactDetail }) => {
   const isMobile = useIsMobile();
   const rootRef = useRef<HTMLDivElement>(null);
   const cardsContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [caller, setCaller] = useState<CardIndex | null>(null);
+
 
   // Keep last measured expanded heights to compute collapsed target height accurately
   const lastExpandedRootHeightRef = useRef<number>(COMMITMENT_GALLERY_TARGET_HEIGHT);
@@ -90,7 +99,15 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
             {items.length > 0 ? (
               items.map((commitment) => (
                 <div key={commitment.id} className="flex-shrink-0">
-                  <CommitmentCard commitment={commitment} />
+                  <CommitmentCard 
+                    commitment={commitment}
+                    onMaximize={() => setSelectedCommitment(commitment)}
+                    onOpenContactDetail={(contact, source) => {
+                      setCaller(source);
+                      setSelectedContact(contact);
+                      setSelectedCommitment(null);
+                    }}
+                  />
                 </div>
               ))
             ) : (
@@ -124,7 +141,15 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
             {items.length > 0 ? (
               items.map((commitment) => (
                 <div key={commitment.id} className="flex-shrink-0">
-                  <CommitmentCard commitment={commitment} />
+                  <CommitmentCard 
+                    commitment={commitment}
+                    onMaximize={() => setSelectedCommitment(commitment)}
+                    onOpenContactDetail={(contact, source) => {
+                      setCaller(source);
+                      setSelectedContact(contact);
+                      setSelectedCommitment(null);
+                    }}
+                  />
                 </div>
               ))
             ) : (
@@ -138,7 +163,117 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
     </div>
   );
 
-  return isMobile ? <MobileLayout /> : <DesktopLayout />;
+  return (
+    <>
+      {isMobile ? <MobileLayout /> : <DesktopLayout />}
+      
+      {/* Commitment Detail Overlay */}
+      {typeof window !== 'undefined' && (selectedCommitment || selectedContact)
+        ? (() => {
+            return createPortal(
+              (
+                <div
+                  className={`fixed inset-0 z-[9999] bg-circle-primary/50 ${isMobile ? '' : 'flex items-center justify-center'}`}
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setSelectedCommitment(null);
+                      setSelectedContact(null);
+                    }
+                  }}
+                >
+                  {isMobile ? (
+                    selectedContact ? (
+                      (() => {
+                        return (
+                          <ContactCardDetail
+                            contact={selectedContact}
+                            caller={caller}
+                            onMinimize={() => {
+                              setSelectedContact(null);
+                              setCaller(null);
+                            }}
+                            onOpenContactDetail={(contact, source) => {
+                              setCaller(source);
+                              setSelectedContact(contact);
+                            }}
+                            onOpenCommitment={(commitment, source) => {
+                              setCaller(source);
+                              setSelectedCommitment(commitment);
+                              setSelectedContact(null);
+                            }}
+                          />
+                        );
+                      })()
+                    ) : selectedCommitment ? (
+                      (() => {
+                        return (
+                          <CommitmentCardDetail
+                            commitment={selectedCommitment}
+                            onMinimize={() => {
+                              setSelectedCommitment(null);
+                              setSelectedContact(null);
+                            }}
+                            onOpenContactDetail={(contact, source) => {
+                              setCaller(source);
+                              setSelectedContact(contact);
+                              setSelectedCommitment(null);
+                            }}
+                          />
+                        );
+                      })()
+                    ) : null
+                  ) : (
+                    <div className="mx-4">
+                      {selectedContact ? (
+                        (() => {
+                          return (
+                            <ContactCardDetail
+                              contact={selectedContact}
+                              caller={caller}
+                              onMinimize={() => {
+                                setSelectedContact(null);
+                                setCaller(null);
+                              }}
+                              onOpenContactDetail={(contact, source) => {
+                                setCaller(source);
+                                setSelectedContact(contact);
+                              }}
+                              onOpenCommitment={(commitment, source) => {
+                                setCaller(source);
+                                setSelectedCommitment(commitment);
+                                setSelectedContact(null);
+                              }}
+                            />
+                          );
+                        })()
+                      ) : selectedCommitment ? (
+                        (() => {
+                          return (
+                            <CommitmentCardDetail
+                              commitment={selectedCommitment}
+                              onMinimize={() => {
+                                setSelectedCommitment(null);
+                                setSelectedContact(null);
+                              }}
+                              onOpenContactDetail={(contact, source) => {
+                                setCaller(source);
+                                setSelectedContact(contact);
+                                setSelectedCommitment(null);
+                              }}
+                            />
+                          );
+                        })()
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              ),
+              document.body
+            );
+          })()
+        : null}
+    </>
+  );
 };
 
 export default CommitmentGallery;

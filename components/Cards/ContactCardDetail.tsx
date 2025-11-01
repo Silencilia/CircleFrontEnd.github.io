@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ContentEditable from 'react-contenteditable';
 import ScrollContainer from 'react-indiana-drag-scroll';
-import { Contact, Subject, Relationship, Note, useContacts } from '../../contexts/ContactContext';
+import { Contact, Subject, Relationship, Note, useContacts, Commitment } from '../../contexts/ContactContext';
 import { CardIndex, createSourceRecord, CardType, getCardIndexArray, popCardIndexArray, clearCardIndexArray } from '../../data/sourceRecord';
 import { SubjectTag, RelationshipTag } from '../Tag';
 import { NewTagButton } from '../Button';
@@ -47,9 +47,10 @@ interface ContactCardDetailProps {
   caller?: CardIndex | null;
   onOpenNote?: (note: Note, caller: CardIndex) => void;
   onOpenContactDetail?: (contact: Contact, caller: CardIndex) => void;
+  onOpenCommitment?: (commitment: Commitment, caller: CardIndex) => void;
 }
 
-const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimize, caller, onOpenNote, onOpenContactDetail }) => {
+const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimize, caller, onOpenNote, onOpenContactDetail, onOpenCommitment }) => {
   const { state, updateContact, addOccupation, addOrganization } = useContacts();
   if (contact.is_trashed) {
     return null;
@@ -472,6 +473,7 @@ const ContactCardDetail: React.FC<ContactCardDetailProps> = ({ contact, onMinimi
   const { openNoteDetail: navOpenNoteDetail, handleBack } = useCardNavigation({
     openNote: onOpenNote,
     openContact: onOpenContactDetail,
+    openCommitment: onOpenCommitment,
     closeCurrent: onMinimize,
   });
 

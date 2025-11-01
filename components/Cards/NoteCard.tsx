@@ -98,7 +98,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
               {/* Title */}
               <div className="h-fit flex flex-row items-start p-0 flex-1 min-w-0 overflow-hidden">
                 <div className="font-circletitlemedium text-circle-primary line-clamp-1 w-full">
-                  {note.title}
+                  {note.title || 'Untitled'}
                 </div>
               </div>
 
@@ -232,7 +232,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, caller: propCaller = null, on
           }
         }}
         itemType="note"
-        itemName={note.title}
+        itemName={note.title || 'Untitled'}
       />
 
       {/* Overlay for ContactCardDetail via portal to escape parent stacking contexts */}

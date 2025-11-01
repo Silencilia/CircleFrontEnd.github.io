@@ -13,7 +13,7 @@ const SpeedSwitch: React.FC<SpeedSwitchProps> = ({
 }) => {
   return (
     <div 
-      className={`relative flex items-center p-[3px] w-[40px] h-[20px] ${isSpeedMode ? 'bg-circle-secondary' : 'bg-circle-primary'} rounded-full cursor-pointer overflow-hidden transition-colors duration-300 ease-out ${className}`}
+      className={`relative flex items-center p-[3px] w-[40px] h-[20px] ${isSpeedMode ? 'bg-circle-secondary' : 'bg-circle-primary'} rounded-full cursor-pointer overflow-hidden transition-colors duration-300 ease-out select-none ${className}`}
       onClick={onToggle}
     >
       <div 

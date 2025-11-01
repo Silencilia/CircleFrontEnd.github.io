@@ -108,7 +108,8 @@ export interface Note {
 export interface Commitment {
   id: string;
   text: string;
-  time: string;
+  due_date: string; // Format: "Dec 20, 2024"
+  due_time: string; // Format: "16:00"
   contact_ids: string[];
   is_trashed: boolean;
 }
@@ -359,6 +360,19 @@ export function ContactProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await dataServiceRef.current.getAllData();
+      
+      // Load drafts from localStorage (drafts are not stored in Supabase)
+      if (typeof window !== 'undefined') {
+        try {
+          const storedDrafts = localStorage.getItem('drafts');
+          if (storedDrafts) {
+            data.drafts = JSON.parse(storedDrafts);
+          }
+        } catch (error) {
+          console.error('Failed to load drafts from localStorage:', error);
+        }
+      }
+      
       dispatch({ type: 'SET_DATA', payload: data });
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -600,12 +614,18 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     return tempNote;
   };
 
-  const updateTemporaryNote = (id: string, updates: Partial<Draft>) => {
-    // Update only in local state for drafts array
+  const updateTemporaryNote = async (id: string, updates: Partial<Draft>) => {
+    // Update in local state for drafts array
+    const updatedDrafts = state.drafts.map(d => d.id === id ? { ...d, ...updates } : d);
     dispatch({ type: 'SET_DATA', payload: {
       ...state,
-      drafts: state.drafts.map(d => d.id === id ? { ...d, ...updates } : d)
+      drafts: updatedDrafts
     } as any });
+    
+    // Persist to localStorage (drafts are not stored in Supabase, so persist locally)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('drafts', JSON.stringify(updatedDrafts));
+    }
   };
 
   const createTemporaryNoteFromText = (text: string): Draft => {
@@ -616,10 +636,17 @@ export function ContactProvider({ children }: { children: ReactNode }) {
       date: { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() },
       time: { hour: now.getHours(), minute: now.getMinutes() },
     };
+    const updatedDrafts = [...state.drafts, draft];
     dispatch({ type: 'SET_DATA', payload: {
       ...state,
-      drafts: [...state.drafts, draft]
+      drafts: updatedDrafts
     } as any });
+    
+    // Persist to localStorage (drafts are not stored in Supabase, so persist locally)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('drafts', JSON.stringify(updatedDrafts));
+    }
+    
     return draft;
   };
 

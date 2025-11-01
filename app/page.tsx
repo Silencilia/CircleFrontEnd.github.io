@@ -104,7 +104,7 @@ const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMe
             console.log('[Record Flow] Classified:', { existing: classified.existing.length, newOnes: classified.newOnes.length });
 
             console.log('[Record Flow] Adding system text...');
-            await chat.addSystemText('Sounds like you met a few people. Do these look right?');
+            await chat.addSystemText('You mentioned a few people. Do these look right?');
             
             console.log('[Record Flow] Adding NameConfirm component...');
             await chat.addSystemComponent('NameConfirm', {

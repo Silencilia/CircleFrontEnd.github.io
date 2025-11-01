@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
-import { useContacts, Note, Contact } from '../contexts/ContactContext';
+import { useContacts, Note, Contact, Commitment } from '../contexts/ContactContext';
 import { CardIndex, CardType, createSourceRecord, getCardIndexArray, popCardIndexArray } from '../data/sourceRecord';
 
 interface CardNavigationOptions {
   openNote?: (note: Note, caller: CardIndex) => void;
   openContact?: (contact: Contact, caller: CardIndex) => void;
+  openCommitment?: (commitment: Commitment, caller: CardIndex) => void;
   closeCurrent?: () => void;
 }
 
@@ -20,6 +21,12 @@ export function useCardNavigation(options: CardNavigationOptions = {}) {
   const openContactDetail = useCallback((contact: Contact, caller: CardIndex | null) => {
     if (options.openContact) {
       options.openContact(contact, caller || createSourceRecord('contactCardDetail', contact.id));
+    }
+  }, [options]);
+
+  const openCommitmentDetail = useCallback((commitment: Commitment, caller: CardIndex | null) => {
+    if (options.openCommitment) {
+      options.openCommitment(commitment, caller || createSourceRecord('commitmentCardDetail', commitment.id));
     }
   }, [options]);
 
@@ -63,6 +70,16 @@ export function useCardNavigation(options: CardNavigationOptions = {}) {
       return;
     }
 
+    if (last.component === 'commitmentCardDetail') {
+      const commitment = state.commitments.find(c => c.id === last.id);
+      if (commitment) {
+        openCommitmentDetail(commitment, createSourceRecord(currentType, currentId));
+        return;
+      }
+      options.closeCurrent?.();
+      return;
+    }
+
     if (last.component === 'nameConfirmationDialog') {
       // For name confirmation dialog, we don't need to open it again
       // since it's managed by the parent component's state
@@ -70,9 +87,9 @@ export function useCardNavigation(options: CardNavigationOptions = {}) {
     }
 
     options.closeCurrent?.();
-  }, [state.notes, state.contacts, openNoteDetail, openContactDetail, options]);
+  }, [state.notes, state.contacts, state.commitments, openNoteDetail, openContactDetail, openCommitmentDetail, options]);
 
-  return { openNoteDetail, openContactDetail, handleBack };
+  return { openNoteDetail, openContactDetail, openCommitmentDetail, handleBack };
 }
 
 export default useCardNavigation;

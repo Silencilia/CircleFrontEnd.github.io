@@ -157,6 +157,9 @@ export default function MemoPage() {
             commitments={state.commitments}
             isCollapsed={isCommitmentGalleryCollapsed}
             onToggle={() => setIsCommitmentGalleryCollapsed(prev => !prev)}
+            onOpenContactDetail={(contact) => {
+              setSelectedContact(contact);
+            }}
           />
         </div>
 
