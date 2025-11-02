@@ -13,7 +13,10 @@ interface CommitmentCardProps {
 const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment, onMaximize, onOpenContactDetail }) => {
   const { state } = useContacts();
 
-  if (commitment.is_trashed) {
+  // Try to get live data from state, fall back to passed object
+  const currentCommitment = state.commitments.find(c => c.id === commitment.id) || commitment;
+
+  if (currentCommitment.is_trashed) {
     return null;
   }
 
@@ -21,11 +24,11 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment, onMaximize,
     // Use due_date and due_time directly from the commitment
     // due_date format: "Dec 20, 2024"
     // due_time format: "16:00"
-    return { 
-      date: commitment.due_date || '', 
-      time: commitment.due_time || '' 
+    return {
+      date: currentCommitment.due_date || '',
+      time: currentCommitment.due_time || ''
     };
-  }, [commitment.due_date, commitment.due_time]);
+  }, [currentCommitment.due_date, currentCommitment.due_time]);
 
   const checkTextOverflow = (text: string, maxHeight: number = 60) => {
     const lineHeight = 20; // matches text leading
@@ -45,8 +48,8 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment, onMaximize,
   };
 
   const { text: truncatedText } = useMemo(
-    () => checkTextOverflow(commitment.text),
-    [commitment.text]
+    () => checkTextOverflow(currentCommitment.text),
+    [currentCommitment.text]
   );
 
   return (
@@ -96,7 +99,7 @@ const CommitmentCard: React.FC<CommitmentCardProps> = ({ commitment, onMaximize,
             if (!contact) return;
             if (onOpenContactDetail) {
               // Create a source record for navigation tracking
-              const cardIndex = createSourceRecord('commitmentCardDetail', commitment.id);
+              const cardIndex = createSourceRecord('commitmentCardDetail', currentCommitment.id);
               onOpenContactDetail(contact, cardIndex);
             }
           }

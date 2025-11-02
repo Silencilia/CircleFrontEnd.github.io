@@ -77,7 +77,110 @@ const CommitmentGallery: React.FC<CommitmentGalleryProps> = ({ commitments, titl
     };
   }, [updateTargetHeight, isCollapsed]);
 
-  const items = useMemo(() => (commitments || []).filter(c => !c.is_trashed), [commitments]);
+  // Helper function to parse due_date string (e.g., "Dec 20, 2024") to Date
+  const parseDueDate = (dateStr: string): Date | null => {
+    if (!dateStr || dateStr === 'no date') {
+      return null;
+    }
+    
+    try {
+      // Parse format like "Dec 20, 2024" or "Dec 20,2024"
+      const match = dateStr.match(/(\w+)\s+(\d{1,2}),\s*(\d{4})/);
+      if (match) {
+        const monthName = match[1];
+        const day = parseInt(match[2], 10);
+        const year = parseInt(match[3], 10);
+        
+        const monthMap: { [key: string]: number } = {
+          'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+          'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+        };
+        
+        const month = monthMap[monthName];
+        if (month !== undefined && day && year) {
+          return new Date(year, month, day);
+        }
+      }
+      
+      // Try parsing as Date object
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    } catch (e) {
+      // Fall through to return null
+    }
+    
+    return null;
+  };
+
+  // Helper function to parse due_time string (e.g., "16:00") to hour and minute
+  const parseDueTime = (timeStr: string): { hour: number; minute: number } | null => {
+    if (!timeStr || timeStr === '--:--') {
+      return null;
+    }
+    
+    const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+    if (match) {
+      const hour = parseInt(match[1], 10);
+      const minute = parseInt(match[2], 10);
+      if (!isNaN(hour) && !isNaN(minute)) {
+        return { hour, minute };
+      }
+    }
+    
+    return null;
+  };
+
+  // Helper function to get the due date/time as a Date object for comparison
+  const getDueDateTime = (commitment: Commitment): Date | null => {
+    const date = parseDueDate(commitment.due_date);
+    if (!date) {
+      return null;
+    }
+    
+    const time = parseDueTime(commitment.due_time);
+    if (time) {
+      date.setHours(time.hour, time.minute, 0, 0);
+    } else {
+      // If no time specified, set to end of day (23:59:59) to include commitments due today
+      date.setHours(23, 59, 59, 999);
+    }
+    
+    return date;
+  };
+
+  const items = useMemo(() => {
+    const now = new Date();
+    // Normalize to the start of the current minute for fair comparison
+    now.setSeconds(0, 0);
+    
+    return (commitments || [])
+      .filter(c => !c.is_trashed)
+      .map(c => ({
+        commitment: c,
+        dueDateTime: getDueDateTime(c)
+      }))
+      .filter(({ dueDateTime }) => {
+        // Filter out commitments without a valid due date/time
+        if (!dueDateTime) {
+          return false;
+        }
+        // Filter out past due commitments (dueDateTime must be >= now)
+        // Normalize dueDateTime to start of minute for comparison
+        const normalizedDue = new Date(dueDateTime);
+        normalizedDue.setSeconds(0, 0);
+        return normalizedDue >= now;
+      })
+      .sort((a, b) => {
+        // Sort by due date/time ascending (earliest first)
+        if (!a.dueDateTime && !b.dueDateTime) return 0;
+        if (!a.dueDateTime) return 1;
+        if (!b.dueDateTime) return -1;
+        return a.dueDateTime.getTime() - b.dueDateTime.getTime();
+      })
+      .map(({ commitment }) => commitment);
+  }, [commitments]);
 
   // Mobile Layout
   const MobileLayout = () => (

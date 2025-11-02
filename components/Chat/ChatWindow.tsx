@@ -8,14 +8,16 @@ import SystemMessageCard from './SystemMessageCard';
 import ThinkingIndicator from './ThinkingIndicator';
 import ContactCardDetail from '../Cards/ContactCardDetail';
 import NoteCardDetail from '../Cards/NoteCardDetail';
+import CommitmentCardDetail from '../Cards/CommitmentCardDetail';
 import { createPortal } from 'react-dom';
 import { createSourceRecord } from '../../data/sourceRecord';
-import { useContacts, Contact, Note } from '../../contexts/ContactContext';
+import { useContacts, Contact, Note, Commitment } from '../../contexts/ContactContext';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { useDragScroll } from '../../hooks/useDragScroll';
+import MissingIndicator from './MissingIndicator';
 
 // Memoized message component to prevent unnecessary re-renders
-const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDetail, onContactMenuClick, state }: { entry: any; onOpenContactDetail: (c: Contact, src: any) => void; onOpenNoteDetail: (n: Note, src: any) => void; onContactMenuClick: (contactId: string) => void; state: any }) => {
+const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDetail, onContactMenuClick, onMaximizeCommitment, state }: { entry: any; onOpenContactDetail: (c: Contact, src: any) => void; onOpenNoteDetail: (n: Note, src: any) => void; onContactMenuClick: (contactId: string) => void; onMaximizeCommitment: (c: Commitment) => void; state: any }) => {
   const isUser = entry.role === 'user';
   const bubble = isUser ? (
     <UserMessageCard text={entry.text ?? ''} />
@@ -27,7 +29,8 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
   const textParts = (entry.parts || []).filter((p: any) => p.type === 'text');
   const contactParts = componentParts.filter((p: any) => p.kind === 'ContactCard');
   const noteParts = componentParts.filter((p: any) => p.kind === 'NoteCard');
-  const otherParts = componentParts.filter((p: any) => p.kind !== 'ContactCard' && p.kind !== 'NoteCard');
+  const commitmentParts = componentParts.filter((p: any) => p.kind === 'CommitmentCard');
+  const otherParts = componentParts.filter((p: any) => p.kind !== 'ContactCard' && p.kind !== 'NoteCard' && p.kind !== 'CommitmentCard');
 
   // Separate valid and missing contacts
   const { validContactParts, missingContactCount } = useMemo(() => {
@@ -44,7 +47,10 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
   // Separate valid and missing notes
   const { validNoteParts, missingNoteCount } = useMemo(() => {
     const valid = noteParts.filter((p: any) => {
-      const note = state.notes.find((n: Note) => n.id === p.props?.id);
+      // Prioritize ID lookup for live data, fallback to passed note object
+      const note = (p.props?.id ? state.notes.find((n: Note) => n.id === p.props.id) : null)
+        || p.props?.note
+        || null;
       return note && !note.is_trashed;
     });
     return {
@@ -53,8 +59,24 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
     };
   }, [noteParts, state.notes]);
 
+  // Separate valid and missing commitments
+  const { validCommitmentParts, missingCommitmentCount } = useMemo(() => {
+    const valid = commitmentParts.filter((p: any) => {
+      // Prioritize ID lookup for live data, fallback to passed commitment object
+      const commitment = (p.props?.id ? state.commitments.find((c: Commitment) => c.id === p.props.id) : null) 
+        || p.props?.commitment 
+        || null;
+      return commitment && !commitment.is_trashed;
+    });
+    return {
+      validCommitmentParts: valid,
+      missingCommitmentCount: commitmentParts.length - valid.length
+    };
+  }, [commitmentParts, state.commitments]);
+
   const contactScrollRef = useDragScroll<HTMLDivElement>();
   const noteScrollRef = useDragScroll<HTMLDivElement>();
+  const commitmentScrollRef = useDragScroll<HTMLDivElement>();
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} w-full`}>
@@ -114,6 +136,37 @@ const MessageComponent = React.memo(({ entry, onOpenContactDetail, onOpenNoteDet
             ))}
           </div>
         )}
+        {!isUser && missingCommitmentCount > 0 && (
+          <div className="w-full">
+            <MissingIndicator datatype="commitment" />
+          </div>
+        )}
+        {!isUser && validCommitmentParts.length > 0 && (
+          <div 
+            ref={commitmentScrollRef}
+            className="w-full flex flex-col md:flex-row gap-md md:overflow-x-auto scrollbar-hide"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            {validCommitmentParts.map((p: any, idx: number) => {
+              // Prioritize ID lookup for live data, fallback to passed commitment object
+              const commitment = (p.props?.id ? state.commitments.find((c: Commitment) => c.id === p.props.id) : null) 
+                || p.props?.commitment 
+                || null;
+              return (
+                <div key={`cmt-${idx}`} className="shrink-0">
+                  {renderComponent(p.kind, {
+                    ...p.props,
+                    onMaximize: commitment ? () => onMaximizeCommitment(commitment) : undefined,
+                    onOpenContactDetail: (contact: Contact, src: any) => onOpenContactDetail(contact, src),
+                  }, entry.id)}
+                </div>
+              );
+            })}
+          </div>
+        )}
         {!isUser && otherParts.length > 0 && (
           <div className="w-full flex flex-col gap-md">
             {otherParts.map((p: any, idx: number) => (
@@ -140,21 +193,25 @@ const ChatWindow: React.FC = () => {
   const { state } = useContacts();
   const [contactForDetail, setContactForDetail] = useState<Contact | null>(null);
   const [noteForDetail, setNoteForDetail] = useState<Note | null>(null);
+  const [commitmentForDetail, setCommitmentForDetail] = useState<Commitment | null>(null);
   const [caller, setCaller] = useState<any>(null);
   const { openContactDetail, openNoteDetail, handleBack } = useCardNavigation({
     openContact: (c, src) => {
       setCaller(src);
       setContactForDetail(c);
       setNoteForDetail(null);
+      setCommitmentForDetail(null);
     },
     openNote: (n, src) => {
       setCaller(src);
       setNoteForDetail(n);
       setContactForDetail(null);
+      setCommitmentForDetail(null);
     },
     closeCurrent: () => {
       setContactForDetail(null);
       setNoteForDetail(null);
+      setCommitmentForDetail(null);
     },
   });
 
@@ -168,12 +225,19 @@ const ChatWindow: React.FC = () => {
         onOpenContactDetail={(c) => openContactDetail(c, createSourceRecord('contactCardDetail', c.id))}
         onOpenNoteDetail={(n) => openNoteDetail(n, createSourceRecord('noteCardDetail', n.id))}
         onContactMenuClick={(contactId: string) => {
-          const contact = state.contacts.find((c) => c.id === contactId);
+          const contact = state.contacts.find((c: Contact) => c.id === contactId);
           if (contact) {
             setCaller(createSourceRecord('contactCardDetail', contact.id));
             setContactForDetail(contact);
             setNoteForDetail(null);
+            setCommitmentForDetail(null);
           }
+        }}
+        onMaximizeCommitment={(commitment) => {
+          setCaller(createSourceRecord('commitmentCardDetail', commitment.id));
+          setCommitmentForDetail(commitment);
+          setContactForDetail(null);
+          setNoteForDetail(null);
         }}
       />
     )), [entries, openContactDetail, openNoteDetail, state]
@@ -206,7 +270,7 @@ const ChatWindow: React.FC = () => {
         <div ref={endRef} />
       </div>
 
-      {typeof window !== 'undefined' && (contactForDetail || noteForDetail) && createPortal(
+      {typeof window !== 'undefined' && (contactForDetail || noteForDetail || commitmentForDetail) && createPortal(
         (
           <div
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-circle-primary/50"
@@ -214,6 +278,7 @@ const ChatWindow: React.FC = () => {
               if (e.target !== e.currentTarget) return;
               setContactForDetail(null);
               setNoteForDetail(null);
+              setCommitmentForDetail(null);
             }}
           >
             {contactForDetail ? (
@@ -224,15 +289,18 @@ const ChatWindow: React.FC = () => {
                   setCaller(src);
                   setContactForDetail(null);
                   setNoteForDetail(n);
+                  setCommitmentForDetail(null);
                 }}
                 onOpenContactDetail={(c, src) => {
                   setCaller(src);
                   setNoteForDetail(null);
                   setContactForDetail(c);
+                  setCommitmentForDetail(null);
                 }}
                 onMinimize={() => {
                   setContactForDetail(null);
                   setNoteForDetail(null);
+                  setCommitmentForDetail(null);
                 }}
               />
             ) : noteForDetail ? (
@@ -243,10 +311,28 @@ const ChatWindow: React.FC = () => {
                   setCaller(src);
                   setNoteForDetail(null);
                   setContactForDetail(c);
+                  setCommitmentForDetail(null);
                 }}
                 onMinimize={() => {
                   setContactForDetail(null);
                   setNoteForDetail(null);
+                  setCommitmentForDetail(null);
+                }}
+              />
+            ) : commitmentForDetail ? (
+              <CommitmentCardDetail
+                commitment={commitmentForDetail}
+                caller={caller}
+                onOpenContactDetail={(c, src) => {
+                  setCaller(src);
+                  setCommitmentForDetail(null);
+                  setContactForDetail(c);
+                  setNoteForDetail(null);
+                }}
+                onMinimize={() => {
+                  setContactForDetail(null);
+                  setNoteForDetail(null);
+                  setCommitmentForDetail(null);
                 }}
               />
             ) : null}

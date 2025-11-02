@@ -138,3 +138,40 @@ export function hasContactReferences(text: string): boolean {
 export function countContactReferences(text: string): number {
   return findContactReferences(text).length;
 }
+
+/**
+ * Escape special regex characters in a string for use in RegExp
+ */
+function escapeRegexPattern(pattern: string): string {
+  return pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Replace a name in text with a contact token
+ * @param text - The text to process
+ * @param name - The name to replace (will be escaped for regex)
+ * @param contactId - The contact ID to use in the token
+ * @returns The text with name replaced by {{contact:contactId}} token
+ */
+export function replaceNameWithToken(text: string, name: string, contactId: string): string {
+  const pattern = escapeRegexPattern(name);
+  const token = `{{contact:${contactId}}}`;
+  return text.replace(new RegExp(pattern, 'gi'), token);
+}
+
+/**
+ * Replace multiple names with contact tokens in text
+ * @param text - The text to process
+ * @param replacements - Array of { name, contactId } objects
+ * @returns The text with all names replaced by their contact tokens
+ */
+export function replaceNamesWithTokens(
+  text: string,
+  replacements: Array<{ name: string; contactId: string }>
+): string {
+  let result = text;
+  for (const { name, contactId } of replacements) {
+    result = replaceNameWithToken(result, name, contactId);
+  }
+  return result;
+}

@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useContacts, Contact } from '../../contexts/ContactContext';
 import { CancelButton, ConfirmButton } from '../Button';
-import { CONTACT_REFERENCE_STYLES } from '../../utils/contactReference';
+import { CONTACT_REFERENCE_STYLES, replaceNamesWithTokens } from '../../utils/contactReference';
 import useCardNavigation from '../../hooks/useCardNavigation';
 import { useChat } from '../../contexts/ChatContext';
 import Checkbox from '../Checkbox';
+import { extractCommitments } from '../../utils/api/extractCommitments';
 
 interface ExistingEntry {
 	contactId: string;
@@ -38,7 +39,7 @@ const NameConfirmationDialog: React.FC<Props> = ({
 	selectedNew: initialSelectedNew = {}
 }) => {
 	console.log('[NameConfirmationDialog] Rendering with:', { draftId, existingCount: existing.length, newCount: newOnes.length, locked: initialLocked, messageId });
-	const { state, addContact, updateTemporaryNote } = useContacts();
+	const { state, addContact, updateTemporaryNote, createCommitmentDraft } = useContacts();
 	const chat = useChat();
 	const { openContactDetail } = useCardNavigation({
 		openContact: (contact) => {},
@@ -104,19 +105,39 @@ const NameConfirmationDialog: React.FC<Props> = ({
 		// Fetch draft, replace text occurrences by name → token
 		const draft = state.drafts.find(d => d.id === draftId);
 		if (!draft) return;
-		let updatedText = draft.text;
 
 		const selectedExistingContacts = existing.filter(e => selectedExisting[e.contactId]);
-		for (const e of selectedExistingContacts) {
-			const pattern = e.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-			updatedText = updatedText.replace(new RegExp(pattern, 'gi'), `{{contact:${e.contactId}}}`);
-		}
-		for (const c of createdContacts) {
-			const pattern = c.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-			updatedText = updatedText.replace(new RegExp(pattern, 'gi'), `{{contact:${c.id}}}`);
-		}
+		const replacements = [
+			...selectedExistingContacts.map(e => ({ name: e.original, contactId: e.contactId })),
+			...createdContacts.map(c => ({ name: c.name, contactId: c.id }))
+		];
+		const updatedText = replaceNamesWithTokens(draft.text, replacements);
 
 		updateTemporaryNote?.(draftId, { text: updatedText });
+
+		// Extract commitments from updated text
+		try {
+			const extractionResult = await extractCommitments(updatedText);
+			if (extractionResult.ok && extractionResult.result?.commitments) {
+				const commitments = extractionResult.result.commitments;
+				console.log('[NameConfirmationDialog] Extracted commitments', { count: commitments.length });
+				
+				// Store extracted commitments as commitmentDrafts
+				for (const commitment of commitments) {
+					createCommitmentDraft({
+						text: commitment.text,
+						due_date: commitment.due_date,
+						due_time: commitment.due_time,
+						draftId: draftId,
+					});
+				}
+			} else {
+				console.log('[NameConfirmationDialog] No commitments extracted or extraction failed');
+			}
+		} catch (error) {
+			console.error('[NameConfirmationDialog] Failed to extract commitments:', error);
+			// Continue flow even if extraction fails
+		}
 
 		// Build summary message with clickable tokens
 		const existingTokens = selectedExistingContacts.map(e => `{{contact:${e.contactId}}}`).join(', ');
@@ -191,7 +212,7 @@ const NameConfirmationDialog: React.FC<Props> = ({
 			<div className="flex flex-col gap-md">
 				{existing.length > 0 && (
 					<>
-						<div className="font-circlebodymedium text-circle-primary select-text">People you know:</div>
+						<div className="font-circlebodymedium text-circle-primary select-text">Existing contacts:</div>
 						<div className="flex flex-col gap-xs">
 							{existing.map(renderExistingRow)}
 						</div>
@@ -199,7 +220,7 @@ const NameConfirmationDialog: React.FC<Props> = ({
 				)}
 				{newOnes.length > 0 && (
 					<>
-						<div className="font-circlebodymedium text-circle-primary select-text">People you just met:</div>
+						<div className="font-circlebodymedium text-circle-primary select-text">New contacts:</div>
 						<div className="flex flex-col gap-xs">
 							{newOnes.map(renderNewRow)}
 						</div>

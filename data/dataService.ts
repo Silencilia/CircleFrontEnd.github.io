@@ -12,7 +12,7 @@ export interface DataService {
   addRelationship(relationship: Omit<Relationship, 'id'>): Promise<Relationship>;
   addSentiment(sentiment: Omit<Sentiment, 'id'>): Promise<Sentiment>;
   updateSentiment(id: string, updates: Partial<Sentiment>): Promise<Sentiment>;
-  addNote(note: Omit<Note, 'id' | 'createdAt'>): Promise<Note>;
+  addNote(note: Omit<Note, 'id' | 'created_at'>): Promise<Note>;
   updateNote(id: string, updates: Partial<Note>): Promise<Note>;
   // Commitments
   addCommitment(commitment: Omit<Commitment, 'id'>): Promise<Commitment>;

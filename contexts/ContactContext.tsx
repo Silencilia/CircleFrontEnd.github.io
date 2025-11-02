@@ -114,6 +114,15 @@ export interface Commitment {
   is_trashed: boolean;
 }
 
+// Represents a commitment extracted from draft text, before being saved to database
+export interface CommitmentDraft {
+  id: string;
+  text: string;
+  due_date: string; // Format: "Dec 20, 2024"
+  due_time: string; // Format: "16:00"
+  draftId: string; // Links to the draft it was extracted from
+}
+
 
 
 
@@ -140,6 +149,7 @@ export interface ContactState {
   sentiments: Sentiment[];
   notes: Note[];
   commitments: Commitment[];
+  commitmentDrafts: CommitmentDraft[];
   drafts: Draft[];
   isLoading: boolean;
   error: string | null;
@@ -157,6 +167,8 @@ type ContactAction =
   | { type: 'UPDATE_NOTE'; payload: Note }
   | { type: 'ADD_COMMITMENT'; payload: Commitment }
   | { type: 'UPDATE_COMMITMENT'; payload: Commitment }
+  | { type: 'ADD_COMMITMENT_DRAFT'; payload: CommitmentDraft }
+  | { type: 'DELETE_COMMITMENT_DRAFT'; payload: string }
   | { type: 'ADD_SUBJECT'; payload: Subject }
   | { type: 'UPDATE_SUBJECT'; payload: Subject }
   | { type: 'ADD_RELATIONSHIP'; payload: Relationship }
@@ -176,6 +188,7 @@ const initialState: ContactState = {
   sentiments: [],
   notes: [],
   commitments: [],
+  commitmentDrafts: [],
   drafts: [],
   isLoading: true,
   error: null,
@@ -231,6 +244,15 @@ function contactReducer(state: ContactState, action: ContactAction): ContactStat
           c.id === action.payload.id ? action.payload : c
         ),
       };
+
+    case 'ADD_COMMITMENT_DRAFT':
+      return { ...state, commitmentDrafts: [...state.commitmentDrafts, action.payload] };
+
+    case 'DELETE_COMMITMENT_DRAFT':
+      return {
+        ...state,
+        commitmentDrafts: state.commitmentDrafts.filter(cd => cd.id !== action.payload),
+      };
     
     case 'UPDATE_SUBJECT':
       return {
@@ -279,9 +301,9 @@ interface ContactContextType {
   updateContact: (id: string, updates: Partial<Contact>) => Promise<void>;
   addContact: (contact: Omit<Contact, 'id'>) => Promise<Contact>;
   deleteContact: (id: string) => Promise<void>;
-  addNote: (note: Omit<Note, 'id' | 'created_at'>) => Promise<void>;
+  addNote: (note: Omit<Note, 'id' | 'created_at'>) => Promise<Note>;
   updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
-  addCommitment: (commitment: Omit<Commitment, 'id'>) => Promise<void>;
+  addCommitment: (commitment: Omit<Commitment, 'id'>) => Promise<Commitment>;
   updateCommitment: (id: string, updates: Partial<Commitment>) => Promise<void>;
   addSubject: (subject: Omit<Subject, 'id'>) => Promise<Subject>;
   updateSubject: (id: string, updates: Partial<Subject>) => Promise<void>;
@@ -302,6 +324,9 @@ interface ContactContextType {
   createTemporaryNoteFromText: (text: string) => Draft;
   // Update temporary note (local state)
   updateTemporaryNote?: (id: string, updates: Partial<Draft>) => void;
+  // Commitment draft management (local state)
+  createCommitmentDraft: (commitmentDraft: Omit<CommitmentDraft, 'id'>) => CommitmentDraft;
+  deleteCommitmentDraft: (id: string) => void;
 }
 
 // Create context
@@ -362,18 +387,30 @@ export function ContactProvider({ children }: { children: ReactNode }) {
       const data = await dataServiceRef.current.getAllData();
       
       // Load drafts from localStorage (drafts are not stored in Supabase)
+      let commitmentDrafts: CommitmentDraft[] = [];
       if (typeof window !== 'undefined') {
         try {
           const storedDrafts = localStorage.getItem('drafts');
           if (storedDrafts) {
             data.drafts = JSON.parse(storedDrafts);
           }
+          // Load commitment drafts from localStorage (commitment drafts are not stored in Supabase)
+          const storedCommitmentDrafts = localStorage.getItem('commitmentDrafts');
+          if (storedCommitmentDrafts) {
+            commitmentDrafts = JSON.parse(storedCommitmentDrafts);
+          }
         } catch (error) {
-          console.error('Failed to load drafts from localStorage:', error);
+          console.error('Failed to load drafts/commitmentDrafts from localStorage:', error);
         }
       }
       
-      dispatch({ type: 'SET_DATA', payload: data });
+      dispatch({ 
+        type: 'SET_DATA', 
+        payload: {
+          ...data,
+          commitmentDrafts,
+        }
+      });
     } catch (error) {
       console.error('Failed to load data:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to load data' });
@@ -496,10 +533,11 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addNote = async (note: Omit<Note, 'id' | 'created_at'>) => {
+  const addNote = async (note: Omit<Note, 'id' | 'created_at'>): Promise<Note> => {
     try {
       const newNote = await dataServiceRef.current.addNote(note);
       dispatch({ type: 'ADD_NOTE', payload: newNote });
+      return newNote;
     } catch (error) {
       console.error('Failed to add note:', error);
       throw error;
@@ -516,10 +554,11 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addCommitment = async (commitment: Omit<Commitment, 'id'>) => {
+  const addCommitment = async (commitment: Omit<Commitment, 'id'>): Promise<Commitment> => {
     try {
       const created = await dataServiceRef.current.addCommitment(commitment);
       dispatch({ type: 'ADD_COMMITMENT', payload: created });
+      return created;
     } catch (error) {
       console.error('Failed to add commitment:', error);
       throw error;
@@ -650,6 +689,34 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     return draft;
   };
 
+  const createCommitmentDraft = (commitmentDraft: Omit<CommitmentDraft, 'id'>): CommitmentDraft => {
+    const now = new Date();
+    const newCommitmentDraft: CommitmentDraft = {
+      id: `commitmentDraft-${now.getTime()}-${Math.random().toString(36).slice(2, 11)}`,
+      ...commitmentDraft,
+    };
+    
+    const updatedCommitmentDrafts = [...state.commitmentDrafts, newCommitmentDraft];
+    dispatch({ type: 'ADD_COMMITMENT_DRAFT', payload: newCommitmentDraft });
+    
+    // Persist to localStorage (commitment drafts are not stored in Supabase, so persist locally)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('commitmentDrafts', JSON.stringify(updatedCommitmentDrafts));
+    }
+    
+    return newCommitmentDraft;
+  };
+
+  const deleteCommitmentDraft = (id: string): void => {
+    const updatedCommitmentDrafts = state.commitmentDrafts.filter(cd => cd.id !== id);
+    dispatch({ type: 'DELETE_COMMITMENT_DRAFT', payload: id });
+    
+    // Persist to localStorage (commitment drafts are not stored in Supabase, so persist locally)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('commitmentDrafts', JSON.stringify(updatedCommitmentDrafts));
+    }
+  };
+
 
   const value: ContactContextType = {
     state,
@@ -674,6 +741,8 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     createTemporaryNote,
     createTemporaryNoteFromText,
     updateTemporaryNote,
+    createCommitmentDraft,
+    deleteCommitmentDraft,
   };
 
   return (

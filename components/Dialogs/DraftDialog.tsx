@@ -16,6 +16,7 @@ import { useChat } from '../../contexts/ChatContext';
 import { extractContactIdsFromText } from '../../utils/api/extractContactIds';
 import { summarizeDraft } from '../../utils/api/summarizeDraft';
 import { contactReference } from '../../data/referenceParsing';
+import { processCommitmentDrafts } from '../../utils/recordFlow';
 
 interface DraftDialogProps {
   draft: Draft;
@@ -36,7 +37,7 @@ const DraftDialog: React.FC<DraftDialogProps> = ({
   messageId,
   locked: initialLocked = null
 }) => {
-  const { updateTemporaryNote, addNote, addSentiment, state } = useContacts();
+  const { updateTemporaryNote, addNote, addSentiment, addCommitment, deleteCommitmentDraft, state } = useContacts();
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
   // Always render with the latest draft from context in case it was updated
@@ -164,7 +165,7 @@ const DraftDialog: React.FC<DraftDialogProps> = ({
 
       // Reuse confirm pathway to create note and announce
       console.log('[DraftDialog] Creating note from summary with carried date/time');
-      await addNote({
+      const newNote = await addNote({
         title: summary.title || (draft.title || ''),
         text: summary.text,
         date: draft.date,
@@ -173,25 +174,24 @@ const DraftDialog: React.FC<DraftDialogProps> = ({
         contact_ids,
         is_trashed: false,
       });
-      console.log('[DraftDialog] addNote completed');
+      console.log('[DraftDialog] addNote completed', { id: newNote.id });
 
-      // Find created note and announce (poll state since addNote updates async)
-      let newNote = stateRef.current.notes.find(n => n.text === summary.text && n.title === (summary.title || (draft.title || '')));
-      for (let i = 0; !newNote && i < 20; i++) {
-        await new Promise(r => setTimeout(r, 100));
-        newNote = stateRef.current.notes.find(n => n.text === summary.text && n.title === (summary.title || (draft.title || '')));
-        if (!newNote) console.log('[DraftDialog] Waiting for note to appear in state...', { attempt: i + 1 });
-      }
-      if (newNote) {
-        console.log('[DraftDialog] Found newly created note in state', { id: newNote.id });
-        await chat.addSystemText('Great! Here is your note:');
-        // Small delay to ensure text message is fully added before component
-        await new Promise(r => setTimeout(r, 50));
-        await chat.addSystemComponent('NoteCard', { id: newNote.id });
-        console.log('[DraftDialog] Mounted NoteCard for new note');
-      } else {
-        console.warn('[DraftDialog] Could not find newly created note in state after polling');
-      }
+      // Create system message with note card (pass full note object for fallback)
+      await chat.addSystemText('Great! Here is your note:');
+      // Small delay to ensure text message is fully added before component
+      await new Promise(r => setTimeout(r, 50));
+      await chat.addSystemComponent('NoteCard', { id: newNote.id, note: newNote });
+      console.log('[DraftDialog] Mounted NoteCard for new note');
+
+      // Process commitment drafts (create commitments and show cards)
+      await processCommitmentDrafts(
+        state.commitmentDrafts,
+        draft.id,
+        addCommitment,
+        chat.addSystemText,
+        chat.addSystemComponent,
+        deleteCommitmentDraft
+      );
 
       if (onMinimize) onMinimize();
       console.log('[DraftDialog] Extract flow finished, dialog minimized');
@@ -201,7 +201,7 @@ const DraftDialog: React.FC<DraftDialogProps> = ({
       chat.setIsThinking(false);
       console.log('[DraftDialog] isThinking set to false');
     }
-  }, [draft, onExtract, locked, setLockedPersistent, chat, state.sentiments]);
+  }, [draft, onExtract, locked, setLockedPersistent, chat, state.sentiments, state.commitmentDrafts, addCommitment, deleteCommitmentDraft]);
 
   const handleCancelClick = useCallback(async () => {
     if (locked) return;
@@ -224,7 +224,7 @@ const DraftDialog: React.FC<DraftDialogProps> = ({
       const contact_ids = extractContactIdsFromText(currentDraft.text);
       
       // Create a new note and add it to the database
-      await addNote({
+      const newNote = await addNote({
         title: currentDraft.title || '',
         text: currentDraft.text,
         date: currentDraft.date,
@@ -234,23 +234,22 @@ const DraftDialog: React.FC<DraftDialogProps> = ({
         is_trashed: false
       });
 
-      // Find created note and announce (poll state since addNote updates async)
-      let newNote = stateRef.current.notes.find(n => n.text === currentDraft.text && n.title === (currentDraft.title || ''));
-      for (let i = 0; !newNote && i < 20; i++) {
-        await new Promise(r => setTimeout(r, 100));
-        newNote = stateRef.current.notes.find(n => n.text === currentDraft.text && n.title === (currentDraft.title || ''));
-        if (!newNote) console.log('[DraftDialog] Waiting for note to appear in state...', { attempt: i + 1 });
-      }
-      if (newNote) {
-        console.log('[DraftDialog] Found newly created note in state', { id: newNote.id });
-        await chat.addSystemText("Great! Here is your note:");
-        // Small delay to ensure text message is fully added before component
-        await new Promise(r => setTimeout(r, 50));
-        await chat.addSystemComponent('NoteCard', { id: newNote.id });
-        console.log('[DraftDialog] Mounted NoteCard for new note');
-      } else {
-        console.warn('[DraftDialog] Could not find newly created note in state after polling');
-      }
+      // Create system message with note card (pass full note object for fallback)
+      await chat.addSystemText("Great! Here is your note:");
+      // Small delay to ensure text message is fully added before component
+      await new Promise(r => setTimeout(r, 50));
+      await chat.addSystemComponent('NoteCard', { id: newNote.id, note: newNote });
+      console.log('[DraftDialog] Mounted NoteCard for new note');
+
+      // Process commitment drafts (create commitments and show cards)
+      await processCommitmentDrafts(
+        state.commitmentDrafts,
+        currentDraft.id,
+        addCommitment,
+        chat.addSystemText,
+        chat.addSystemComponent,
+        deleteCommitmentDraft
+      );
 
       // Minimize the draft card
       if (onMinimize) {
@@ -259,7 +258,7 @@ const DraftDialog: React.FC<DraftDialogProps> = ({
     } catch (error) {
       console.error('Failed to create note:', error);
     }
-  }, [currentDraft, addNote, chat, onMinimize, locked, setLockedPersistent]);
+  }, [currentDraft, addNote, addCommitment, deleteCommitmentDraft, state.commitmentDrafts, chat, onMinimize, locked, setLockedPersistent]);
 
   // Mouse wheel scrolling
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -665,4 +664,5 @@ const DraftDialog: React.FC<DraftDialogProps> = ({
 };
 
 export default DraftDialog;
+
 

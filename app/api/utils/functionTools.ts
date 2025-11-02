@@ -103,6 +103,86 @@ export const referenceEntitiesTool = {
   },
 };
 
+/**
+ * Tool for extracting commitments from draft text
+ */
+export const extractCommitmentsTool = {
+  type: 'function' as const,
+  function: {
+    name: 'extract_commitments',
+    description: 'Extract all commitments, tasks, and to-do items from the draft text, preserving contact tokens and extracting due dates/times.',
+    parameters: {
+      type: 'object',
+      properties: {
+        commitments: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              text: {
+                type: 'string',
+                description: 'Concise description of the commitment, preserving any {{contact:UUID}} tokens exactly.',
+              },
+              due_date: {
+                type: 'string',
+                description: 'Due date in format "Dec 20, 2024" or empty string if not specified.',
+              },
+              due_time: {
+                type: 'string',
+                description: 'Due time in format "16:00" or empty string if not specified.',
+              },
+            },
+            required: ['text', 'due_date', 'due_time'],
+            additionalProperties: false,
+          },
+          description: 'Array of commitments found in the text. Empty array if none found.',
+        },
+      },
+      required: ['commitments'],
+      additionalProperties: false,
+    },
+  },
+};
+
+/**
+ * Tool for summarizing draft text with sentiment mapping
+ */
+export const summarizeDraftTool = {
+  type: 'function' as const,
+  function: {
+    name: 'summarize_draft',
+    description: 'Return a structured, concise summary for the draft, preserving contact tokens and mapping sentiments.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Short, informative title. ≤ 8 words.' },
+        text: { type: 'string', description: 'Summarized content, preserving any {{contact:UUID}} tokens exactly.' },
+        sentiments: {
+          type: 'object',
+          properties: {
+            existing_ids: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'UUIDs of existing sentiments chosen from the catalog.',
+              maxItems: 3,
+            },
+            new_labels: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'New sentiment labels when catalog has no match.',
+              maxItems: 3,
+            },
+          },
+          required: ['existing_ids', 'new_labels'],
+          additionalProperties: false,
+        },
+      },
+      required: ['title', 'text', 'sentiments'],
+      additionalProperties: false,
+    },
+  },
+};
+
 export function extractEntitiesFromToolCalls(toolCalls: any[]): { contacts: string[]; notes: string[] } {
   let contacts: string[] = [];
   let notes: string[] = [];

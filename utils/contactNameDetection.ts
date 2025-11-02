@@ -1,5 +1,6 @@
 import { Contact } from '../contexts/ContactContext';
 import { generateEmbedding, searchWithPgVector } from '../app/api/utils/semanticSearch';
+import { replaceNameWithToken } from './contactReference';
 
 export interface DetectedContact {
   name: string;
@@ -98,11 +99,7 @@ export async function detectContactNames(
             });
 
             // Replace the detected name with contact reference token
-            const contactToken = `{{contact:${matchingContact.id}}}`;
-            processedText = processedText.replace(
-              new RegExp(detectedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
-              contactToken
-            );
+            processedText = replaceNameWithToken(processedText, detectedName, matchingContact.id);
           }
         }
       } catch (error) {
@@ -123,11 +120,7 @@ export async function detectContactNames(
           });
 
           // Replace the detected name with contact reference token
-          const contactToken = `{{contact:${simpleMatch.id}}}`;
-          processedText = processedText.replace(
-            new RegExp(detectedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
-            contactToken
-          );
+          processedText = replaceNameWithToken(processedText, detectedName, simpleMatch.id);
         }
       }
     }
@@ -268,20 +261,17 @@ export function detectContactNamesSimple(
     const contactName = contact.name.toLowerCase();
     const textLower = text.toLowerCase();
     
-    // Check for exact matches
+    // Check for exact matches (case-insensitive)
     if (textLower.includes(contactName)) {
-      const regex = new RegExp(contact.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-      if (regex.test(text)) {
-        detectedContacts.push({
-          name: contact.name,
-          contact: contact,
-          similarity: 1.0,
-          originalText: contact.name
-        });
+      detectedContacts.push({
+        name: contact.name,
+        contact: contact,
+        similarity: 1.0,
+        originalText: contact.name
+      });
 
-        // Replace with contact reference token
-        processedText = processedText.replace(regex, `{{contact:${contact.id}}}`);
-      }
+      // Replace with contact reference token (handles regex escaping internally)
+      processedText = replaceNameWithToken(processedText, contact.name, contact.id);
     }
   }
 
