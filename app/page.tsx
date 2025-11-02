@@ -55,6 +55,7 @@ const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMe
         const { data: userRes } = await supabase.auth.getUser();
         const isOffline = !userRes.user?.id;
 
+        let intentResult;
         if (isOffline) {
           // Gather local storage data for offline mode
           const localData = {
@@ -69,7 +70,7 @@ const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMe
             drafts: [],
           };
 
-          await identifyRequest(
+          intentResult = await identifyRequest(
             pendingMessage.chatId, 
             pendingMessage.messageId, 
             chat.addSystemText, 
@@ -77,7 +78,7 @@ const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMe
             chat.setIsThinking
           );
         } else {
-          await identifyRequest(
+          intentResult = await identifyRequest(
             pendingMessage.chatId, 
             pendingMessage.messageId, 
             undefined, 
@@ -86,7 +87,8 @@ const InitialMessageHandler: React.FC<InitialMessageHandlerProps> = ({ pendingMe
           );
         }
         // Client-side record flow: create temp note, detect names, ask for confirmation
-        if (pendingMessage.text && chat.chatId) {
+        // Only trigger record flow if intent is "record"
+        if (pendingMessage.text && chat.chatId && intentResult?.ok && intentResult?.intent === 'record') {
           try {
             await processRecordFlow(pendingMessage.text, chat.chatId, chat, contactsCtx);
           } catch (err) {

@@ -147,8 +147,6 @@ export async function processCommitmentDrafts(
 
   // Create system message with commitment cards
   await addSystemText('Keep in mind that you also mentioned doing this later:');
-  await new Promise(r => setTimeout(r, 50)); // Small delay
-  
   // Add commitment cards
   for (const commitmentId of createdCommitmentIds) {
     await addSystemComponent('CommitmentCard', { id: commitmentId });
